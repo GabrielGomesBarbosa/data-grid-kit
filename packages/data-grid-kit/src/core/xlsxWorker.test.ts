@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import { buildXlsx, type XlsxSheet } from './xlsx'
+import { readZip } from './xlsx.helpers'
 import { setupXlsxWorker, type XlsxWorkerRequest, type XlsxWorkerResponse, type XlsxWorkerScope } from './xlsxWorker'
 import { buildXlsxInWorker, type XlsxWorkerLike } from './xlsxWorkerClient'
 
@@ -41,6 +42,15 @@ describe('xlsx worker', () => {
     expect(viaWorker.length).toBe(direct.length)
     expect(String.fromCharCode(viaWorker[0]!, viaWorker[1]!)).toBe('PK')
     expect(log.terminated).toBe(true)
+  })
+
+  it('extra sheets travel with the request and end up in the same file', async () => {
+    const { worker } = fakeWorker()
+    const extra: XlsxSheet = { ...sheet(2), name: 'Extra' }
+    const files = await readZip(await buildXlsxInWorker({ ...sheet(3), name: 'Main' }, { compress: false }, () => worker, [extra]))
+    expect(files['xl/workbook.xml']).toContain('name="Main"')
+    expect(files['xl/workbook.xml']).toContain('name="Extra"')
+    expect(Object.keys(files).filter((n) => n.startsWith('xl/worksheets/'))).toHaveLength(2)
   })
 
   it('sends the rows in batches as plain data (dates stay dates) and reports progress', async () => {

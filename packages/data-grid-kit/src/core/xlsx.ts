@@ -1,7 +1,19 @@
 import { zip, type ZipEntry } from './zip'
+import { escapeXml } from './xlsxXml'
+import { Styles, type XlsxStyle } from './xlsxStyles'
+export type { XlsxStyle } from './xlsxStyles'
 
 /** What a cell can hold. Numbers, booleans and dates are typed cells; everything else is text. */
-export type XlsxValue = string | number | boolean | Date | null | undefined
+export type XlsxValue = string | number | boolean | Date | XlsxFormula | null | undefined
+
+/**
+ * A formula cell. Only an explicit object is a formula: text that merely starts with `=` stays text. `value` is the
+ * result shown until the file is recalculated (Excel recalculates on open); the leading `=` is optional.
+ */
+export interface XlsxFormula {
+  formula: string
+  value?: number | string | boolean
+}
 
 export interface XlsxColumn {
   /** the title shown in the header row */
@@ -12,6 +24,13 @@ export interface XlsxColumn {
   width?: number
   /** number format code, e.g. `#,##0.00` or `yyyy-mm-dd`. Dates default to `yyyy-mm-dd`. */
   numFmt?: string
+  /** look of the column's cells */
+  style?: XlsxStyle
+  /**
+   * A drop-down list of allowed values for the column's data cells. Excel's inline lists hold at most 255 characters
+   * and no commas or quotes in an item: a list that does not fit is left out (the cells still hold the values).
+   */
+  validationList?: string[]
 }
 
 export interface XlsxRow {
@@ -31,6 +50,8 @@ export interface XlsxSheet {
   freezeHeader?: boolean
   /** filter buttons on the title row (default false; they would sit under merged group headers otherwise) */
   autoFilter?: boolean
+  /** look of the title row (default: bold on a light fill) */
+  headerStyle?: XlsxStyle
 }
 
 export interface XlsxOptions {
@@ -58,10 +79,6 @@ export function columnLetters(index: number): string {
   return s
 }
 
-// characters XML 1.0 cannot carry (control characters, lone surrogates, U+FFFE/FFFF)
-const ILLEGAL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F￾￿]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g
-const escapeXml = (s: string) => s.replace(ILLEGAL, '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-
 /** days since 1899-12-30, with the time of day as the fraction. Wall-clock time: Excel has no time zones. */
 export function excelSerial(d: Date): number {
   const utc = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds(), d.getMilliseconds())
@@ -72,77 +89,33 @@ export function excelSerial(d: Date): number {
 
 const sheetName = (name: string) => escapeXml(name.replace(/[[\]:*?/\\]/g, ' ').trim().slice(0, 31).replace(/^'+|'+$/g, '') || 'Sheet1')
 
-/* ------------------------------------------------------------------ styles */
-
-/** Cell formats are registered as they are met; `index` is what a cell's `s` attribute refers to. */
-class Styles {
-  private numFmts: string[] = []
-  private xfs: { numFmtId: number; bold: boolean; header: boolean }[] = [{ numFmtId: 0, bold: false, header: false }]
-  private lookup = new Map<string, number>([['0|0|0', 0]])
-
-  private fmtId(code: string | undefined): number {
-    if (!code) return 0
-    if (code === 'yyyy-mm-dd') return 165 // custom, registered below; keeps one code path
-    let i = this.numFmts.indexOf(code)
-    if (i < 0) i = this.numFmts.push(code) - 1
-    return 170 + i
-  }
-
-  index(numFmt: string | undefined, bold = false, header = false): number {
-    const id = this.fmtId(numFmt)
-    const key = `${id}|${bold ? 1 : 0}|${header ? 1 : 0}`
-    let at = this.lookup.get(key)
-    if (at === undefined) {
-      at = this.xfs.push({ numFmtId: id, bold, header }) - 1
-      this.lookup.set(key, at)
-    }
-    return at
-  }
-
-  xml(): string {
-    const fmts = [`<numFmt numFmtId="165" formatCode="yyyy-mm-dd"/>`, ...this.numFmts.map((c, i) => `<numFmt numFmtId="${170 + i}" formatCode="${escapeXml(c)}"/>`)]
-    const xfs = this.xfs
-      .map((x) => {
-        const attrs = `numFmtId="${x.numFmtId}" fontId="${x.bold ? 1 : 0}" fillId="${x.header ? 2 : 0}" borderId="${x.header ? 1 : 0}" xfId="0"${x.numFmtId ? ' applyNumberFormat="1"' : ''}${x.bold ? ' applyFont="1"' : ''}${x.header ? ' applyFill="1" applyBorder="1"' : ''}`
-        return x.header ? `<xf ${attrs} applyAlignment="1"><alignment vertical="center"/></xf>` : `<xf ${attrs}/>`
-      })
-      .join('')
-    return (
-      `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` +
-      `<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">` +
-      `<numFmts count="${fmts.length}">${fmts.join('')}</numFmts>` +
-      `<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts>` +
-      `<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>` +
-      `<fill><patternFill patternType="solid"><fgColor rgb="FFEFF1F5"/><bgColor indexed="64"/></patternFill></fill></fills>` +
-      `<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>` +
-      `<border><left/><right/><top/><bottom style="thin"><color rgb="FFC9CED8"/></bottom><diagonal/></border></borders>` +
-      `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>` +
-      `<cellXfs count="${this.xfs.length}">${xfs}</cellXfs>` +
-      `<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>` +
-      `</styleSheet>`
-    )
-  }
-}
-
 /* -------------------------------------------------------------------- sheet */
 
 const tick = () => new Promise<void>((r) => setTimeout(r, 0))
 
+interface WrittenSheet {
+  name: string
+  chunks: Uint8Array[]
+  /** the filter range, when the sheet has one (the workbook declares it) */
+  filter: { titleRow: number; lastCol: string; lastRow: number } | null
+}
+
 /**
- * Write one worksheet as an .xlsx file. Cells are streamed into XML pieces row by row, so the memory used is the
- * output itself, not an object per cell. Text goes in as inline strings (never evaluated as a formula, so a value
- * like `=1+1` stays text).
+ * One worksheet's XML. Cells are streamed into pieces row by row, so the memory used is the output itself, not an
+ * object per cell. Text goes in as inline strings (never evaluated as a formula, so a value like `=1+1` stays text).
  */
-export async function buildXlsx(sheet: XlsxSheet, options: XlsxOptions = {}): Promise<Uint8Array> {
+async function writeSheet(sheet: XlsxSheet, styles: Styles, options: XlsxOptions): Promise<WrittenSheet> {
   const cols = sheet.columns
   if (cols.length > MAX_COLUMNS) throw new Error(`xlsx supports at most ${MAX_COLUMNS} columns (got ${cols.length})`)
-  const styles = new Styles()
   const letters = cols.map((_, i) => columnLetters(i))
-  const colStyle = cols.map((c) => styles.index(c.numFmt))
-  const colStyleBold = cols.map((c) => styles.index(c.numFmt, true))
-  const dateStyle = cols.map((c) => styles.index(c.numFmt ?? 'yyyy-mm-dd'))
-  const dateStyleBold = cols.map((c) => styles.index(c.numFmt ?? 'yyyy-mm-dd', true))
-  const headStyle = styles.index(undefined, true, true)
+  const colStyle = cols.map((c) => styles.index(c.numFmt, false, false, c.style))
+  const colStyleBold = cols.map((c) => styles.index(c.numFmt, true, false, c.style))
+  const dateStyle = cols.map((c) => styles.index(c.numFmt ?? 'yyyy-mm-dd', false, false, c.style))
+  const dateStyleBold = cols.map((c) => styles.index(c.numFmt ?? 'yyyy-mm-dd', true, false, c.style))
+  // text keeps style 0 unless the column has a look of its own
+  const textStyle = cols.map((c) => (c.style ? styles.index(undefined, false, false, c.style) : 0))
+  const textStyleBold = cols.map((c) => styles.index(undefined, true, false, c.style))
+  const headStyle = styles.index(undefined, true, true, sheet.headerStyle)
 
   const chunks: Uint8Array[] = []
   let buf = ''
@@ -210,13 +183,15 @@ export async function buildXlsx(sheet: XlsxSheet, options: XlsxOptions = {}): Pr
         if (!Number.isFinite(v)) continue
         const s = row.bold ? colStyleBold[i]! : colStyle[i]!
         xml += `<c r="${ref}"${s ? ` s="${s}"` : ''}><v>${v}</v></c>`
+      } else if (typeof v === 'object' && !(v instanceof Date)) {
+        xml += formulaCell(ref, v, row.bold ? colStyleBold[i]! : colStyle[i]!)
       } else if (typeof v === 'boolean') {
         xml += `<c r="${ref}" t="b"><v>${v ? 1 : 0}</v></c>`
       } else if (v instanceof Date) {
         if (Number.isNaN(v.getTime())) continue
         xml += `<c r="${ref}" s="${row.bold ? dateStyleBold[i]! : dateStyle[i]!}"><v>${excelSerial(v)}</v></c>`
       } else {
-        xml += textCell(ref, String(v), row.bold ? colStyleBold[i]! : 0)
+        xml += textCell(ref, String(v), row.bold ? textStyleBold[i]! : textStyle[i]!)
       }
     }
     push(xml + '</row>')
@@ -250,48 +225,107 @@ export async function buildXlsx(sheet: XlsxSheet, options: XlsxOptions = {}): Pr
     `</sheetData>` +
     (filter ? `<autoFilter ref="A${titleRow}:${lastCol}${Math.max(titleRow, rowNo)}"/>` : '') +
     (merges.length ? `<mergeCells count="${merges.length}">${merges.map((m) => `<mergeCell ref="${m}"/>`).join('')}</mergeCells>` : '') +
+    validations(cols, letters, headerRows + 1, rowNo) +
     `</worksheet>`
-  const sheetChunks = [enc.encode(head), ...chunks, enc.encode(buf + tail)]
+  return {
+    name: sheetName(sheet.name ?? 'Sheet1'),
+    chunks: [enc.encode(head), ...chunks, enc.encode(buf + tail)],
+    filter: filter ? { titleRow, lastCol, lastRow: Math.max(titleRow, rowNo) } : null,
+  }
+}
 
-  const name = sheetName(sheet.name ?? 'Sheet1')
-  const small = (s: string): ZipEntry['chunks'] => [enc.encode(s)]
+/** a formula cell: the result is cached next to the formula, so viewers that do not calculate still show it */
+function formulaCell(ref: string, v: XlsxFormula, s: number): string {
+  if (typeof v.formula !== 'string' || !v.formula.replace(/^=/, '')) return ''
+  const f = `<f>${escapeXml(v.formula.replace(/^=/, ''))}</f>`
+  const style = s ? ` s="${s}"` : ''
+  const r = v.value
+  if (typeof r === 'number') return Number.isFinite(r) ? `<c r="${ref}"${style}>${f}<v>${r}</v></c>` : `<c r="${ref}"${style}>${f}</c>`
+  if (typeof r === 'boolean') return `<c r="${ref}"${style} t="b">${f}<v>${r ? 1 : 0}</v></c>`
+  if (typeof r === 'string') return `<c r="${ref}"${style} t="str">${f}<v>${escapeXml(r.slice(0, MAX_TEXT))}</v></c>`
+  return `<c r="${ref}"${style}>${f}</c>`
+}
+
+/** drop-down lists for the data cells of the columns that ask for one (see `XlsxColumn.validationList`) */
+function validations(cols: XlsxColumn[], letters: string[], first: number, last: number): string {
+  if (last < first) return ''
+  const items: string[] = []
+  cols.forEach((c, i) => {
+    const list = c.validationList
+    if (!list?.length || list.some((x) => /[",\n\r]/.test(x) || !x) || list.join(',').length > 255) return
+    items.push(
+      `<dataValidation type="list" allowBlank="1" showErrorMessage="1" sqref="${letters[i]}${first}:${letters[i]}${last}"><formula1>"${escapeXml(list.join(','))}"</formula1></dataValidation>`,
+    )
+  })
+  return items.length ? `<dataValidations count="${items.length}">${items.join('')}</dataValidations>` : ''
+}
+
+/* ----------------------------------------------------------------- workbook */
+
+/** a sheet name Excel accepts, made unique among the ones before it (names compare ignoring case) */
+function uniqueName(name: string, taken: Set<string>): string {
+  let out = name
+  for (let n = 2; taken.has(out.toLowerCase()); n++) {
+    const suffix = ` (${n})`
+    out = name.slice(0, 31 - suffix.length) + suffix
+  }
+  taken.add(out.toLowerCase())
+  return out
+}
+
+/** Several worksheets in one .xlsx file, in the given order. At least one sheet is needed. */
+export async function buildXlsxWorkbook(sheets: XlsxSheet[], options: XlsxOptions = {}): Promise<Uint8Array> {
+  if (!sheets.length) throw new Error('A workbook needs at least one sheet')
+  const styles = new Styles()
+  const written: WrittenSheet[] = []
+  const taken = new Set<string>()
+  for (const sheet of sheets) {
+    const w = await writeSheet(sheet, styles, options)
+    written.push({ ...w, name: uniqueName(w.name, taken) })
+  }
+  const small = (x: string): ZipEntry['chunks'] => [enc.encode(x)]
+  const header = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`
+  const REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
+  const defined = written
+    .map((w, i) => (w.filter ? `<definedName name="_xlnm._FilterDatabase" localSheetId="${i}" hidden="1">'${w.name.replace(/'/g, "''")}'!$A$${w.filter.titleRow}:$${w.filter.lastCol}$${w.filter.lastRow}</definedName>` : ''))
+    .join('')
   const entries: ZipEntry[] = [
     {
       name: '[Content_Types].xml',
       chunks: small(
-        `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">` +
+        `${header}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">` +
           `<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>` +
           `<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>` +
-          `<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>` +
+          written.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('') +
           `<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`,
       ),
     },
     {
       name: '_rels/.rels',
-      chunks: small(
-        `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` +
-          `<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`,
-      ),
+      chunks: small(`${header}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${REL}/officeDocument" Target="xl/workbook.xml"/></Relationships>`),
     },
     {
       name: 'xl/workbook.xml',
       chunks: small(
-        `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">` +
-          `<sheets><sheet name="${name}" sheetId="1" r:id="rId1"/></sheets>` +
-          (filter ? `<definedNames><definedName name="_xlnm._FilterDatabase" localSheetId="0" hidden="1">'${name.replace(/'/g, "''")}'!$A$${titleRow}:$${lastCol}$${Math.max(titleRow, rowNo)}</definedName></definedNames>` : '') +
+        `${header}<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="${REL}">` +
+          `<sheets>${written.map((w, i) => `<sheet name="${w.name}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('')}</sheets>` +
+          (defined ? `<definedNames>${defined}</definedNames>` : '') +
           `</workbook>`,
       ),
     },
     {
       name: 'xl/_rels/workbook.xml.rels',
       chunks: small(
-        `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` +
-          `<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>` +
-          `<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`,
+        `${header}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` +
+          written.map((_, i) => `<Relationship Id="rId${i + 1}" Type="${REL}/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('') +
+          `<Relationship Id="rId${written.length + 1}" Type="${REL}/styles" Target="styles.xml"/></Relationships>`,
       ),
     },
     { name: 'xl/styles.xml', chunks: small(styles.xml()) },
-    { name: 'xl/worksheets/sheet1.xml', chunks: sheetChunks },
+    ...written.map((w, i) => ({ name: `xl/worksheets/sheet${i + 1}.xml`, chunks: w.chunks })),
   ]
   return zip(entries, { compress: options.compress })
 }
+
+/** One worksheet as an .xlsx file. */
+export const buildXlsx = (sheet: XlsxSheet, options: XlsxOptions = {}): Promise<Uint8Array> => buildXlsxWorkbook([sheet], options)

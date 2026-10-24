@@ -33,6 +33,9 @@ export const page: PageDef = {
             <tr><td><code>freezeHeader</code></td><td>true</td><td>Keep the header rows in view while scrolling.</td></tr>
             <tr><td><code>autoFilter</code></td><td>false</td><td>Filter buttons on the title row (not with column groups, where they would sit under merged cells).</td></tr>
             <tr><td><code>compress</code></td><td>true</td><td>Deflate the parts (smaller files; stored when the browser has no <code>CompressionStream</code>).</td></tr>
+            <tr><td><code>headerStyle</code>, <code>columnStyles</code></td><td>-</td><td>Look of the title row, and of a column's cells by field (see below).</td></tr>
+            <tr><td><code>validateSelects</code></td><td>false</td><td>A drop-down of the options in <code>singleSelect</code> columns.</td></tr>
+            <tr><td><code>extraSheets</code></td><td>-</td><td>More worksheets after the grid's (see below).</td></tr>
             <tr><td><code>worker</code></td><td>-</td><td>A function that creates a web worker to build the file in (see below).</td></tr>
             <tr><td><code>onProgress</code>, <code>signal</code></td><td>-</td><td>Rows written so far; an <code>AbortSignal</code> to cancel (rejects with <code>AbortError</code>).</td></tr>
           </tbody>
@@ -59,6 +62,27 @@ await api.exportXlsx({
         hanging. With 100,000 rows in the demo above the longest pause of the page went from about 250 ms to about 70 ms; the rest is reading the grid's rows.
         To write your own worker file, call <code>setupXlsxWorker()</code> from <code>data-grid-kit/core</code> in it.
       </p>
+      <h2>Styles, drop-downs, formulas and more sheets</h2>
+      <CodeBlock
+        code={`await api.exportXlsx({
+  headerStyle: { fill: '#112233', color: '#ffffff' },
+  columnStyles: { salary: { bold: true, color: '#0a7d36', align: 'right' } },
+  validateSelects: true,                       // singleSelect columns get a drop-down
+  extraSheets: [{
+    name: 'Summary',
+    columns: [{ header: 'What' }, { header: 'Value' }],
+    rows: [
+      { cells: ['Rows', { formula: 'COUNTA(Sheet1!A2:A1000)', value: 120 }] },  // an explicit formula
+    ],
+  }],
+})`}
+      />
+      <ul>
+        <li><strong>Styles.</strong> <code>{'{ bold, italic, color, fill, align, wrap }'}</code>, colours as <code>#rrggbb</code> (anything else is ignored). Cell formats are shared, so a million styled cells cost no more than one.</li>
+        <li><strong>Drop-down lists.</strong> Excel's inline lists hold 255 characters and no commas or quotes in an item; a column whose options do not fit is exported without the list (the cells keep their values).</li>
+        <li><strong>Formulas</strong> are always explicit: <code>{'{ formula, value }'}</code> in an extra sheet or in <code>buildXlsxWorkbook</code>; the grid's own cells stay text and numbers. <code>value</code> is the result shown by viewers that do not calculate; Excel recalculates on open.</li>
+        <li><strong>More sheets.</strong> <code>extraSheets</code> follow the grid's sheet; names are made unique and valid. Outside a grid, <code>buildXlsxWorkbook(sheets)</code> from <code>data-grid-kit/core</code> writes any set of sheets.</li>
+      </ul>
       <h2>What goes in a cell</h2>
       <ul>
         <li><strong>Numbers, booleans and dates are typed cells</strong>, not text, so Excel can sum, sort and format them. The grid's <code>valueFormatter</code> is not applied to them (use <code>numFmts</code> for Excel formats); other columns are written as their formatted text, and <code>singleSelect</code> as the option's label.</li>
@@ -85,7 +109,7 @@ await api.exportXlsx({
       <h2>Limits</h2>
       <ul>
         <li>Excel's own limits apply: 1,048,576 rows and 16,384 columns. Exporting more rejects with a clear message; filter the data or export in parts.</li>
-        <li>One sheet. The archive is not ZIP64, so the file must stay under 4 GB.</li>
+        <li>Not covered (MUI gets some of them from ExcelJS): images, conditional formatting, cell-by-cell style callbacks, and ExcelJS-style pre/post-process hooks. The archive is not ZIP64, so the file must stay under 4 GB.</li>
         <li>With server-side data only the rows that have been loaded are exported.</li>
         <li>Validated by reading the files back with an independent library (openpyxl) and by tests of the XML; it has not been opened in Excel or LibreOffice here, so check the output in the programs you target.</li>
       </ul>

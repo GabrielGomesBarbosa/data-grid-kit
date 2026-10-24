@@ -24,3 +24,16 @@ for kind in ("deflated", "stored"):
     assert ws["C6"].value is None and ws["D6"].value is None and ws["E6"].value is None  # NaN, invalid date, undefined
     assert len(ws["A7"].value) == 32767, len(ws["A7"].value)  # cut at Excel's limit
     print(kind, "ok")
+
+wb = load_workbook(f"{d}/fixture-features.xlsx")
+assert wb.sheetnames == ["Items", "items (2)"], wb.sheetnames
+ws = wb["Items"]
+assert ws["A1"].fill.fgColor.rgb.endswith("112233") and ws["A1"].font.color.rgb.endswith("FFFFFF")
+assert ws["A2"].font.i and ws["A2"].font.color.rgb.endswith("CC0000") and ws["A2"].alignment.horizontal == "center"
+assert ws["C2"].font.b and ws["C2"].fill.fgColor.rgb.endswith("FFEE00")
+assert ws["A3"].value == "=not a formula" and ws["A3"].data_type == "s", "text stays text"
+assert ws["C4"].value == "=SUM(C2:C3)" and ws["C4"].data_type == "f", "an explicit formula is a formula"
+dv = ws.data_validations.dataValidation
+assert len(dv) == 1 and dv[0].type == "list" and dv[0].formula1 == '"open,done"' and str(dv[0].sqref) == "B2:B4"
+assert wb["items (2)"]["A2"].value == "x"
+print("features ok")

@@ -1,8 +1,8 @@
-import { buildXlsx, type XlsxOptions, type XlsxRow, type XlsxSheet } from './xlsx'
+import { buildXlsxWorkbook, type XlsxOptions, type XlsxRow, type XlsxSheet } from './xlsx'
 
 /** What the page sends to the worker (everything is structured-cloneable: rows are arrays, dates stay dates). */
 export type XlsxWorkerRequest =
-  | { type: 'start'; sheet: Omit<XlsxSheet, 'rows'>; options: { compress?: boolean } }
+  | { type: 'start'; sheet: Omit<XlsxSheet, 'rows'>; /** further sheets, rows included (they are small) */ extra?: (Omit<XlsxSheet, 'rows'> & { rows: XlsxRow[] })[]; options: { compress?: boolean } }
   /** the rows come in batches, so the page never has to clone a whole data set in one go */
   | { type: 'rows'; rows: XlsxRow[] }
   | { type: 'end' }
@@ -45,7 +45,7 @@ export function setupXlsxWorker(scope: XlsxWorkerScope = self as unknown as Xlsx
       signal: abort.signal,
       onProgress: (written) => scope.postMessage({ type: 'progress', rows: written }),
     }
-    buildXlsx({ ...start.sheet, rows }, options).then(
+    buildXlsxWorkbook([{ ...start.sheet, rows }, ...(start.extra ?? [])], options).then(
       (bytes) => scope.postMessage({ type: 'done', bytes }, [bytes.buffer as ArrayBuffer]),
       (err: unknown) => {
         const e = err instanceof Error ? err : new Error(String(err))

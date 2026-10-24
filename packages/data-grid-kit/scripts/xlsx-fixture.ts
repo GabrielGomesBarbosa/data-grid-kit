@@ -1,6 +1,6 @@
 // Writes sample workbooks for scripts/verify_xlsx.py (an independent reader). Usage: tsx scripts/xlsx-fixture.ts <dir>
 import { writeFileSync } from 'node:fs'
-import { buildXlsx } from '../src/core/xlsx'
+import { buildXlsx, buildXlsxWorkbook } from '../src/core/xlsx'
 
 const dir = process.argv[2]!
 const columns = [
@@ -21,3 +21,26 @@ for (const compress of [true, false]) {
   const bytes = await buildXlsx({ name: 'Sheet: bad/chars?', columns, rows }, { compress })
   writeFileSync(`${dir}/fixture-${compress ? 'deflated' : 'stored'}.xlsx`, bytes)
 }
+
+// formulas, styles, drop-down lists and a second sheet
+const features = await buildXlsxWorkbook(
+  [
+    {
+      name: 'Items',
+      headerStyle: { fill: '#112233', color: '#ffffff' },
+      columns: [
+        { header: 'Name', style: { italic: true, color: '#cc0000', align: 'center' } },
+        { header: 'Status', validationList: ['open', 'done'] },
+        { header: 'Qty', style: { bold: true, fill: '#ffee00' } },
+      ],
+      rows: [
+        { cells: ['a', 'open', 2] },
+        { cells: ['=not a formula', 'done', 3] },
+        { cells: ['sum', null, { formula: '=SUM(C2:C3)', value: 5 }] },
+      ],
+    },
+    { name: 'items', columns: [{ header: 'Code' }], rows: [{ cells: ['x'] }] }, // same name, ignoring case
+  ],
+  { compress: true },
+)
+writeFileSync(`${dir}/fixture-features.xlsx`, features)

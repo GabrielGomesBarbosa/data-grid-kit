@@ -20,7 +20,7 @@ const tick = () => new Promise<void>((r) => setTimeout(r, 0))
  * with a break between them so the page stays responsive; the bytes come back transferred, not copied. The worker lives
  * for one export. Aborting terminates it.
  */
-export function buildXlsxInWorker(sheet: XlsxSheet, options: XlsxOptions, create: () => XlsxWorkerLike): Promise<Uint8Array> {
+export function buildXlsxInWorker(sheet: XlsxSheet, options: XlsxOptions, create: () => XlsxWorkerLike, extra: XlsxSheet[] = []): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
     const abortError = () => new DOMException('Export aborted', 'AbortError')
     if (options.signal?.aborted) return reject(abortError())
@@ -49,7 +49,7 @@ export function buildXlsxInWorker(sheet: XlsxSheet, options: XlsxOptions, create
     void (async () => {
       try {
         const { rows, ...rest } = sheet
-        worker.postMessage({ type: 'start', sheet: rest, options: { compress: options.compress } })
+        worker.postMessage({ type: 'start', sheet: rest, extra: extra.map((x) => ({ ...x, rows: Array.from(x.rows) })), options: { compress: options.compress } })
         let batch: XlsxRow[] = []
         for (const row of rows) {
           batch.push(row)

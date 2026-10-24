@@ -1,7 +1,7 @@
 import { optionLabel, optionValue } from './columns'
 import { getCellValue } from './values'
 import type { XlsxWorkerLike } from './xlsxWorkerClient'
-import type { XlsxColumn, XlsxOptions, XlsxRow, XlsxSheet, XlsxValue } from './xlsx'
+import type { XlsxColumn, XlsxOptions, XlsxRow, XlsxSheet, XlsxStyle, XlsxValue } from './xlsx'
 import type { ColumnDef, RenderRow, RowId } from './types'
 
 export interface XlsxExportOptions extends XlsxOptions {
@@ -21,6 +21,17 @@ export interface XlsxExportOptions extends XlsxOptions {
   autoFilter?: boolean
   /** file name for `exportXlsx` (default "export.xlsx") */
   fileName?: string
+  /** look of the title row (default: bold on a light fill) */
+  headerStyle?: XlsxStyle
+  /** look of a column's cells, by field: `{ salary: { color: '#0a7d36', bold: true } }` */
+  columnStyles?: Record<string, XlsxStyle>
+  /** give `singleSelect` columns a drop-down of their options (the labels the cells hold). Off by default. */
+  validateSelects?: boolean
+  /**
+   * More worksheets after the grid's, in a form you build: `{ name, columns, rows }` (see `XlsxSheet`). Handy for a
+   * summary or a legend next to the data.
+   */
+  extraSheets?: XlsxSheet[]
   /**
    * Build the file in a web worker, so a big export does not touch the page's main thread. You create the worker:
    * `() => new Worker(new URL('data-grid-kit/xlsx-worker', import.meta.url), { type: 'module' })`.
@@ -83,6 +94,9 @@ export function sheetOfGrid<R>(input: {
     group: c.group,
     width: Math.min(255, Math.max(6, input.widthOf(c.field) / 7.5)), // ~7.5 px per Excel character
     numFmt: options.numFmts?.[c.field],
+    style: options.columnStyles?.[c.field],
+    validationList:
+      options.validateSelects && c.type === 'singleSelect' && c.valueOptions ? c.valueOptions.map((o) => String(optionLabel(o))) : undefined,
   }))
   const label = (r: RenderRow<R>) => (r.groupValue == null || r.groupValue === '' ? '(empty)' : r.groupValue instanceof Date ? r.groupValue.toLocaleDateString() : String(r.groupValue))
 
@@ -114,5 +128,6 @@ export function sheetOfGrid<R>(input: {
     headers: options.includeHeaders,
     freezeHeader: options.freezeHeader,
     autoFilter: options.autoFilter,
+    headerStyle: options.headerStyle,
   }
 }
