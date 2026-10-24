@@ -1,59 +1,28 @@
-import { memo, useCallback, useEffect, useId, useMemo, useRef, useState, type ComponentType, type FunctionComponent } from 'react'
-import { flushSync } from 'react-dom'
-import { useGrid, type GridOptions, type Range, type RenderRow, type RowGeometry } from '../core'
-import { useIsomorphicLayoutEffect } from '../core/isomorphic'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useGrid, type GridOptions, type RenderRow } from '../core'
 import type { GridCtx } from './ctx'
-import { defaultSlots } from './defaultSlots'
-import type { BodyRow, DetailItem, GridView, PinnedBlock } from './gridView'
+import type { GridView } from './gridView'
 import { mergeProps } from './mergeProps'
-import { rowPropsEqual } from './Row'
-import type { GridSlotProps, GridSlots } from './slotTypes'
 import type { PanelState } from './Toolbar'
 import type { GridProps } from './types'
 import { useAutoRowHeights } from './useAutoRowHeights'
+import { useAutosize } from './useAutosize'
 import { useCellSelection } from './useCellSelection'
 import { useClipboard } from './useClipboard'
 import { useColumnDrag } from './useColumnDrag'
+import { useGridEvents } from './useGridEvents'
 import { useKeyboard } from './useKeyboard'
 import { usePanels } from './usePanels'
 import { useRowDrag } from './useRowDrag'
-import { useGridEvents } from './useGridEvents'
-import { useAutosize } from './useAutosize'
 import { useScrollApi } from './useScrollApi'
-
-const NO_SLOT_PROPS: GridSlotProps = {}
-
-/** a custom `row` slot, memoised once with the grid's own comparison (the same component object gives the same wrapper) */
-/** is any part of the visible body not covered by the rows that are rendered right now? */
-function exposesUnrenderedRows(grid: { rowRange: Range; geometry: RowGeometry; headerHeight: number }, el: HTMLElement): boolean {
-  const { rowRange, geometry } = grid
-  const count = geometry.count
-  if (count === 0) return false
-  const top = el.scrollTop
-  const bottom = top + el.clientHeight - grid.headerHeight
-  const from = geometry.topOf(Math.min(rowRange.start, count - 1))
-  const to = rowRange.end >= count ? geometry.totalHeight : geometry.topOf(rowRange.end)
-  return (top < from && rowRange.start > 0) || (bottom > to && rowRange.end < count)
-}
-
-const memoRows = new WeakMap<object, ComponentType<any>>()
-function memoRow(component: ComponentType<any>): ComponentType<any> {
-  let wrapped = memoRows.get(component)
-  if (!wrapped) memoRows.set(component, (wrapped = memo(component as FunctionComponent<any>, rowPropsEqual as (a: any, b: any) => boolean)))
-  return wrapped
-}
+import { buildBodyRows, buildDetailItems, buildPinnedBlocks, type RowsInput } from './view/buildRows'
+import { useSlotsValue } from './view/slotsValue'
+import { useFitting } from './view/useFitting'
+import { useRefMemo } from './view/useRefMemo'
+import { useViewport } from './view/useViewport'
 
 /** height of a detail panel when `renderDetailPanel` is given without `detailPanelHeight` */
 const DETAIL_DEFAULT = 200
-
-/** useMemo that recomputes only when the dependency identities change */
-function useRefMemo<T>(factory: () => T, deps: unknown[]): T {
-  const ref = useRef<{ deps: unknown[]; value: T }>()
-  if (!ref.current || ref.current.deps.some((d, i) => !Object.is(d, deps[i]))) {
-    ref.current = { deps, value: factory() }
-  }
-  return ref.current.value
-}
 
 /**
  * The grid without its markup: state, interactions (keyboard, selection, drag and drop, clipboard, panels), and the
@@ -93,18 +62,10 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
     onColumnHeaderClick,
     onColumnHeaderDoubleClick,
     slots: userSlots,
-    slotProps = NO_SLOT_PROPS,
+    slotProps,
     ...options
   } = props
-  const slotsValue = useMemo(
-    () => {
-      const slots = { ...defaultSlots, ...userSlots, icons: { ...defaultSlots.icons, ...userSlots?.icons } } as GridSlots<R>
-      // the speed of the grid must not depend on how a replacement row was written
-      if (userSlots?.row) slots.row = memoRow(userSlots.row)
-      return { slots, slotProps }
-    },
-    [userSlots, slotProps],
-  )
+  const slotsValue = useSlotsValue<R>(userSlots, slotProps)
   const grid = useGrid<R>({
     ...options,
     // giving a renderer is enough to turn the feature on
@@ -125,22 +86,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
   useScrollApi(api, scrollerRef, gridRef)
   const autosizeRef = useRef(autosizeOptions)
   autosizeRef.current = autosizeOptions
-  useEffect(() => {
-    if (!autosizeOnMount) return
-    // after the first rows are on screen: two frames later the viewport is known and the rows are drawn
-    let frame = requestAnimationFrame(() => (frame = requestAnimationFrame(() => api.autosizeColumns(autosizeRef.current))))
-    return () => cancelAnimationFrame(frame)
-  }, [api, autosizeOnMount])
-
-  // a page as tall as the body shows: the rows that fit between the header and the footer
-  const fitPage = autoPageSize && props.pagination !== false
-  const viewportHeight = state.viewport.height
-  useEffect(() => {
-    if (!fitPage) return
-    const body = viewportHeight - gridRef.current.headerHeight - gridRef.current.rowHeight // the footer takes about a row
-    const fit = Math.max(1, Math.floor(body / gridRef.current.rowHeight))
-    if (gridRef.current.state.paginationModel.pageSize !== fit) api.setPageSize(fit)
-  }, [fitPage, viewportHeight, api, state.density])
+  useFitting(api, gridRef, autosizeRef, { autosizeOnMount, autoPageSize, paginated: props.pagination !== false, viewportHeight: state.viewport.height, density: state.density })
 
   const [menu, setMenu] = useState<{ field: string; anchor: DOMRect } | null>(null)
   const [panel, setPanel] = useState<PanelState | null>(null)
@@ -149,37 +95,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
     onReady?.(api)
   }, [api, onReady])
 
-  // keep the viewport size in the store
-  useIsomorphicLayoutEffect(() => {
-    const el = scrollerRef.current
-    if (!el) return
-    const measure = () => api.setViewport(el.clientWidth, el.clientHeight)
-    measure()
-    const ro = new ResizeObserver(measure)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [api])
-
-  // One store write per frame, regardless of how many scroll events fire. But when the scroll has already left the
-  // rendered rows (a scrollbar dragged fast), waiting for the frame would paint an empty region first: commit that
-  // one at once, inside the event, like MUI does with flushSync.
-  const frame = useRef(0)
-  const onScroll = useCallback(() => {
-    const el = scrollerRef.current
-    if (el && exposesUnrenderedRows(gridRef.current, el)) {
-      cancelAnimationFrame(frame.current)
-      frame.current = 0
-      flushSync(() => api.setScroll(el.scrollTop, el.scrollLeft))
-      return
-    }
-    if (frame.current) return
-    frame.current = requestAnimationFrame(() => {
-      frame.current = 0
-      const e = scrollerRef.current
-      if (e) api.setScroll(e.scrollTop, e.scrollLeft)
-    })
-  }, [api])
-  useEffect(() => () => cancelAnimationFrame(frame.current), [])
+  const onScroll = useViewport(api, scrollerRef, gridRef)
 
   const hasHierarchy = state.rowGroupingModel.length > 0 || !!props.getTreeDataPath || !!grid.server?.tree
   const hierarchyField = layout.all[0]?.field
@@ -209,7 +125,6 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
   const activeId =
     focusedRowIndex >= rowRange.start && focusedRowIndex < rowRange.end && focusedPos >= 0 ? `${gridId}-r${focusedRowIndex}-c${focusedPos}` : undefined
 
-  const { pinnedTop, pinnedBottom, footer } = grid
   const aggNames = useRefMemo(
     () => grid.pivot?.aggNames ?? (Object.keys(state.aggregationModel).length ? state.aggregationModel : undefined),
     [state.aggregationModel, grid.pivot?.aggNames],
@@ -239,108 +154,26 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
     getCellClassName: props.getCellClassName,
   }
 
-  const bodyRows: BodyRow<R>[] = []
-  // with no columns there is nothing to draw in a row: the empty state is shown instead
-  for (let i = rowRange.start; layout.all.length > 0 && i < rowRange.end; i++) {
-    const r = rows[i]
-    const ariaRow = hdr + pinnedTop.length + i + geometry.slotsBefore(i)
-    if (!r) {
-      // server data that hasn't arrived: a placeholder row (client-side grids never have gaps)
-      if (grid.server && i < rows.length) {
-        bodyRows.push({ type: 'skeleton', key: `sk-${i}`, props: { index: i, top: geometry.topOf(i), rowHeight: geometry.heightOf(i), totalWidth, layout, colRange, ariaRow } })
-      }
-      continue
-    }
-    const here = focused?.rowId === r.id
-    bodyRows.push({
-      type: 'row',
-      key: r.id,
-      props: {
-        ...rowShared,
-        rowHeight: geometry.heightOf(i),
-        auto: props.getRowHeight?.({ id: r.id, row: r.row, depth: r.depth }) === 'auto',
-        row: r,
-        index: i,
-        rowClassName: props.getRowClassName?.({ id: r.id, row: r.row, renderRow: r, index: i }),
-        hasHierarchy,
-        selected: grid.isSelected(r),
-        selectable: canSelect(r),
-        focusedField: here ? focused!.field : undefined,
-        editing: here && state.editingCell?.rowId === r.id ? state.editingCell : null,
-        pinSide: undefined,
-        ariaRow,
-        rangeKey: rangeKeyFor(i),
-        fillCol: fillColFor(i),
-        onFillStart,
-        top: geometry.topOf(i),
-        detailState: detailStateOf(r),
-        canReorder: grid.reorderAllowed && r.row !== undefined,
-        onRowDragStart,
-        dragging: rowDrag?.id === r.id,
-      },
-    })
+  const rowsInput: RowsInput<R> = {
+    grid,
+    props,
+    hdr,
+    totalWidth,
+    hasHierarchy,
+    shared: rowShared,
+    canSelect,
+    detailStateOf,
+    rangeKeyFor,
+    fillColFor,
+    onFillStart,
+    onRowDragStart,
+    draggingId: rowDrag?.id,
   }
-
-  const detailItems: DetailItem<R>[] = []
-  if (renderDetailPanel) {
-    for (let k = detailRange.start; k < detailRange.end; k++) {
-      const slot = detailSlots[k]
-      const row = slot && rows[slot.index]?.row
-      if (!slot || row === undefined) continue
-      detailItems.push({
-        key: `detail-${slot.id}`,
-        row,
-        props: {
-          top: geometry.slotTop(k),
-          height: slot.height,
-          auto: slot.auto,
-          width: state.viewport.width,
-          totalWidth,
-          ariaRow: hdr + pinnedTop.length + slot.index + k + 1,
-          colCount: layout.all.length,
-          onMeasure: (h) => api.setDetailPanelHeight(slot.id, h),
-        },
-      })
-    }
-  }
-
-  const pinnedRowProps = (list: RenderRow<R>[], side: 'top' | 'bottom', firstAria: number) =>
-    list.map((r, i) => ({
-      ...rowShared,
-      row: r,
-      index: i,
-      rowClassName: props.getRowClassName?.({ id: r.id, row: r.row, renderRow: r, index: i }),
-      hasHierarchy: false,
-      selected: grid.isSelected(r),
-      selectable: canSelect(r),
-      focusedField: undefined,
-      editing: null,
-      pinSide: side,
-      ariaRow: firstAria + i,
-      rangeKey: '',
-      fillCol: -1,
-      onFillStart: undefined,
-      top: 0,
-      detailState: undefined,
-      canReorder: false,
-      onRowDragStart: undefined,
-      dragging: false,
-    }))
-  const belowBody = hdr + pinnedTop.length + rows.length + detailSlots.length
-  const pinnedTopBlock: PinnedBlock<R> | null = pinnedTop.length
-    ? { side: 'top', label: grid.text.pinnedRowsTop, style: { top: headerHeight, height: pinnedTop.length * rowHeight, width: totalWidth }, rows: pinnedRowProps(pinnedTop, 'top', hdr) }
-    : null
-  const pinnedBottomBlock: PinnedBlock<R> | null =
-    pinnedBottom.length > 0 || footer
-      ? {
-          side: 'bottom',
-          label: footer ? grid.text.pinnedRowsAndTotals : grid.text.pinnedRowsBottom,
-          style: { height: (pinnedBottom.length + (footer ? 1 : 0)) * rowHeight, width: totalWidth },
-          rows: [...pinnedRowProps(pinnedBottom, 'bottom', belowBody), ...(footer ? pinnedRowProps([footer], 'bottom', belowBody + pinnedBottom.length) : [])],
-        }
-      : null
+  const bodyRows = buildBodyRows(rowsInput)
+  const detailItems = buildDetailItems(rowsInput)
+  const pinned = buildPinnedBlocks(rowsInput)
+  const { pinnedTop, pinnedBottom, footer } = grid
   const dockedPivot = panel?.kind === 'pivot' && pivotPanelMode === 'docked'
-  const pinnedHeight = (pinnedTop.length + pinnedBottom.length + (footer ? 1 : 0)) * rowHeight
 
   const paging = props.pagination !== false
   return {
@@ -379,7 +212,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
         extra,
       ),
     getContentProps: (extra) =>
-      mergeProps({ className: 'gk-content', style: { width: totalWidth > 0 ? totalWidth : '100%', height: geometry.totalHeight + headerHeight + pinnedHeight } }, extra),
+      mergeProps({ className: 'gk-content', style: { width: totalWidth > 0 ? totalWidth : '100%', height: geometry.totalHeight + headerHeight + pinned.height } }, extra),
     getBodyProps: (extra) =>
       mergeProps(
         {
@@ -395,8 +228,8 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
     header: { grid, colPos, onAutosize: (field: string) => api.autosizeColumns({ ...autosizeRef.current, columns: [field] }), controls: columnControls, reorder: columnReorder, onOpenMenu: openMenu, onDragIntent: startColumnDrag, justDragged, totalWidth },
     bodyRows,
     detailItems,
-    pinnedTop: pinnedTopBlock,
-    pinnedBottom: pinnedBottomBlock,
+    pinnedTop: pinned.top,
+    pinnedBottom: pinned.bottom,
     toolbar: toolbar ? { grid, panel, onPanel: openPanel, onExport: doExport, densitySelector } : null,
     openPanel,
     footer: paging || grid.server ? { grid, paging, rects, pageSizeOptions } : null,
