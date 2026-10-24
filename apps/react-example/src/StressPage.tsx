@@ -61,8 +61,9 @@ export function StressPage() {
 
   return (
     <>
+      <h1 className="page-title">Stress test</h1>
+      <p className="lead">Up to half a million rows with grouping, tree data, pinning, detail panels, cell selection and live editing. Everything stays virtualized.</p>
       <div className="bar">
-        <strong>data-grid-kit</strong>
         <select value={count} onChange={(e) => setCount(Number(e.target.value))} aria-label="Row count">
           {[1_000, 10_000, 100_000, 500_000].map((n) => (
             <option key={n} value={n}>{n.toLocaleString()} rows</option>
@@ -93,6 +94,7 @@ export function StressPage() {
         />
         <span className="stat">Shift+click a header to multi-sort</span>
       </div>
+      <div className="card">
       <Grid<Employee>
         key={mode === 'tree' ? 'tree' : 'rows'}
         rows={rows}
@@ -116,6 +118,7 @@ export function StressPage() {
         initialState={{ rowGroupingModel: mode === 'group' ? ['team', 'role'] : [], aggregationModel: { salary: 'sum', age: 'avg' } }}
         onReady={(api) => { apiRef.current = api }}
       />
+      </div>
     </>
   )
 }
