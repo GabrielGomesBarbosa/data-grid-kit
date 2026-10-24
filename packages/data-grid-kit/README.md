@@ -1,44 +1,78 @@
 # data-grid-kit
 
-A headless-first React data grid: a store + row pipeline with no UI (`data-grid-kit/core`), and a
-ready-made grid component on top of it (`data-grid-kit`). No dependency on any UI library.
+A **headless-first, high-performance React data grid** with advanced features, built to be restyled and rearranged to fit your own design system.
 
-## Run it
+- **Headless core** (`data-grid-kit/core`): a store, a memoised row pipeline and layout math with no UI, plus the `useGrid` hook. Build any table on top of it.
+- **Ready-made grid** (`data-grid-kit`): a virtualized, accessible `Grid` component using that core, with an optional stylesheet.
+- No dependency on any UI library. Peer dependency: `react >= 18`.
+
+> **Status: pre-release (0.x).** Not published to npm yet; the API will change while the customization architecture (slots, unstyled mode, prop getters) lands. Follow the [roadmap](https://github.com/GabrielGomesBarbosa/data-grid-kit/issues).
+
+## Install
+
+Until the first npm release, build it from the repository:
 
 ```bash
-npm install
-npm run docs        # documentation site with live demos  → http://localhost:5300
-npm run dev         # 100k-row playground                 → http://localhost:5199
-npm test            # unit + randomized tests (incremental updates are fuzzed against a full rebuild)
-npm run typecheck
-npm run build       # library → dist/
-npx vite-node scripts/bench.ts   # pipeline benchmark in Node
+git clone https://github.com/GabrielGomesBarbosa/data-grid-kit && cd data-grid-kit
+npm install && npm run build
+cd packages/data-grid-kit && npm pack     # then install the .tgz in your app
 ```
 
-## What exists today
+## Quick start
 
-Community-tier: sorting (multi-column), typed filtering (+ filter panel, quick filter), pagination,
-row selection, cell editing, keyboard navigation (ARIA grid), column menu, columns panel, toolbar,
-column resize/hide, CSV export.
-Pro/Premium-tier: row + column virtualization, column pinning, row pinning, column reordering by drag
-(with a keyboard-accessible menu alternative), tree data, row grouping, live updates
-(`api.updateRows` or a new `rows` array are applied incrementally instead of rebuilding),
-**aggregation** (sum, avg, min, max, count, size and custom functions, on group rows and a total row),
-**cell range selection**, **clipboard** (copy, cut, paste as tab-separated text), a **fill handle**,
-**detail panels** (content under a row; fixed, per-row or measured height), **row reordering** (drag or Alt+Shift+arrows), **server-side data** (`dataSource.getRows`: server sort/filter/pages,
-lazy loading with skeleton rows, block cache with abort and retry, infinite scroll; no server-side grouping/aggregation yet) and **pivoting** (rows × columns × values with nested column
-groups, incremental on live updates; client-side data) and **Excel export** (`api.exportXlsx` / `getXlsx`: dependency-free .xlsx with typed cells, number formats,
-merged column groups and outline levels for group rows).
+```tsx
+import { Grid, type UIColumnDef } from 'data-grid-kit'
+import 'data-grid-kit/styles.css'
 
-All features of the MUI X roadmap that were in scope are implemented; see the feature-status page for the honest limits.
-The docs site has a feature-status page with the full, honest list, and a Light / Dark / System theme switch
-(the grid follows the system theme, or `data-theme="light|dark"` on `<html>`).
+interface Person { id: number; name: string; age: number }
 
-## Layout of this package
+const columns: UIColumnDef<Person>[] = [
+  { field: 'name', headerName: 'Name', width: 200, editable: true },
+  { field: 'age', headerName: 'Age', type: 'number' },
+]
 
-- `src/core` — store, pipeline (tree → filter → sort → flatten, each stage memoised), layout and
-  virtualization math, keyboard navigation, CSV / xlsx, `useGrid`.
-- `src/ui` — `Grid`, editors, panels, popover, styles.
-- `scripts` — Node benchmarks (`npm run bench`).
+export function People({ rows }: { rows: Person[] }) {
+  return <Grid rows={rows} columns={columns} getRowId={(r) => r.id} height={400} toolbar />
+}
+```
 
-The documentation site and example apps live in the repository root, under `apps/`.
+Headless (your own markup, driven by the core):
+
+```tsx
+import { useGrid } from 'data-grid-kit/core'
+
+const grid = useGrid({ rows, columns, getRowId: (r) => r.id })
+// grid.rows, grid.layout, grid.api.toggleSort(...), grid.state ...
+```
+
+Next.js: import the grid from a file marked `"use client"`; see [`apps/next-example`](../../apps/next-example).
+
+## Features
+
+| Area | What you get |
+|---|---|
+| Basics | Sorting (multi-column), typed filtering (filter panel, quick filter), pagination, row selection, cell editing, keyboard navigation with ARIA grid roles, column menu, columns panel, toolbar, resize, hide, CSV export |
+| Scale | Row and column virtualization, incremental live updates (insert / edit / remove without rebuilding) |
+| Layout | Column pinning, row pinning, column reordering by drag, detail panels, row reordering |
+| Hierarchy | Tree data, row grouping, aggregation (sum, avg, min, max, count, size, custom), pivoting with nested column groups |
+| Spreadsheet-like | Cell range selection, clipboard (copy, cut, paste), fill handle |
+| Data | Server-side data (`dataSource.getRows`) with lazy loading, block cache, abort, retry, infinite scroll |
+| Export | CSV and dependency-free **.xlsx** (typed cells, number formats, merged column groups, outline levels) |
+
+Every feature has a documented status and its known limits on the docs feature-status page.
+
+## Performance
+
+Measured in Node (`npm run bench` at the repository root), 100,000 rows: build a sorted flat list ≈ 18 ms, group by two columns with aggregation ≈ 50 ms, pivot ≈ 35 ms, edit one value in a live grid ≈ 0.3 ms. The docs include a benchmark you can run in your own browser.
+
+## Customization
+
+The goal is to work like an unstyled component library: your look, your markup where you need it, the grid's behaviour and speed underneath. Today you can restyle with the optional stylesheet's CSS variables, use `renderCell` / `renderDetailPanel`, or go fully headless with `data-grid-kit/core`. Slots, `slotProps`, prop getters and a no-styles-by-default mode are in progress (epic #29).
+
+## Independent project
+
+data-grid-kit is an independent project. It is inspired by the feature set of MUI X Data Grid, but **does not contain or copy MUI X source code** (in particular none of the Pro / Premium code, whose license forbids that).
+
+## License
+
+[MIT](./LICENSE)
