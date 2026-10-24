@@ -1,21 +1,149 @@
 /* ---- pivot panel ---- */
 .gk-pivot {
-  min-width: 300px;
-  max-height: min(70vh, 560px);
+  box-sizing: border-box;
+  width: 340px;
+  max-width: 100%;
+  max-height: min(78vh, 640px);
   overflow: auto;
+  gap: 10px;
 }
-.gk-pivot h4 {
-  margin: 12px 0 4px;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--gk-text-muted);
+/* header: the Pivot switch and a close button */
+.gk-pivot-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 .gk-pivot-mode {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
+  font-size: 15px;
   font-weight: 600;
+  cursor: pointer;
+}
+.gk-pivot-mode input[role='switch'] {
+  appearance: none;
+  position: relative;
+  width: 36px;
+  height: 20px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--gk-border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.gk-pivot-mode input[role='switch']::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s;
+}
+.gk-pivot-mode input[role='switch']:checked {
+  background: var(--gk-accent);
+}
+.gk-pivot-mode input[role='switch']:checked::after {
+  transform: translateX(16px);
+}
+.gk-pivot-mode input[role='switch']:focus-visible {
+  outline: 2px solid var(--gk-accent);
+  outline-offset: 2px;
+}
+/* the field search: an outlined box with a magnifier inside */
+.gk-pivot-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid var(--gk-border);
+  border-radius: 6px;
+  color: var(--gk-text-muted);
+}
+.gk-pivot-search:focus-within {
+  border-color: var(--gk-accent);
+}
+.gk-pivot-search input {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0;
+  border: 0 !important;
+  background: transparent !important;
+  outline: none;
+}
+/* Rows / Columns / Values: a bar with the name, how many it holds and a chevron */
+.gk-panel .gk-pivot-section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  text-align: left;
+}
+.gk-pivot-section-head > span:first-child {
+  flex: 1;
+}
+.gk-pivot-count {
+  min-width: 18px;
+  padding: 0 6px;
+  border-radius: 9px;
+  background: var(--gk-bg-header);
+  color: var(--gk-text-muted);
+  font-size: 12px;
+  text-align: center;
+}
+/* what an entry can do shows when the pointer or the keyboard is on it */
+.gk-pivot-list li .gk-pivot-actions {
+  opacity: 0;
+}
+.gk-pivot-list li:hover .gk-pivot-actions,
+.gk-pivot-list li:focus-within .gk-pivot-actions {
+  opacity: 1;
+}
+@media (hover: none) {
+  .gk-pivot-list li .gk-pivot-actions {
+    opacity: 1;
+  }
+}
+.gk-pivot-add {
+  position: absolute;
+  right: 8px;
+  display: inline-flex;
+  color: var(--gk-text-muted);
+  pointer-events: none;
+}
+.gk-pivot-list li:hover .gk-pivot-add,
+.gk-pivot-list li:focus-within .gk-pivot-add {
+  display: none;
+}
+@media (hover: none) {
+  .gk-pivot-add {
+    display: none;
+  }
+}
+.gk-pivot-fields {
+  max-height: 168px;
+  overflow: auto;
+  padding: 2px 4px;
+  border: 1px solid var(--gk-border);
+  border-radius: 6px;
+}
+.gk-pivot-list li {
+  padding: 0 4px;
+  border-radius: 4px;
+}
+.gk-pivot-list li:hover {
+  background: var(--gk-bg-alt);
+}
+.gk-pivot-fields li .gk-pivot-actions button {
+  padding: 1px 8px;
+  font-size: 12px;
 }
 .gk-pivot-list {
   list-style: none;
@@ -31,7 +159,7 @@
   gap: 6px;
   min-height: 28px;
 }
-.gk-pivot-list li > span:first-child {
+.gk-pivot-name {
   flex: 1;
   min-width: 0;
   overflow: hidden;

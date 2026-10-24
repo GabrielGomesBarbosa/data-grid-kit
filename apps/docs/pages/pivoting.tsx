@@ -30,10 +30,12 @@ values:  [{ field: 'salary', aggFunc: 'avg' }]
       </p>
       <h2>The panel</h2>
       <p>
-        Drag a field's grip (⋮⋮) from <em>Fields</em> into <em>Rows</em>, <em>Columns</em> or <em>Values</em>; drop it between two entries to choose its place, drag
-        entries to reorder them or move them to another list, and drop one on <em>Fields</em> to remove it. A field leaves the list it was in; a column keeps its sort
+        The panel has the <strong>Pivot</strong> switch and a close button, a search box for the fields, the fields not used yet (a <em>+</em> that turns into Row / Column / Value buttons when the pointer or the keyboard is on
+        one), and the <em>Rows</em>, <em>Columns</em> and <em>Values</em> sections, each with a count and a chevron to fold it. Each entry has a checkbox to switch it off without losing it.
+        Drag a field's grip (⋮⋮) into <em>Rows</em>, <em>Columns</em> or <em>Values</em>; drop it between two entries to choose its place, drag
+        entries to reorder them or move them to another list, and drop one back on the field list to remove it. A field leaves the list it was in; a column keeps its sort
         and a value its function when it moves within its list. <em>Values</em> refuses fields that can't be aggregated, and <kbd>Esc</kbd> cancels a drag. The
-        drag uses pointer events (mouse, touch and pen), not the browser's native drag and drop. Every move also has buttons (Row / Column / Value, ↑ ↓ ✕) for keyboard users.
+        drag uses pointer events (mouse, touch and pen), not the browser's native drag and drop. Every move also has buttons (Row / Column / Value, ↑ ↓ ✕) for keyboard users; they show when an entry is hovered or focused.
         The move rules are a pure function, <code>movePivotField(model, field, section | null, before?)</code>, if you build your own panel.
       </p>
       <h2>What you can pivot on</h2>

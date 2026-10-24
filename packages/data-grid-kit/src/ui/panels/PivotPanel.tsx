@@ -16,8 +16,10 @@ type Target = { section: PivotSection | 'fields'; before: string | null; beforeI
  * Choose what the pivot table is made of: row groups, column values and the aggregated values. Fields move by dragging
  * their grip between the lists (or by the buttons, which do the same for keyboard users).
  */
-export function PivotPanel<R>({ grid, className }: PanelProps<R>) {
-  const { Button, Checkbox, Select } = useBase()
+export function PivotPanel<R>({ grid, className, onClose }: PanelProps<R>) {
+  const { Button, Checkbox, Input, Select } = useBase()
+  const [open, setOpen] = useState({ rows: true, columns: true, values: true })
+  const [query, setQuery] = useState('')
   const icons = useIcons()
   const { api, state, options } = grid
   const model = state.pivotModel
@@ -143,33 +145,90 @@ export function PivotPanel<R>({ grid, className }: PanelProps<R>) {
   const valueFields = model.values.map((v) => v.field)
   const where = (f: string): PivotSection | null => (rowFields.includes(f) ? 'rows' : columnFields.includes(f) ? 'columns' : valueFields.includes(f) ? 'values' : null)
 
+  /** a collapsible group: its name, how many entries it holds, a chevron */
+  const section = (id: PivotSection, label: string, count: number) => (
+    <button type="button" className="gk-pivot-section-head" aria-expanded={open[id]} onClick={() => setOpen((o) => ({ ...o, [id]: !o[id] }))}>
+      <span>{label}</span>
+      {count > 0 && <span className="gk-pivot-count">{count}</span>}
+      {open[id] ? <icons.collapse /> : <icons.expand />}
+    </button>
+  )
+  const q = query.trim().toLowerCase()
+  /** the fields no section uses yet: what is left to add (the ones in use are listed under Rows, Columns or Values) */
+  const free = fields.filter((c) => !where(c.field) && (!q || title(c).toLowerCase().includes(q)))
+
   return (
     <div className={cx('gk-panel gk-pivot', className)} data-dragging={drag ? '' : undefined}>
-      <label className="gk-pivot-mode">
-        <Checkbox type="checkbox" checked={state.pivotMode} onChange={(e) => api.setPivotMode(e.target.checked)} /> Pivot mode
+      <div className="gk-pivot-head">
+        <label className="gk-pivot-mode">
+          <Checkbox type="checkbox" role="switch" aria-label="Pivot mode" checked={state.pivotMode} onChange={(e) => api.setPivotMode(e.target.checked)} />
+          <span>Pivot</span>
+        </label>
+        {onClose && (
+          <Button type="button" className="gk-icon-btn" aria-label="Close pivot panel" title="Close" onClick={onClose}>
+            <icons.close />
+          </Button>
+        )}
+      </div>
+      <label className="gk-pivot-search">
+        <icons.search />
+        <Input type="search" placeholder="Search fields" aria-label="Search fields" value={query} onChange={(e) => setQuery(e.target.value)} />
       </label>
 
-      <h4>Rows</h4>
+      <ul className="gk-pivot-list gk-pivot-fields" aria-label="Available fields" data-pivot-section="fields" data-over={overOf('fields') ? '' : undefined}>
+        {free.length === 0 && empty(q ? 'No field matches' : 'Every field is in use')}
+        {free
+          .map((c) => {
+          const at = where(c.field)
+          return (
+            <li key={c.field} data-pivot-field={c.field} data-used={at ? '' : undefined} data-dragged={drag?.field === c.field ? '' : undefined}>
+              {grip(c.field)}
+              <span className="gk-pivot-name">{title(c)}</span>
+              <span className="gk-pivot-add" aria-hidden="true">
+                <icons.add />
+              </span>
+              <span className="gk-pivot-actions">
+                {(['rows', 'columns', 'values'] as PivotSection[]).map((sec) => (
+                  <Button
+                    key={sec}
+                    type="button"
+                    disabled={at === sec || (sec === 'values' && !canValue(c.field))}
+                    aria-label={`Add ${title(c)} to ${sec}`}
+                    onClick={() => place(c.field, sec)}
+                  >
+                    {sec === 'rows' ? 'Row' : sec === 'columns' ? 'Column' : 'Value'}
+                  </Button>
+                ))}
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+
+      {section('rows', 'Rows', model.rows.length)}
+      {open.rows && (
       <ul {...list('rows', 'Pivot rows')}>
         {model.rows.length === 0 && empty('Drag a field here to group the rows by it')}
         {model.rows.map((f) => (
           <li key={f} data-pivot-field={f} data-drop={dropMark('rows', f)} data-dragged={drag?.field === f ? '' : undefined} data-hidden={model.hiddenRows?.includes(f) ? '' : undefined}>
             {grip(f)}
             {visibility({ section: 'rows', field: f }, f, model.hiddenRows?.includes(f))}
-            <span>{name(f)}</span>
+            <span className="gk-pivot-name">{name(f)}</span>
             {arrows(rowFields, f, 'rows')}
           </li>
         ))}
       </ul>
+      )}
 
-      <h4>Columns</h4>
+      {section('columns', 'Columns', model.columns.length)}
+      {open.columns && (
       <ul {...list('columns', 'Pivot columns')}>
         {model.columns.length === 0 && empty('Drag a field here to spread it into columns')}
         {model.columns.map((c) => (
           <li key={c.field} data-pivot-field={c.field} data-drop={dropMark('columns', c.field)} data-dragged={drag?.field === c.field ? '' : undefined} data-hidden={c.hidden ? '' : undefined}>
             {grip(c.field)}
             {visibility({ section: 'columns', field: c.field }, c.field, c.hidden)}
-            <span>{name(c.field)}</span>
+            <span className="gk-pivot-name">{name(c.field)}</span>
             <Select
               aria-label={`Sort ${name(c.field)} columns`}
               value={c.sort ?? 'asc'}
@@ -184,8 +243,10 @@ export function PivotPanel<R>({ grid, className }: PanelProps<R>) {
           </li>
         ))}
       </ul>
+      )}
 
-      <h4>Values</h4>
+      {section('values', 'Values', model.values.length)}
+      {open.values && (
       <ul {...list('values', 'Pivot values')}>
         {model.values.length === 0 && empty('Drag a field here to aggregate it')}
         {model.values.map((v, i) => {
@@ -204,7 +265,7 @@ export function PivotPanel<R>({ grid, className }: PanelProps<R>) {
             >
               {grip(v.field, i)}
               {visibility({ section: 'values', index: i }, v.field, v.hidden)}
-              <span>{name(v.field)}</span>
+              <span className="gk-pivot-name">{name(v.field)}</span>
               <Select
                 aria-label={`Function for ${name(v.field)}`}
                 value={v.aggFunc}
@@ -234,33 +295,9 @@ export function PivotPanel<R>({ grid, className }: PanelProps<R>) {
           )
         })}
       </ul>
+      )}
 
-      <h4>Fields</h4>
-      <ul className="gk-pivot-list gk-pivot-fields" aria-label="Available fields" data-pivot-section="fields" data-over={overOf('fields') ? '' : undefined}>
-        {fields.map((c) => {
-          const at = where(c.field)
-          return (
-            <li key={c.field} data-pivot-field={c.field} data-used={at ? '' : undefined} data-dragged={drag?.field === c.field ? '' : undefined}>
-              {grip(c.field)}
-              <span>{title(c)}</span>
-              <span className="gk-pivot-actions">
-                {(['rows', 'columns', 'values'] as PivotSection[]).map((sec) => (
-                  <Button
-                    key={sec}
-                    type="button"
-                    disabled={at === sec || (sec === 'values' && !canValue(c.field))}
-                    aria-label={`Add ${title(c)} to ${sec}`}
-                    onClick={() => place(c.field, sec)}
-                  >
-                    {sec === 'rows' ? 'Row' : sec === 'columns' ? 'Column' : 'Value'}
-                  </Button>
-                ))}
-              </span>
-            </li>
-          )
-        })}
-      </ul>
-      <p className="gk-pivot-hint">Drag a field's grip to a list, or onto Fields to remove it. Esc cancels.</p>
+      <p className="gk-pivot-hint">Drag a field's grip to a list, or back onto the field list to remove it. Esc cancels.</p>
       {drag && (
         <div className="gk-pivot-ghost" style={{ left: drag.x + 10, top: drag.y + 10 }} aria-hidden="true">
           {name(drag.field)}

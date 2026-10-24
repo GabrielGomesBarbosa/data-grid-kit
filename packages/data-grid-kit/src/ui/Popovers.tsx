@@ -45,7 +45,7 @@ export function Popovers<R>(p: PopoversProps<R>) {
       )}
       {panel?.kind === 'pivot' && (
         <Popover anchor={panel.anchor} onClose={p.closePanel} label="Pivot" {...popoverProps()}>
-          <PivotPanel grid={grid} {...slotProps.pivotPanel} />
+          <PivotPanel grid={grid} onClose={p.closePanel} {...slotProps.pivotPanel} />
         </Popover>
       )}
       {panel?.kind === 'export' && (
