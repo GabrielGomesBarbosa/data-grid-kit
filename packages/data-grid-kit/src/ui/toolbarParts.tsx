@@ -138,11 +138,13 @@ export interface QuickFilterProps extends Omit<HTMLAttributes<HTMLSpanElement>, 
   placeholder?: string
   /** start with the box open (default: a search button that opens it) */
   defaultExpanded?: boolean
+  /** wait this long after the last keystroke before filtering (the box itself shows what is typed at once) */
+  debounceMs?: number
   children?: ReactNode
 }
 
 /** The quick search: a button that opens a search box (Escape closes it when it is empty). It filters every column. */
-export function QuickFilter({ placeholder: placeholderProp, defaultExpanded = false, className, children, ...rest }: QuickFilterProps) {
+export function QuickFilter({ placeholder: placeholderProp, defaultExpanded = false, debounceMs = 0, className, children, ...rest }: QuickFilterProps) {
   const { grid } = useToolbar()
   const { Button, Input } = useBase()
   const icons = useIcons()
@@ -151,6 +153,17 @@ export function QuickFilter({ placeholder: placeholderProp, defaultExpanded = fa
   const value = grid.state.filterModel.quickFilter ?? ''
   const [open, setOpen] = useState(defaultExpanded)
   const input = useRef<HTMLInputElement>(null)
+  // with a delay the box shows what is typed, and the filter follows later; anything that changes the filter from elsewhere wins
+  const [draft, setDraft] = useState(value)
+  const timer = useRef<ReturnType<typeof setTimeout>>()
+  useEffect(() => setDraft(value), [value])
+  useEffect(() => () => clearTimeout(timer.current), [])
+  const apply = (text: string, now = false) => {
+    clearTimeout(timer.current)
+    setDraft(text)
+    if (debounceMs > 0 && !now) timer.current = setTimeout(() => grid.api.setQuickFilter(text), debounceMs)
+    else grid.api.setQuickFilter(text)
+  }
   const shown = open || value !== '' // a search that is filtering stays visible
   useEffect(() => {
     if (open) input.current?.focus()
@@ -168,14 +181,14 @@ export function QuickFilter({ placeholder: placeholderProp, defaultExpanded = fa
             className="gk-search"
             placeholder={placeholder}
             aria-label={t.quickFilterLabel}
-            value={value}
-            onChange={(e) => grid.api.setQuickFilter(e.target.value)}
+            value={debounceMs > 0 ? draft : value}
+            onChange={(e) => apply(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Escape' && value === '') setOpen(false)
             }}
           />
           {value !== '' && (
-            <Button type="button" aria-label={t.quickFilterClear} title={t.quickFilterClear} className="gk-toolbar-button" onClick={() => grid.api.setQuickFilter('')}>
+            <Button type="button" aria-label={t.quickFilterClear} title={t.quickFilterClear} className="gk-toolbar-button" onClick={() => apply('', true)}>
               <icons.close />
             </Button>
           )}

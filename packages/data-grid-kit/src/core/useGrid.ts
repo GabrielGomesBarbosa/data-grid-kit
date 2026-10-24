@@ -136,6 +136,10 @@ export function useGrid<R = any>(rawOptions: GridOptions<R>): GridInstance<R> {
     () => (options.pivoting ? withDerivedColumns(options.columns, options.pivotDerivedColumns, pivotText) : options.columns),
     [options.pivoting, options.columns, options.pivotDerivedColumns, pivotText],
   )
+  const quickFilterOptions = useMemo(
+    () => ({ parser: options.quickFilterParser, logic: options.quickFilterLogicOperator, includeHidden: options.quickFilterIncludeHidden }),
+    [options.quickFilterParser, options.quickFilterLogicOperator, options.quickFilterIncludeHidden],
+  )
   const pivotInput = useMemo(
     () => (pivotActive ? pivotInputOf(effective.pivotModel, !!options.pivotTotals) : undefined),
     [pivotActive, effective.pivotModel, options.pivotTotals],
@@ -153,6 +157,7 @@ export function useGrid<R = any>(rawOptions: GridOptions<R>): GridInstance<R> {
     sortModel: pipelineSort,
     filterModel: effective.filterModel,
     ignoreDiacritics: options.ignoreDiacritics,
+    quickFilter: quickFilterOptions,
     rowGroupingModel: effective.rowGroupingModel,
     expandedIds: expandedSet,
     expandAllByDefault: effective.expandAllByDefault,

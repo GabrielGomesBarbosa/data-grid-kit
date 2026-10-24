@@ -104,6 +104,11 @@ export interface ColumnDef<R = any> {
    * stays open), or nothing / `null` when it is fine. May return a promise (a check on the server). Gets the value being typed and the row.
    */
   validate?: (params: { value: unknown; row: R; field: string }) => string | null | undefined | void | Promise<string | null | undefined | void>
+  /**
+   * How this column takes part in the quick filter: `false` leaves it out; a function decides for a term (already lower-cased, and
+   * without accents with `ignoreDiacritics`) whether the cell matches it. Default: the column's text contains the term.
+   */
+  quickFilter?: boolean | ((params: { term: string; value: unknown; row: R }) => boolean)
   /** replaces the operators the filter panel offers for this column (spread `getFilterOperators(col)` to extend them) */
   filterOperators?: FilterOperatorDef<R>[]
   /** options for `singleSelect` columns */
@@ -241,6 +246,12 @@ export interface GridOptions<R = any> {
    * The texts the grid shows, by key (see `GridLocaleText`). What you leave out stays in English. Keep the object (and its
    * functions) the same between renders (define it outside the component, or `useMemo` it): a new one re-renders the grid.
    */
+  /** turns what is typed in the quick filter into the terms to look for (default: split on spaces; use it to allow terms with spaces). Keep it the same between renders. */
+  quickFilterParser?: (input: string) => string[]
+  /** `'or'`: a row needs only one of the terms (default `'and'`) */
+  quickFilterLogicOperator?: 'and' | 'or'
+  /** also search the columns that start hidden (default false) */
+  quickFilterIncludeHidden?: boolean
   /** what a click on a header does, in turn (default `['asc', 'desc', null]`: ascending, descending, unsorted). A column's own `sortingOrder` wins. */
   sortingOrder?: ('asc' | 'desc' | null)[]
   /** `'always'`: a click on a header adds to the sort instead of replacing it, without a modifier key (default: Shift, Ctrl or Cmd+click adds) */

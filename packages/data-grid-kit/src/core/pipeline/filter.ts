@@ -63,18 +63,32 @@ export function matchesItem<R>(item: FilterItem, col: ColumnDef<R>, row: R, igno
   }
 }
 
+/** how the quick filter reads its input and which columns it looks at (see `GridOptions`) */
+export interface QuickFilterOptions {
+  /** turns what was typed into the terms to look for (default: split on spaces) */
+  parser?: (input: string) => string[]
+  /** `'or'`: a row needs one of the terms (default `'and'`: all of them) */
+  logic?: 'and' | 'or'
+  /** also look in columns that start hidden (default false) */
+  includeHidden?: boolean
+}
+
 export function createRowFilter<R>(
   model: FilterModel,
   columns: ColumnDef<R>[],
   ignoreDiacritics = false,
+  quickOptions?: QuickFilterOptions,
 ): ((row: R) => boolean) | null {
   const byField = new Map(columns.map((c) => [c.field, c]))
   const items = model.items.filter((i) => byField.has(i.field))
   const fold = (t: string) => (ignoreDiacritics ? foldDiacritics(t) : t)
-  const quick = model.quickFilter?.trim() ? fold(model.quickFilter.trim().toLowerCase()) : undefined
-  if (items.length === 0 && !quick) return null
-  const terms = quick ? quick.split(/\s+/) : []
-  const searchable = columns.filter((c) => !c.hidden)
+  const typed = model.quickFilter?.trim()
+  const terms = typed ? (quickOptions?.parser ? quickOptions.parser(typed) : typed.split(/\s+/)).map((t) => fold(t.trim().toLowerCase())).filter((t) => t !== '') : []
+  if (items.length === 0 && terms.length === 0) return null
+  const any = quickOptions?.logic === 'or'
+  // a column leaves the search with `quickFilter: false`; one with its own function is asked per term instead of read as text
+  const searchable = columns.filter((c) => c.quickFilter !== false && typeof c.quickFilter !== 'function' && (quickOptions?.includeHidden || !c.hidden))
+  const custom = columns.flatMap((c) => (typeof c.quickFilter === 'function' && (quickOptions?.includeHidden || !c.hidden) ? [{ col: c, fn: c.quickFilter }] : []))
   return (row) => {
     if (items.length) {
       const test = (i: FilterItem) => matchesItem(i, byField.get(i.field)!, row, ignoreDiacritics)
@@ -84,7 +98,9 @@ export function createRowFilter<R>(
       // build the searchable text once per row, then test every term against it
       let haystack = ''
       for (const c of searchable) haystack += fold(formatCellValue(c, row).toLowerCase()) + '\u0000'
-      for (const t of terms) if (!haystack.includes(t)) return false
+      const has = (t: string) =>
+        haystack.includes(t) || custom.some(({ col, fn }) => fn({ term: t, value: getCellValue(col, row), row }) === true)
+      return any ? terms.some(has) : terms.every(has)
     }
     return true
   }

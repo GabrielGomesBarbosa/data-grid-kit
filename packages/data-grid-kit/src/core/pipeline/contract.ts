@@ -64,6 +64,8 @@ export interface PivotInput {
   totals?: boolean
 }
 
+import type { QuickFilterOptions } from './filter'
+
 export interface PipelineInput<R> {
   rows: R[]
   columns: ColumnDef<R>[]
@@ -78,6 +80,8 @@ export interface PipelineInput<R> {
   filterModel: FilterModel
   /** match letters with and without accents ("cafe" finds "café") in the filters and the quick filter */
   ignoreDiacritics?: boolean
+  /** how the quick filter reads its input and where it looks */
+  quickFilter?: QuickFilterOptions
   rowGroupingModel: string[]
   expandedIds: ReadonlySet<RowId>
   expandAllByDefault: boolean

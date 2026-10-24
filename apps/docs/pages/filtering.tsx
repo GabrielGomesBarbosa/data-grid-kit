@@ -28,6 +28,17 @@ export const page: PageDef = {
         a row stays visible when it or any descendant matches; with grouping, groups with no matching rows disappear and their counts
         reflect the filter.
       </p>
+      <h2>The quick filter</h2>
+      <ul>
+        <li>
+          What is typed is split on spaces and a row must contain every term (<code>quickFilterLogicOperator="or"</code>: any of them) in the text of its visible columns
+          (<code>quickFilterIncludeHidden</code> adds the hidden ones). <code>quickFilterParser</code> changes how the input is split, for example on commas so that a term can have a space.
+        </li>
+        <li>
+          A column leaves the search with <code>quickFilter: false</code>, or takes a function to decide for itself whether a cell matches a term. In your own toolbar,{' '}
+          <code>{'<QuickFilter debounceMs={300} />'}</code> waits for a pause in typing before it filters.
+        </li>
+      </ul>
       <h2>Your own operators, and accents</h2>
       <ul>
         <li>
