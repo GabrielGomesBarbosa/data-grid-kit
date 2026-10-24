@@ -3,7 +3,7 @@ import { isNil, compareValues, formatCellValue, getCellValue } from '../values'
 import { fullFilter } from './filterStage'
 import { fit, ensureRootAccs } from './aggStage'
 import { same, groupKey } from './nodes'
-import { PIVOT_SEP, type PivotColumn } from './contract'
+import { PIVOT_SEP, PIVOT_VALUE_PREFIX, type PivotColumn } from './contract'
 import { type Engine } from './engine'
 
 export function pivotOn<R>(S: Engine<R>) {
@@ -40,7 +40,7 @@ export function keyEntry<R>(S: Engine<R>, row: R): PivotKey {
       e.items.push(S.aggItems.length)
       e.all.push(S.aggItems.length)
       // the position keeps two values of the same field apart
-      S.aggItems.push({ field: `__pv${PIVOT_SEP}${key}${PIVOT_SEP}${j}${PIVOT_SEP}${v.col.field}`, name: v.kind, kind: v.kind, custom: null, col: v.col })
+      S.aggItems.push({ field: `${PIVOT_VALUE_PREFIX}${PIVOT_SEP}${key}${PIVOT_SEP}${j}${PIVOT_SEP}${v.col.field}`, name: v.kind, kind: v.kind, custom: null, col: v.col })
     }
     S.pivotKeys.set(key, e)
   }

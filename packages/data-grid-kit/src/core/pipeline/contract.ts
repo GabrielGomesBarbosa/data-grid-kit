@@ -40,6 +40,10 @@ export interface PipelineResult<R> {
 
 /** separates the parts of a pivot column's field name */
 export const PIVOT_SEP = '\u241f'
+/** every pivot value column's field starts with this, and every total column's with the other */
+export const PIVOT_VALUE_PREFIX = '__pv'
+export const PIVOT_TOTAL_PREFIX = '__pt'
+export const isPivotValueField = (field: string) => field.startsWith(PIVOT_VALUE_PREFIX) || field.startsWith(PIVOT_TOTAL_PREFIX)
 
 /** One value column of a pivot table: the aggregate of one value field for one combination of column values. */
 export interface PivotColumn {
@@ -88,6 +92,11 @@ export interface PipelineInput<R> {
    * their aggregates are keyed by the fields of `result.pivotColumns`. `aggregationModel` is ignored.
    */
   pivot?: PivotInput
+  /**
+   * Pivot mode: order the groups of every level by this pivot column's aggregate (`field` is a `pivotColumns` field).
+   * Empty values come last. It only changes the order of the list, so it never rebuilds the hierarchy.
+   */
+  aggSort?: { field: string; direction: 'asc' | 'desc' }
 }
 
 export interface Pipeline<R> {

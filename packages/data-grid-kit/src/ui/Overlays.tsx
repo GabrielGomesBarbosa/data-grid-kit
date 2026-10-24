@@ -1,6 +1,6 @@
 import { useBase } from './base'
 import type { CSSProperties } from 'react'
-import type { GridInstance } from '../core'
+import { visiblePivot, type GridInstance } from '../core'
 import { cx } from './cx'
 
 export interface OverlayProps {
@@ -35,10 +35,11 @@ export function ErrorBanner({ message, onRetry, className, style }: ErrorOverlay
 /** What the body shows when there is nothing to show: a hint in pivot mode, otherwise "No rows". */
 export function EmptyState<R>({ grid, className, style }: NoRowsOverlayProps<R>) {
   const { pivot, state, rows, server } = grid
-  if (pivot && (state.pivotModel.rows.length === 0 || pivot.columns.length === 0)) {
+  const shownRows = visiblePivot(state.pivotModel).rows.length
+  if (pivot && (shownRows === 0 || pivot.columns.length === 0)) {
     return (
       <div className={cx('gk-empty', className)} style={style}>
-        {state.pivotModel.rows.length === 0 ? 'Add a field as a row' : 'Add a field as a value'} in the Pivot panel to fill the table.
+        {shownRows === 0 ? 'Add a field as a row' : 'Add a field as a value'} in the Pivot panel to fill the table.
       </div>
     )
   }

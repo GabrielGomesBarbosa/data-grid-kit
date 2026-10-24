@@ -268,12 +268,14 @@ describe('pivot table on screen', () => {
     expect(s.querySelector('.gk-agg-label')).toBeNull()
   })
 
-  it('generated pivot columns have a column menu (Hide only: they cannot be sorted, filtered or moved)', () => {
+  it('generated pivot columns have a column menu: sort and hide, but no filter, move or pin', () => {
     const { container } = render(<Grid {...opts()} height={300} />)
     const btn = container.querySelectorAll<HTMLElement>('.gk-header-row:last-child .gk-menu-btn')[1]! // the first generated column
     fireEvent.click(btn)
     const items = [...document.querySelectorAll('[role=menu] [role=menuitem]')].map((e) => e.textContent)
-    expect(items).toEqual(['Hide column'])
+    expect(items.some((t) => /sort/i.test(t ?? ''))).toBe(true)
+    expect(items).toContain('Hide column')
+    expect(items.some((t) => /filter|pin|move/i.test(t ?? ''))).toBe(false)
   })
 
   it('has a Pivot button and panel in the toolbar', () => {

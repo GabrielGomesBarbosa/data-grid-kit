@@ -1,7 +1,7 @@
 import { useBase } from '../base'
 import { useIcons } from '../icons'
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { aggregationLabel, availableAggregations, isBuiltinAggregation, movePivotField, type ColumnDef, type GridInstance, type PivotModel, type PivotSection } from '../../core'
+import { addPivotValue, aggregationLabel, availableAggregations, isBuiltinAggregation, moveValueEntry, movePivotField, removePivotValue, setPivotHidden, setValueFunc, type ColumnDef, type GridInstance, type PivotEntry, type PivotModel, type PivotSection } from '../../core'
 import { pointerDrag } from '../pointerDrag'
 import { title } from './shared'
 import { cx } from '../cx'
@@ -9,7 +9,8 @@ import type { PanelProps } from './types'
 
 /* ------------------------------------------------------------- pivot panel */
 
-type Target = { section: PivotSection | 'fields'; before: string | null }
+/** `beforeIndex` is the position among the value entries (a field can be a value more than once) */
+type Target = { section: PivotSection | 'fields'; before: string | null; beforeIndex: number | null }
 
 /**
  * Choose what the pivot table is made of: row groups, column values and the aggregated values. Fields move by dragging
@@ -36,7 +37,7 @@ export function PivotPanel<R>({ grid, className }: PanelProps<R>) {
   const update = (fn: (m: PivotModel) => PivotModel) => api.setPivotModel(fn)
 
   /* ---- dragging a field by its grip ---- */
-  const [drag, setDrag] = useState<{ field: string; x: number; y: number; over: Target | null } | null>(null)
+  const [drag, setDrag] = useState<{ field: string; entry?: number; x: number; y: number; over: Target | null } | null>(null)
   const cancel = useRef<(() => void) | null>(null)
   useEffect(() => () => cancel.current?.(), [])
 
@@ -46,15 +47,17 @@ export function PivotPanel<R>({ grid, className }: PanelProps<R>) {
     if (!list) return null
     const section = list.dataset.pivotSection as PivotSection | 'fields'
     if (section === 'values' && !canValue(field)) return null
-    if (section === 'fields') return { section, before: null }
+    const at = (li: HTMLElement | null): Pick<Target, 'before' | 'beforeIndex'> =>
+      li?.dataset.pivotField ? { before: li.dataset.pivotField, beforeIndex: li.dataset.pivotIndex === undefined ? null : Number(li.dataset.pivotIndex) } : { before: null, beforeIndex: null }
+    if (section === 'fields') return { section, ...at(null) }
     const item = el!.closest<HTMLElement>('[data-pivot-field]')
-    if (!item || !list.contains(item)) return { section, before: null }
+    if (!item || !list.contains(item)) return { section, ...at(null) }
     const r = item.getBoundingClientRect()
-    if (y < r.top + r.height / 2) return { section, before: item.dataset.pivotField! }
-    return { section, before: (item.nextElementSibling as HTMLElement | null)?.dataset.pivotField ?? null }
+    if (y < r.top + r.height / 2) return { section, ...at(item) }
+    return { section, ...at(item.nextElementSibling as HTMLElement | null) }
   }
 
-  const startDrag = (field: string, e: ReactPointerEvent<HTMLElement>) => {
+  const startDrag = (field: string, e: ReactPointerEvent<HTMLElement>, entry?: number) => {
     if (e.button !== 0) return
     e.preventDefault()
     let over: Target | null = null
@@ -65,34 +68,50 @@ export function PivotPanel<R>({ grid, className }: PanelProps<R>) {
         cancelOnEscape: true,
         onMove: (x, y) => {
           over = targetAt(x, y, field)
-          setDrag({ field, x, y, over })
+          setDrag({ field, entry, x, y, over })
         },
         onFinish: () => {
           cancel.current = null
           setDrag(null)
         },
         onEnd: (outcome) => {
-          if (outcome === 'dropped' && over) place(field, over.section === 'fields' ? null : over.section, over.before)
+          if (outcome !== 'dropped' || !over) return
+          // a value entry moves, or leaves, on its own: the field's other functions stay
+          if (entry !== undefined && over.section === 'values') update((m) => moveValueEntry(m, entry, over!.beforeIndex))
+          else if (entry !== undefined && over.section === 'fields') update((m) => removePivotValue(m, entry))
+          else place(field, over.section === 'fields' ? null : over.section, over.before)
         },
       },
     )
     cancel.current = stop
   }
 
-  const grip = (field: string) => (
+  const grip = (field: string, entry?: number) => (
     <span
       className="gk-pivot-grip"
       aria-hidden="true"
       title={`Drag ${name(field)} to another list`}
-      onPointerDown={(e) => startDrag(field, e)}
+      onPointerDown={(e) => startDrag(field, e, entry)}
     >
       <icons.dragHandle />
     </span>
   )
+  /** switch an entry on or off: it stays in the model, the table just ignores it */
+  const visibility = (entry: PivotEntry, field: string, hidden: boolean | undefined) => (
+    <Checkbox
+      type="checkbox"
+      aria-label={`Show ${name(field)}`}
+      title={hidden ? 'Hidden from the table' : 'Shown in the table'}
+      checked={!hidden}
+      onChange={(e) => update((m) => setPivotHidden(m, entry, !e.target.checked))}
+    />
+  )
   const overOf = (section: PivotSection | 'fields') => (drag?.over?.section === section ? drag.over : null)
-  const dropMark = (section: PivotSection, field: string) => {
+  const dropMark = (section: PivotSection, field: string, index?: number) => {
     const o = overOf(section)
-    return o && o.before === field && drag!.field !== field ? 'before' : undefined
+    if (!o || o.before !== field) return undefined
+    if (index !== undefined && drag!.entry !== undefined) return o.beforeIndex === index && drag!.entry !== index ? 'before' : undefined
+    return drag!.field !== field ? 'before' : undefined
   }
 
   const arrows = (list: string[], field: string, section: PivotSection) => {
@@ -134,8 +153,9 @@ export function PivotPanel<R>({ grid, className }: PanelProps<R>) {
       <ul {...list('rows', 'Pivot rows')}>
         {model.rows.length === 0 && empty('Drag a field here to group the rows by it')}
         {model.rows.map((f) => (
-          <li key={f} data-pivot-field={f} data-drop={dropMark('rows', f)} data-dragged={drag?.field === f ? '' : undefined}>
+          <li key={f} data-pivot-field={f} data-drop={dropMark('rows', f)} data-dragged={drag?.field === f ? '' : undefined} data-hidden={model.hiddenRows?.includes(f) ? '' : undefined}>
             {grip(f)}
+            {visibility({ section: 'rows', field: f }, f, model.hiddenRows?.includes(f))}
             <span>{name(f)}</span>
             {arrows(rowFields, f, 'rows')}
           </li>
@@ -146,8 +166,9 @@ export function PivotPanel<R>({ grid, className }: PanelProps<R>) {
       <ul {...list('columns', 'Pivot columns')}>
         {model.columns.length === 0 && empty('Drag a field here to spread it into columns')}
         {model.columns.map((c) => (
-          <li key={c.field} data-pivot-field={c.field} data-drop={dropMark('columns', c.field)} data-dragged={drag?.field === c.field ? '' : undefined}>
+          <li key={c.field} data-pivot-field={c.field} data-drop={dropMark('columns', c.field)} data-dragged={drag?.field === c.field ? '' : undefined} data-hidden={c.hidden ? '' : undefined}>
             {grip(c.field)}
+            {visibility({ section: 'columns', field: c.field }, c.field, c.hidden)}
             <span>{name(c.field)}</span>
             <Select
               aria-label={`Sort ${name(c.field)} columns`}
@@ -167,25 +188,48 @@ export function PivotPanel<R>({ grid, className }: PanelProps<R>) {
       <h4>Values</h4>
       <ul {...list('values', 'Pivot values')}>
         {model.values.length === 0 && empty('Drag a field here to aggregate it')}
-        {model.values.map((v) => {
+        {model.values.map((v, i) => {
           const col = byField.get(v.field)
           const fns = (col ? availableAggregations(col) : []).filter(isBuiltinAggregation)
+          const taken = (f: string) => model.values.some((x, j) => j !== i && x.field === v.field && x.aggFunc === f)
+          const spare = fns.find((f) => !model.values.some((x) => x.field === v.field && x.aggFunc === f))
           return (
-            <li key={v.field} data-pivot-field={v.field} data-drop={dropMark('values', v.field)} data-dragged={drag?.field === v.field ? '' : undefined}>
-              {grip(v.field)}
+            <li
+              key={`${v.field}:${v.aggFunc}`}
+              data-pivot-field={v.field}
+              data-pivot-index={i}
+              data-drop={dropMark('values', v.field, i)}
+              data-dragged={drag?.field === v.field && (drag.entry === undefined || drag.entry === i) ? '' : undefined}
+              data-hidden={v.hidden ? '' : undefined}
+            >
+              {grip(v.field, i)}
+              {visibility({ section: 'values', index: i }, v.field, v.hidden)}
               <span>{name(v.field)}</span>
               <Select
                 aria-label={`Function for ${name(v.field)}`}
                 value={v.aggFunc}
-                onChange={(e) => update((m) => ({ ...m, values: m.values.map((x) => (x.field === v.field ? { ...x, aggFunc: e.target.value } : x)) }))}
+                onChange={(e) => update((m) => setValueFunc(m, i, e.target.value))}
               >
                 {fns.map((f) => (
-                  <option key={f} value={f}>
+                  <option key={f} value={f} disabled={taken(f)}>
                     {aggregationLabel(f)}
                   </option>
                 ))}
               </Select>
-              {arrows(valueFields, v.field, 'values')}
+              <span className="gk-pivot-actions">
+                <Button type="button" aria-label={`Add another function for ${name(v.field)}`} title="Use this field again with another function" disabled={!spare} onClick={() => spare && update((m) => addPivotValue(m, v.field, spare))}>
+                  +
+                </Button>
+                <Button type="button" aria-label={`Move ${name(v.field)} up`} disabled={i === 0} onClick={() => update((m) => moveValueEntry(m, i, i - 1))}>
+                  <icons.moveUp />
+                </Button>
+                <Button type="button" aria-label={`Move ${name(v.field)} down`} disabled={i === model.values.length - 1} onClick={() => update((m) => moveValueEntry(m, i, i + 2 > model.values.length ? null : i + 2))}>
+                  <icons.moveDown />
+                </Button>
+                <Button type="button" aria-label={`Remove ${name(v.field)}`} onClick={() => update((m) => removePivotValue(m, i))}>
+                  <icons.close />
+                </Button>
+              </span>
             </li>
           )
         })}

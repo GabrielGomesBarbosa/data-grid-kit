@@ -1,4 +1,5 @@
 import { type RenderRow, type RowId } from '../types'
+import { compareValues, isNil } from '../values'
 import { aggOn, ensureAccs, ensureRootAccs, finishAccs, shallowSame } from './aggStage'
 import { pivotColumnsNow } from './pivotStage'
 import { same, type TreeNode } from './nodes'
@@ -7,10 +8,38 @@ import { type Engine } from './engine'
 
 /* -------- flatten -------- */
 
+/**
+ * A pivot table can order its groups by a value column. This works on the visible lists at flatten time: it reads the
+ * aggregates that are shown anyway (computed once per node here), so no incremental structure has to follow them.
+ */
+function aggSorter<R>(S: Engine<R>) {
+  const sort = S.input.aggSort
+  const records = new Map<TreeNode<R>, Record<string, unknown> | undefined>()
+  const aggregatesOf = (n: TreeNode<R>) => {
+    if (!records.has(n)) records.set(n, n.kids && n.kids.length > 0 && aggOn(S) ? finishAccs(S, ensureAccs(S, n), n) : undefined)
+    return records.get(n)
+  }
+  const dir = sort?.direction === 'desc' ? -1 : 1
+  const order = (nodes: TreeNode<R>[]): TreeNode<R>[] => {
+    if (!sort || !S.pivot || nodes.length < 2) return nodes
+    return nodes
+      .map((n, i) => ({ n, i, v: aggregatesOf(n)?.[sort.field] }))
+      .sort((a, b) => {
+        const an = isNil(a.v)
+        const bn = isNil(b.v)
+        if (an || bn) return an === bn ? a.i - b.i : an ? 1 : -1 // empty values last, in both directions
+        return compareValues(a.v, b.v) * dir || a.i - b.i
+      })
+      .map((x) => x.n)
+  }
+  return { order, aggregatesOf }
+}
+
   export function flatten<R>(S: Engine<R>): PipelineResult<R> {
   const m = S.model!
   const hidden = S.input.hiddenIds
-  let roots = m.kidsRoot
+  const agg = aggSorter(S)
+  let roots = agg.order(m.kidsRoot)
   let hiddenPassing = 0
   if (hidden && hidden.size) {
     roots = roots.filter((n) => !hidden.has(n.id))
@@ -37,7 +66,7 @@ import { type Engine } from './engine'
       const expandable = hasKids && !(S.pivot && depth >= lastLevel)
       const open = expandable && (all ? !expanded.has(n.id) : expanded.has(n.id))
       const childCount = n.count - n.self
-      let aggregates = hasKids && aggOn(S) ? finishAccs(S, ensureAccs(S, n), n) : undefined
+      let aggregates = hasKids && aggOn(S) ? agg.aggregatesOf(n) : undefined
       let rr = n.rr
       if (rr && shallowSame(S, rr.aggregates, aggregates)) aggregates = rr.aggregates // keep identity while values are unchanged
       // RenderRows are immutable: a new object only when something the UI shows has changed
@@ -67,7 +96,7 @@ import { type Engine } from './engine'
         detailRows.push({ id: n.id, index: rows.length })
       }
       rows.push(rr)
-      if (open) walk(children!, depth + 1)
+      if (open) walk(agg.order(children!), depth + 1)
     }
   }
   walk(S.pivot && lastLevel < 0 ? [] : pageRoots, 0)
@@ -120,13 +149,13 @@ import { type Engine } from './engine'
               expanded: true,
               groupField: n.groupField,
               groupValue: n.groupValue,
-              aggregates: hasKids && aggOn(S) ? finishAccs(S, ensureAccs(S, n), n) : undefined,
+              aggregates: hasKids && aggOn(S) ? agg.aggregatesOf(n) : undefined,
             })
           }
-          if (hasKids && !stop) visit(kids!, depth + 1)
+          if (hasKids && !stop) visit(agg.order(kids!), depth + 1)
         }
       }
-      visit(m.kidsRoot, 0)
+      visit(agg.order(m.kidsRoot), 0)
       return out
     },
     detailRows,

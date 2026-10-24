@@ -129,3 +129,8 @@
 .gk-pivot > * {
   flex: none;
 }
+
+.gk-pivot-list li[data-hidden] > span:not(.gk-pivot-actions) {
+  opacity: 0.5;
+  text-decoration: line-through;
+}

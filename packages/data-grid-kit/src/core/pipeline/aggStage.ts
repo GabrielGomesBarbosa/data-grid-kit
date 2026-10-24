@@ -3,7 +3,7 @@ import { type ColumnDef, type CustomAggregation } from '../types'
 import { getCellValue } from '../values'
 import { keyEntry } from './pivotStage'
 import { type TreeNode } from './nodes'
-import { PIVOT_SEP } from './contract'
+import { PIVOT_SEP, PIVOT_TOTAL_PREFIX } from './contract'
 import { type Engine } from './engine'
 
 export function aggOn<R>(S: Engine<R>) {
@@ -29,7 +29,7 @@ export function makeAggItems<R>(S: Engine<R>): AggItem<R>[] {
       for (let j = 0; j < S.pivotValues.length; j++) {
         const v = S.pivotValues[j]!
         S.totalIdx.push(out.length)
-        out.push({ field: `__pt${PIVOT_SEP}${j}${PIVOT_SEP}${v.col.field}`, name: v.kind, kind: v.kind, custom: null, col: v.col })
+        out.push({ field: `${PIVOT_TOTAL_PREFIX}${PIVOT_SEP}${j}${PIVOT_SEP}${v.col.field}`, name: v.kind, kind: v.kind, custom: null, col: v.col })
       }
     }
     return out

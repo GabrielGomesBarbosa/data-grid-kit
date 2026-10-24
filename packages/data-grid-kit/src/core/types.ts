@@ -106,9 +106,14 @@ export interface PivotModel {
   /** fields that become the row groups, outermost first */
   rows: string[]
   /** fields whose distinct values become columns (nested in this order) */
-  columns: { field: string; sort?: 'asc' | 'desc' }[]
-  /** what is aggregated in each cell */
-  values: { field: string; aggFunc: string }[]
+  columns: { field: string; sort?: 'asc' | 'desc'; /** kept in the model but left out of the table */ hidden?: boolean }[]
+  /**
+   * what is aggregated in each cell. A field can appear more than once with different functions (sum and avg of the
+   * same field); each entry is a column per column value.
+   */
+  values: { field: string; aggFunc: string; /** kept in the model but left out of the table */ hidden?: boolean }[]
+  /** fields of `rows` that are kept in the model but not used to group the table */
+  hiddenRows?: string[]
 }
 
 export const EMPTY_PIVOT: PivotModel = { rows: [], columns: [], values: [] }

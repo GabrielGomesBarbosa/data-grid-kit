@@ -1,6 +1,8 @@
 import { isBuiltinAggregation } from './aggregation'
 import type { PivotColumn, PivotInput } from './pipeline'
+import { isPivotValueField } from './pipeline/contract'
 import type { ColumnDef, PivotModel } from './types'
+import { moveValueEntry, visiblePivot } from './pivotModel'
 
 /** field of the column that carries the row group labels in pivot mode */
 export const PIVOT_ROWS_FIELD = '__gk_pivot_rows__'
@@ -45,9 +47,10 @@ export function withDerivedColumns<R>(
 
 /** What the pipeline needs to know about a pivot model: fields that don't exist or can't be aggregated are dropped there. */
 export function pivotInputOf(model: PivotModel, totals: boolean): PivotInput {
+  const { columns, values } = visiblePivot(model)
   return {
-    columns: model.columns.map((c) => ({ field: c.field, sort: c.sort })),
-    values: model.values.filter((v) => isBuiltinAggregation(v.aggFunc)).map((v) => ({ field: v.field, aggFunc: v.aggFunc })),
+    columns: columns.map((c) => ({ field: c.field, sort: c.sort })),
+    values: values.filter((v) => isBuiltinAggregation(v.aggFunc)).map((v) => ({ field: v.field, aggFunc: v.aggFunc })),
     totals,
   }
 }
@@ -60,7 +63,7 @@ export function buildPivotColumns<R>(
   overrides?: (field: string, path: string[]) => Partial<ColumnDef<R>> | undefined,
 ): ColumnDef<R>[] {
   const byField = new Map(source.map((c) => [c.field, c]))
-  const rowsTitle = model.rows.map((f) => (byField.has(f) ? title(byField.get(f)!) : f)).join(' / ')
+  const rowsTitle = visiblePivot(model).rows.map((f) => (byField.has(f) ? title(byField.get(f)!) : f)).join(' / ')
   const out: ColumnDef<R>[] = [
     {
       field: PIVOT_ROWS_FIELD,
@@ -85,7 +88,7 @@ export function buildPivotColumns<R>(
       width: Math.max(orig.width ?? 0, 130),
       minWidth: orig.minWidth,
       valueFormatter: orig.valueFormatter,
-      sortable: false,
+      sortable: true, // orders the groups by this column's aggregate
       filterable: false,
       editable: false,
       aggregable: false,
@@ -105,13 +108,20 @@ export function pivotSortOf(sortModel: { field: string; direction: 'asc' | 'desc
   return rows.map((field) => ({ field, direction }))
 }
 
+/** Clicking a value column's header orders the groups of every level by its aggregate: the first such sort wins. */
+export function pivotAggSortOf(sortModel: { field: string; direction: 'asc' | 'desc' }[]) {
+  const s = sortModel.find((x) => isPivotValueField(x.field))
+  return s ? { field: s.field, direction: s.direction } : undefined
+}
+
 export type PivotSection = 'rows' | 'columns' | 'values'
 
 /**
  * Move a field to a section of the pivot model, before another field of that section (or at the end), or out of the
- * model with `to = null`. A field is in at most one section, so it leaves the one it was in. Moving inside a section keeps
- * the entry's own settings (a column's sort, a value's function); entering `values` gets `defaultFunc(field)`.
- * Returns the same object when nothing would change.
+ * model with `to = null`. A field is in at most one of rows / columns / values, so it leaves the one it was in; values
+ * may hold it several times (one entry per function), and moving a field inside `values` moves its first entry only.
+ * Moving inside a section keeps the entry's own settings (a column's sort, a value's function, hidden); entering
+ * `values` gets `defaultFunc(field)`. Returns the same object when nothing would change.
  */
 export function movePivotField(
   model: PivotModel,
@@ -121,11 +131,19 @@ export function movePivotField(
   defaultFunc: (field: string) => string = () => 'sum',
 ): PivotModel {
   if (before === field) return model // dropped on itself
+  if (to === 'values') {
+    const from = model.values.findIndex((v) => v.field === field)
+    if (from >= 0) {
+      const target = before === null ? -1 : model.values.findIndex((v) => v.field === before)
+      return moveValueEntry(model, from, target < 0 ? null : target)
+    }
+  }
   const keptColumn = model.columns.find((c) => c.field === field)
   const keptValue = model.values.find((v) => v.field === field)
   const rows = model.rows.filter((f) => f !== field)
   const columns = model.columns.filter((c) => c.field !== field)
   const values = model.values.filter((v) => v.field !== field)
+  const hiddenRows = (model.hiddenRows ?? []).filter((f) => f !== field || (to === 'rows' && model.rows.includes(field)))
   const at = <T>(list: T[], key: (x: T) => string): number => {
     const i = before && before !== field ? list.findIndex((x) => key(x) === before) : -1
     return i < 0 ? list.length : i
@@ -133,12 +151,14 @@ export function movePivotField(
   if (to === 'rows') rows.splice(at(rows, (f) => f), 0, field)
   else if (to === 'columns') columns.splice(at(columns, (c) => c.field), 0, keptColumn ?? { field })
   else if (to === 'values') values.splice(at(values, (v) => v.field), 0, keptValue ?? { field, aggFunc: defaultFunc(field) })
+  const old = model.hiddenRows ?? []
   const same =
     rows.length === model.rows.length &&
     rows.every((f, i) => f === model.rows[i]) &&
     columns.length === model.columns.length &&
     columns.every((c, i) => c === model.columns[i]) &&
     values.length === model.values.length &&
-    values.every((v, i) => v === model.values[i])
-  return same ? model : { rows, columns, values }
+    values.every((v, i) => v === model.values[i]) &&
+    hiddenRows.length === old.length
+  return same ? model : { rows, columns, values, ...(hiddenRows.length ? { hiddenRows } : {}) }
 }

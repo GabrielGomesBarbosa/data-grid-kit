@@ -1,5 +1,6 @@
 import PivotDemo from '../demos/PivotDemo'
 import pivotSrc from '../demos/PivotDemo.tsx?raw'
+import { CodeBlock } from '../components/CodeBlock'
 import { features } from '../api'
 import { type PageDef, demo } from './shared'
 
@@ -43,17 +44,49 @@ values:  [{ field: 'salary', aggFunc: 'avg' }]
         <li>The filter and quick filter apply to the source rows before pivoting; columns without any matching row disappear.</li>
         <li><code>pivotColumnDef(valueField, path)</code> adjusts a generated column (width, formatter, …).</li>
       </ul>
+      <h2>Sort, hide, repeat</h2>
+      <ul>
+        <li>
+          <strong>Sort by a value column.</strong> Click the header of a value (or total) column: the groups of every level are ordered by that aggregate, ascending then descending, a
+          third click clears it. Groups with no value come last in both directions. Clicking the row-label column orders by label as before. It only reorders the list, so it costs
+          no rebuild; paging and the exports follow the same order.
+        </li>
+        <li>
+          <strong>Hide without losing the setting.</strong> Each entry in the panel has a checkbox. A hidden row, column or value stays in the model (with its sort and function) but the
+          table ignores it: <code>hidden: true</code> on a column or value entry, <code>hiddenRows: ['field']</code> for rows.
+        </li>
+        <li>
+          <strong>The same field more than once.</strong> A field can be a value several times with different functions (the <em>+</em> button in the panel), each one a column per column value.
+        </li>
+      </ul>
+      <CodeBlock
+        code={`<Grid pivoting initialState={{ pivotMode: true, pivotModel: {
+  rows: ['team', 'role'],
+  columns: [{ field: 'country', sort: 'asc' }],
+  values: [
+    { field: 'salary', aggFunc: 'sum' },
+    { field: 'salary', aggFunc: 'avg' },          // the same field again
+    { field: 'age', aggFunc: 'avg', hidden: true }, // kept, not shown
+  ],
+  hiddenRows: ['role'],                             // group by team only, for now
+} }} />`}
+      />
+      <p>
+        For your own panel, <code>data-grid-kit/core</code> has the helpers the built-in one uses: <code>setPivotHidden</code>, <code>addPivotValue</code>, <code>removePivotValue</code>,{' '}
+        <code>moveValueEntry</code>, <code>setValueFunc</code> and <code>visiblePivot</code>.
+      </p>
       <h2>How it differs from MUI</h2>
       <p>
         MUI builds a pivot by copying every row with one extra property per column, creating a column definition per combination, and recomputing all of it
         whenever rows change. data-grid-kit has no copies: each row adds itself to the running totals of its groups, under the one column it belongs to, so a changed
         row adjusts its ancestors and nothing else (columns appear and vanish with the data). Columns are sorted by their values, ascending unless you choose
-        otherwise, not in order of appearance, so the result does not depend on the order rows arrived in.
+        otherwise, not in order of appearance, so the result does not depend on the order rows arrived in. MUI documents a <code>hidden</code> flag and sorting of the column
+        values; its docs say using the same field twice is not supported yet and do not describe ordering rows by a value column, which is available here.
       </p>
       <h2>Limits</h2>
       <ul>
         <li>Client-side data only: with a <code>dataSource</code> the server would have to pivot, which is not supported yet.</li>
-        <li>No per-field hide toggle, no sorting by a value column, and each field can be used once (dragging it elsewhere moves it).</li>
+        <li>A field is in one of rows, columns or values (dragging it elsewhere moves it, with all its entries); only values can hold it more than once.</li>
         <li>Cells can't be edited. Copy and range selection read cell values, so they don't see the aggregates. CSV export writes the table as shown (the group rows of the current page), with the column groups joined into the header text.</li>
       </ul>
       <h2>What it costs</h2>

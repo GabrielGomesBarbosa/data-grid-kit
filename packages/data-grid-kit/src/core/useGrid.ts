@@ -13,7 +13,8 @@ import { createPipeline, type PipelineResult } from './pipeline'
 import { DataSourceController } from './dataSource'
 import { buildServerResult } from './serverResult'
 
-import { PIVOT_ROWS_FIELD, buildPivotColumns, pivotInputOf, pivotSortOf, withDerivedColumns } from './pivot'
+import { visiblePivot } from './pivotModel'
+import { PIVOT_ROWS_FIELD, buildPivotColumns, pivotAggSortOf, pivotInputOf, pivotSortOf, withDerivedColumns } from './pivot'
 import { type ColumnDef, type GridOptions, type GridState, type RenderRow, type RowId } from './types'
 
 /** height assumed for an 'auto' detail panel until its content has been measured */
@@ -63,7 +64,7 @@ export function useGrid<R = any>(options: GridOptions<R>): GridInstance<R> {
   const effective = useMemo<GridState>(() => {
     const s = options.state ? { ...state, ...options.state } : state
     // in pivot mode the row groups are the pivot's rows; everything downstream reads them from here
-    return pivotAvailable && s.pivotMode ? { ...s, rowGroupingModel: s.pivotModel.rows } : s
+    return pivotAvailable && s.pivotMode ? { ...s, rowGroupingModel: visiblePivot(s.pivotModel).rows } : s
   }, [state, options.state, pivotAvailable])
   const pivotActive = pivotAvailable && effective.pivotMode
 
@@ -175,8 +176,8 @@ export function useGrid<R = any>(options: GridOptions<R>): GridInstance<R> {
     [pivotActive, effective.pivotModel, options.pivotTotals],
   )
   const pipelineSort = useMemo(
-    () => (pivotActive ? pivotSortOf(effective.sortModel, effective.pivotModel.rows) : effective.sortModel),
-    [pivotActive, effective.sortModel, effective.pivotModel.rows],
+    () => (pivotActive ? pivotSortOf(effective.sortModel, visiblePivot(effective.pivotModel).rows) : effective.sortModel),
+    [pivotActive, effective.sortModel, effective.pivotModel],
   )
 
   const result: PipelineResult<R> = serverResult ?? pipelineRef.current({
@@ -195,6 +196,7 @@ export function useGrid<R = any>(options: GridOptions<R>): GridInstance<R> {
     aggregationModel: effective.aggregationModel,
     aggregationFunctions: options.aggregationFunctions,
     pivot: pivotInput,
+    aggSort: pivotActive ? pivotAggSortOf(effective.sortModel) : undefined,
   })
   resultRef.current = result
 

@@ -172,7 +172,7 @@ export function createPipeline<R>(): Pipeline<R> {
     }
 
     if (changed) S.version++
-    const nextFlat = [S.version, inp.expandedIds, inp.expandAllByDefault, inp.pagination?.page, inp.pagination?.pageSize, inp.hiddenIds, inp.detailIds]
+    const nextFlat = [S.version, inp.expandedIds, inp.expandAllByDefault, inp.pagination?.page, inp.pagination?.pageSize, inp.hiddenIds, inp.detailIds, inp.aggSort?.field, inp.aggSort?.direction]
     if (!S.result || !same(S.flatDeps, nextFlat)) {
       S.flatDeps = nextFlat
       S.result = flatten(S)
