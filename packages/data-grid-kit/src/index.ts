@@ -14,3 +14,6 @@ export type { ErrorOverlayProps, NoRowsOverlayProps, OverlayProps } from './ui/O
 export type { ColumnMenuProps } from './ui/panels/ColumnMenu'
 export type { PanelProps } from './ui/panels/types'
 export type { PopoverProps } from './ui/Popover'
+export { useGridView } from './ui/useGridView'
+export type { BodyRow, DetailItem, GetProps, GridView, PinnedBlock } from './ui/gridView'
+export { mergeProps } from './ui/mergeProps'
