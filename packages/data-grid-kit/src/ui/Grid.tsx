@@ -1,6 +1,8 @@
+import { useMemo } from 'react'
 import { Header } from './Header'
 import { ColumnDragFeedback, RowDragFeedback } from './DragFeedback'
 import { Popovers } from './Popovers'
+import { LocaleProvider } from './localeContext'
 import { SlotsProvider } from './slotsContext'
 import { ToolbarContext } from './toolbarParts'
 import { type UIColumnDef, type GridProps } from './types'
@@ -14,6 +16,8 @@ export type { GridProps, UIColumnDef }
  */
 export function Grid<R = any>(props: GridProps<R>) {
   const view = useGridView<R>(props)
+  const { text, locale } = view.grid
+  const localeValue = useMemo(() => ({ text, locale }), [text, locale])
   const { slots, slotProps } = view.slotsValue
   const { row: RowSlot, skeletonRow: SkeletonRowSlot, detailPanel: DetailPanelSlot } = slots
   const { pinnedTop, pinnedBottom } = view
@@ -27,6 +31,7 @@ export function Grid<R = any>(props: GridProps<R>) {
   )
 
   return (
+    <LocaleProvider value={localeValue}>
     <SlotsProvider value={view.slotsValue}>
       <div {...view.getRootProps()}>
         <div className="gk-main">
@@ -69,11 +74,12 @@ export function Grid<R = any>(props: GridProps<R>) {
           <Popovers {...view.popovers} />
         </div>
         {view.dock && (
-          <aside className="gk-dock" aria-label="Pivot panel" onKeyDown={(e) => e.key === 'Escape' && view.dock!.onClose()}>
+          <aside className="gk-dock" aria-label={text.pivotPanel} onKeyDown={(e) => e.key === 'Escape' && view.dock!.onClose()}>
             <slots.pivotPanel grid={view.grid} onClose={view.dock.onClose} {...slotProps.pivotPanel} />
           </aside>
         )}
       </div>
     </SlotsProvider>
+    </LocaleProvider>
   )
 }

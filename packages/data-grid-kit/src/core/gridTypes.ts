@@ -6,6 +6,7 @@ import type { PipelineResult, PivotColumn, RowChanges } from './pipeline'
 import type { CellPoint, CellRange, RangeRect } from './range'
 import type { XlsxExportOptions } from './xlsxExport'
 import type { DataSourceError, DataSourceSnapshot } from './dataSource'
+import type { GridLocaleText } from './localeText'
 import type { Store } from './store'
 import type { CellRef, ColumnDef, FilterModel, GridOptions, GridState, PinSide, PivotModel, RenderRow, RowId, SortItem } from './types'
 
@@ -139,6 +140,10 @@ export interface PivotInfo {
 export interface GridInstance<R = any> {
   api: GridApi<R>
   options: GridOptions<R>
+  /** the texts the grid shows: the defaults with `options.localeText` on top */
+  text: GridLocaleText
+  /** `options.locale` */
+  locale: string | undefined
   rowHeight: number
   /** for renderers that size rows by their content: tell the grid what `'auto'` rows measured (row positions follow) */
   reportRowHeights: (heights: ReadonlyMap<RowId, number>) => void

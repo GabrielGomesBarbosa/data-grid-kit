@@ -3,6 +3,7 @@ import { buildXlsxWorkbook, XLSX_MIME } from '../xlsx'
 import { sheetOfGrid } from '../xlsxExport'
 import { buildXlsxInWorker } from '../xlsxWorkerClient'
 import { PIVOT_ROWS_FIELD } from '../pivot'
+import { resolveLocaleText } from '../localeText'
 import { type ColumnDef, type RowId } from '../types'
 import type { ApiContext } from './context'
 import type { GridApi } from '../gridTypes'
@@ -22,6 +23,8 @@ export function exportApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'getXlsx' | 'ex
         widthOf: layout.width,
         selection: options.selectedOnly ? new Set(store.getState().selection) : undefined,
         options,
+        text: resolveLocaleText(o.localeText),
+        locale: o.locale,
       })
       const extra = options.extraSheets ?? []
       return options.worker ? buildXlsxInWorker(sheet, options, options.worker, extra) : buildXlsxWorkbook([sheet, ...extra], options)
@@ -42,6 +45,7 @@ export function exportApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'getXlsx' | 'ex
       const layout = layoutRef.current
       if (!result || !layout) return ''
       if (layout.all.some((c) => c.field === PIVOT_ROWS_FIELD)) {
+        const empty = resolveLocaleText(optionsRef.current.localeText).groupEmpty
         // a pivot table exports what it shows: group rows with their aggregates (numbers, not text)
         const cols: ColumnDef<{ label: string; values: Record<string, unknown> }>[] = layout.all.map((c) => ({
           field: c.field,
@@ -51,7 +55,7 @@ export function exportApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'getXlsx' | 'ex
         }))
         const body = result.rows
           .filter((r) => r.type === 'group')
-          .map((r) => ({ label: r.groupValue == null || r.groupValue === '' ? '(empty)' : String(r.groupValue), values: r.aggregates ?? {} }))
+          .map((r) => ({ label: r.groupValue == null || r.groupValue === '' ? empty : String(r.groupValue), values: r.aggregates ?? {} }))
         return toCsv(cols, body, options)
       }
       let rows = result.getVisibleDataRows()

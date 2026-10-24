@@ -57,9 +57,21 @@ Next.js: import the grid from a file marked `"use client"`; see [`apps/next-exam
 | Hierarchy | Tree data, row grouping, aggregation (sum, avg, min, max, count, size, custom), pivoting with nested column groups |
 | Spreadsheet-like | Cell range selection, clipboard (copy, cut, paste), fill handle |
 | Data | Server-side data (`dataSource.getRows`) with lazy loading, block cache, abort, retry, infinite scroll |
+| Localization | `localeText` (every fixed text, strings or functions), `locale` for numbers and dates, a Brazilian Portuguese pack (`data-grid-kit/locales`) |
 | Export | CSV and dependency-free **.xlsx** (typed cells, number formats, merged column groups, outline levels) |
 
 Every feature has a documented status and its known limits on the docs feature-status page.
+
+## Localization
+
+```tsx
+import { ptBR } from 'data-grid-kit/locales'
+
+<Grid rows={rows} columns={columns} {...ptBR} />                         {/* a pack: texts + locale */}
+<Grid rows={rows} columns={columns} locale="de-DE" localeText={de} />   {/* your own keys; the rest stays in English */}
+```
+
+`localeText` keys are strings, or functions when a text has a name or a number in it, so react-intl and next-intl fit as they are. Keep the object the same between renders. See the Localization page of the docs.
 
 ## Performance
 

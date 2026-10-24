@@ -1,3 +1,4 @@
+import type { GridLocaleText } from './localeText'
 export type RowId = string | number
 
 export type SortDirection = 'asc' | 'desc'
@@ -179,6 +180,13 @@ export interface RenderRow<R = any> {
 }
 
 export interface GridOptions<R = any> {
+  /**
+   * The texts the grid shows, by key (see `GridLocaleText`). What you leave out stays in English. Keep the object (and its
+   * functions) the same between renders (define it outside the component, or `useMemo` it): a new one re-renders the grid.
+   */
+  localeText?: Partial<GridLocaleText>
+  /** The locale (`'pt-BR'`) numbers and dates are written in. Default: the browser's. Sorting and searching keep using the browser's. */
+  locale?: string
   /** the data (client-side). Ignored when `dataSource` is set. */
   rows?: R[]
   /**

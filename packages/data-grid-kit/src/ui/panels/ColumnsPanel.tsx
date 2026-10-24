@@ -10,7 +10,7 @@ import type { PanelProps } from './types'
 /** Show and hide columns: a search box, one checkbox per column, one Show/Hide All checkbox and Reset. Every column can be hidden. */
 export function ColumnsPanel<R>({ grid, className }: PanelProps<R>) {
   const { Button, Checkbox, Input } = useBase()
-  const { api, state, options } = grid
+  const { api, state, options, text: t } = grid
   const [query, setQuery] = useState('')
   const visible = (c: ColumnDef) => state.columnVisibility[c.field] ?? !c.hidden
   const all = options.columns
@@ -19,7 +19,7 @@ export function ColumnsPanel<R>({ grid, className }: PanelProps<R>) {
   const list = q ? all.filter((c) => title(c).toLowerCase().includes(q)) : all
   return (
     <div className={cx('gk-panel', className)}>
-      <Input type="search" className="gk-columns-search" placeholder="Search" aria-label="Search columns" value={query} onChange={(e) => setQuery(e.target.value)} />
+      <Input type="search" className="gk-columns-search" placeholder={t.columnsSearch} aria-label={t.columnsSearchLabel} value={query} onChange={(e) => setQuery(e.target.value)} />
       <ul className="gk-column-list">
         {list.map((c) => (
           <li key={c.field}>
@@ -29,7 +29,7 @@ export function ColumnsPanel<R>({ grid, className }: PanelProps<R>) {
             </label>
           </li>
         ))}
-        {list.length === 0 && <li className="gk-muted">No column matches</li>}
+        {list.length === 0 && <li className="gk-muted">{t.columnsNoMatch}</li>}
       </ul>
       <div className="gk-panel-actions gk-columns-footer">
         <label>
@@ -41,10 +41,10 @@ export function ColumnsPanel<R>({ grid, className }: PanelProps<R>) {
             }}
             onChange={(e) => api.setColumnVisibilityModel(Object.fromEntries(all.map((c) => [c.field, e.target.checked])))}
           />
-          Show/Hide All
+          {t.columnsToggleAll}
         </label>
         <Button type="button" disabled={Object.keys(state.columnVisibility).length === 0} onClick={() => api.setColumnVisibilityModel({})}>
-          Reset
+          {t.columnsReset}
         </Button>
       </div>
     </div>

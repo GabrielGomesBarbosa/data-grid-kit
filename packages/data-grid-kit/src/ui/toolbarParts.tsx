@@ -2,6 +2,7 @@ import { createContext, forwardRef, useContext, useEffect, useRef, useState, typ
 import { useBase, type BaseButtonProps } from './base'
 import { useIcons } from './icons'
 import { cx } from './cx'
+import { useLocaleText } from './localeContext'
 import { operatorNeedsValue } from '../core'
 import type { PanelKind, ToolbarProps } from './Toolbar'
 
@@ -21,7 +22,8 @@ export function useToolbar<R = any>(): ToolbarProps<R> {
 
 /** The bar itself: lays its children in a row. Put any of the parts below, or your own elements, inside. */
 export function Toolbar({ className, ...rest }: HTMLAttributes<HTMLDivElement>) {
-  return <div role="toolbar" aria-label="Grid toolbar" {...rest} className={cx('gk-toolbar', className)} />
+  const { text } = useLocaleText()
+  return <div role="toolbar" aria-label={text.toolbar} {...rest} className={cx('gk-toolbar', className)} />
 }
 
 /** A title at the start of the bar; it takes the free space, which pushes the buttons to the end. */
@@ -63,27 +65,28 @@ function usePanelButton(kind: PanelKind) {
 }
 
 /** Opens the columns panel (show / hide columns). Not shown in pivot mode, where the columns are generated. */
-export function ColumnsButton({ label = 'Columns', children, ...rest }: PartProps) {
+export function ColumnsButton({ label, children, ...rest }: PartProps) {
   const { grid } = useToolbar()
   const icons = useIcons()
   const panel = usePanelButton('columns')
   if (grid.pivot) return null
   return (
-    <ToolbarButton label={label} aria-haspopup="dialog" {...panel} {...rest}>
+    <ToolbarButton label={label ?? grid.text.toolbarColumns} aria-haspopup="dialog" {...panel} {...rest}>
       {children ?? <icons.columns />}
     </ToolbarButton>
   )
 }
 
 /** Opens the filter panel; a badge shows how many filters are on. */
-export function FilterButton({ label = 'Filters', children, ...rest }: PartProps) {
+export function FilterButton({ label: labelProp, children, ...rest }: PartProps) {
   const { grid } = useToolbar()
   const icons = useIcons()
   const panel = usePanelButton('filters')
+  const label = labelProp ?? grid.text.toolbarFilters
   // a row nothing has been typed into yet filters nothing, so it is not counted
   const active = grid.state.filterModel.items.filter((f) => !operatorNeedsValue(f.operator) || (f.value !== undefined && f.value !== null && f.value !== '')).length
   return (
-    <ToolbarButton label={active ? `${label}, ${active} active` : label} aria-haspopup="dialog" {...panel} {...rest}>
+    <ToolbarButton label={active ? `${label}, ${grid.text.toolbarFiltersActive(active)}` : label} aria-haspopup="dialog" {...panel} {...rest}>
       {children ?? <icons.filter />}
       {active > 0 && (
         <span className="gk-badge" aria-hidden="true">
@@ -95,24 +98,25 @@ export function FilterButton({ label = 'Filters', children, ...rest }: PartProps
 }
 
 /** Opens the pivot panel. Only shown when the grid has `pivoting` on and its data is on the client. */
-export function PivotButton({ label = 'Pivot', children, ...rest }: PartProps) {
+export function PivotButton({ label, children, ...rest }: PartProps) {
   const { grid } = useToolbar()
   const icons = useIcons()
   const panel = usePanelButton('pivot')
   if (!grid.options.pivoting || grid.options.dataSource) return null
   return (
-    <ToolbarButton label={label} aria-haspopup="dialog" data-active={grid.state.pivotMode ? '' : undefined} {...panel} {...rest}>
+    <ToolbarButton label={label ?? grid.text.toolbarPivot} aria-haspopup="dialog" data-active={grid.state.pivotMode ? '' : undefined} {...panel} {...rest}>
       {children ?? <icons.pivot />}
     </ToolbarButton>
   )
 }
 
 /** Opens the export menu (CSV, Excel). */
-export function ExportButton({ label = 'Export', children, ...rest }: PartProps) {
+export function ExportButton({ label, children, ...rest }: PartProps) {
+  const { grid } = useToolbar()
   const panel = usePanelButton('export')
   const icons = useIcons()
   return (
-    <ToolbarButton label={label} aria-haspopup="menu" {...panel} {...rest}>
+    <ToolbarButton label={label ?? grid.text.toolbarExport} aria-haspopup="menu" {...panel} {...rest}>
       {children ?? <icons.download />}
     </ToolbarButton>
   )
@@ -126,10 +130,12 @@ export interface QuickFilterProps extends Omit<HTMLAttributes<HTMLSpanElement>, 
 }
 
 /** The quick search: a button that opens a search box (Escape closes it when it is empty). It filters every column. */
-export function QuickFilter({ placeholder = 'Search…', defaultExpanded = false, className, children, ...rest }: QuickFilterProps) {
+export function QuickFilter({ placeholder: placeholderProp, defaultExpanded = false, className, children, ...rest }: QuickFilterProps) {
   const { grid } = useToolbar()
   const { Button, Input } = useBase()
   const icons = useIcons()
+  const t = grid.text
+  const placeholder = placeholderProp ?? t.quickFilterPlaceholder
   const value = grid.state.filterModel.quickFilter ?? ''
   const [open, setOpen] = useState(defaultExpanded)
   const input = useRef<HTMLInputElement>(null)
@@ -139,7 +145,7 @@ export function QuickFilter({ placeholder = 'Search…', defaultExpanded = false
   }, [open])
   return (
     <span {...rest} className={cx('gk-quick-filter', className)} data-open={shown ? '' : undefined}>
-      <ToolbarButton label="Search" aria-expanded={shown} onClick={() => setOpen((o) => !o)}>
+      <ToolbarButton label={t.toolbarSearch} aria-expanded={shown} onClick={() => setOpen((o) => !o)}>
         {children ?? <icons.search />}
       </ToolbarButton>
       {shown && (
@@ -149,7 +155,7 @@ export function QuickFilter({ placeholder = 'Search…', defaultExpanded = false
             type="search"
             className="gk-search"
             placeholder={placeholder}
-            aria-label="Quick filter"
+            aria-label={t.quickFilterLabel}
             value={value}
             onChange={(e) => grid.api.setQuickFilter(e.target.value)}
             onKeyDown={(e) => {
@@ -157,7 +163,7 @@ export function QuickFilter({ placeholder = 'Search…', defaultExpanded = false
             }}
           />
           {value !== '' && (
-            <Button type="button" aria-label="Clear search" title="Clear search" className="gk-toolbar-button" onClick={() => grid.api.setQuickFilter('')}>
+            <Button type="button" aria-label={t.quickFilterClear} title={t.quickFilterClear} className="gk-toolbar-button" onClick={() => grid.api.setQuickFilter('')}>
               <icons.close />
             </Button>
           )}

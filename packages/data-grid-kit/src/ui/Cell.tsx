@@ -2,7 +2,8 @@ import { useBase } from './base'
 import { cx } from './cx'
 import { useIcons } from './icons'
 import { type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
-import { aggregationLabel, defaultAlign, formatAggregateValue, formatCellValue, getCellValue, type CellRef, type CustomAggregation, type RenderRow } from '../core'
+import { aggregationLabel, defaultAlign, formatAggregateValue, formatCellValue, formatDate, formatNumber, getCellValue, type CellRef, type CustomAggregation, type RenderRow } from '../core'
+import { useLocaleText } from './localeContext'
 import { CellEditor, type EditMove } from './Editors'
 import { type UIColumnDef } from './types'
 
@@ -61,6 +62,7 @@ const edgeVars = (prefix: string, edges: string | undefined): CSSProperties | un
 
 export function Cell<R>(p: CellProps<R>) {
   const { col, row } = p
+  const { text: t, locale } = useLocaleText()
   const isGroupRow = (row.type === 'group' && row.row === undefined) || row.type === 'footer'
   const aggName = p.aggNames?.[col.field]
   const aggregated = aggName !== undefined && row.aggregates !== undefined && col.field in row.aggregates
@@ -71,14 +73,15 @@ export function Cell<R>(p: CellProps<R>) {
     )
   } else if (aggregated && !(p.isHierarchy && isGroupRow)) {
     // group rows, tree parents and the total row show the aggregate instead of a cell value
-    const text = formatAggregateValue(col, aggName, row.aggregates![col.field])
+    const text = formatAggregateValue(col, aggName, row.aggregates![col.field], locale)
+    const label = aggregationLabel(aggName, p.aggCustom, t)
     content = col.pivot ? (
-      <span className="gk-agg-pivot" title={`${aggregationLabel(aggName, p.aggCustom)} of ${col.pivot.valueField}`}>
+      <span className="gk-agg-pivot" title={t.aggregationOf(label, col.pivot.valueField)}>
         {text}
       </span>
     ) : (
-      <span className="gk-agg" title={`${aggregationLabel(aggName, p.aggCustom)} of ${col.headerName ?? col.field}`}>
-        <span className="gk-agg-label">{aggregationLabel(aggName, p.aggCustom)}</span> {text}
+      <span className="gk-agg" title={t.aggregationOf(label, col.headerName ?? col.field)}>
+        <span className="gk-agg-label">{label}</span> {text}
       </span>
     )
   } else if (isGroupRow) {
@@ -93,7 +96,7 @@ export function Cell<R>(p: CellProps<R>) {
           : value === false
             ? ''
             : ''
-        : formatCellValue(col, row.row)
+        : formatCellValue(col, row.row, locale)
   }
   const align = defaultAlign(col)
   return (
@@ -118,7 +121,7 @@ export function Cell<R>(p: CellProps<R>) {
     >
       {p.isHierarchy && <HierarchyControls p={p} isGroupRow={isGroupRow} />}
       {p.editing ? content : <span className="gk-cell-text">{content}</span>}
-      {p.fillHandle && <div className="gk-fill-handle" title="Drag to fill" aria-hidden="true" onPointerDown={p.onFillStart} />}
+      {p.fillHandle && <div className="gk-fill-handle" title={t.fillHandle} aria-hidden="true" onPointerDown={p.onFillStart} />}
     </div>
   )
 }
@@ -126,6 +129,7 @@ export function Cell<R>(p: CellProps<R>) {
 /** What leads the first cell of a row: drag grip, selection checkbox, detail and expand toggles, pin buttons. */
 function HierarchyControls<R>({ p, isGroupRow }: { p: CellProps<R>; isGroupRow: boolean }) {
   const { Button, Checkbox } = useBase()
+  const { text: t } = useLocaleText()
   const icons = useIcons()
   const { row } = p
   return (
@@ -134,7 +138,7 @@ function HierarchyControls<R>({ p, isGroupRow }: { p: CellProps<R>; isGroupRow: 
         <span
           className="gk-row-handle"
           aria-hidden="true"
-          title="Drag to move this row (or Alt+Shift+↑ / ↓)"
+          title={t.rowDragHandle}
           onPointerDown={(e) => p.onRowDragStart?.(row.id, e)}
         >
           <icons.dragHandle />
@@ -145,7 +149,7 @@ function HierarchyControls<R>({ p, isGroupRow }: { p: CellProps<R>; isGroupRow: 
           type="checkbox"
           className="gk-checkbox"
           tabIndex={-1}
-          aria-label="Select row"
+          aria-label={t.rowSelect}
           checked={p.selected === true}
           ref={(el) => {
             if (el) el.indeterminate = p.selected === 'indeterminate'
@@ -160,7 +164,7 @@ function HierarchyControls<R>({ p, isGroupRow }: { p: CellProps<R>; isGroupRow: 
           className="gk-detail-toggle"
           data-open={p.detailState === 'open' ? '' : undefined}
           aria-expanded={p.detailState === 'open'}
-          aria-label={p.detailState === 'open' ? 'Collapse details' : 'Expand details'}
+          aria-label={p.detailState === 'open' ? t.detailCollapse : t.detailExpand}
           onClick={() => p.onToggleDetail(row.id)}
         >
           <icons.detailToggle />
@@ -172,7 +176,7 @@ function HierarchyControls<R>({ p, isGroupRow }: { p: CellProps<R>; isGroupRow: 
             type="button"
             tabIndex={-1}
             className="gk-toggle"
-            aria-label={row.expanded ? 'Collapse' : 'Expand'}
+            aria-label={row.expanded ? t.treeCollapse : t.treeExpand}
             aria-expanded={row.expanded}
             onClick={() => p.onToggleExpand(row.id)}
           >
@@ -184,15 +188,15 @@ function HierarchyControls<R>({ p, isGroupRow }: { p: CellProps<R>; isGroupRow: 
       {p.rowPinning && !isGroupRow && (
         <span className="gk-rowpin">
           {p.pinSide ? (
-            <Button type="button" tabIndex={-1} aria-label="Unpin row" title="Unpin row" onClick={() => p.onPinRow(row.id, null)}>
+            <Button type="button" tabIndex={-1} aria-label={t.rowUnpin} title={t.rowUnpinTitle} onClick={() => p.onPinRow(row.id, null)}>
               <icons.close />
             </Button>
           ) : (
             <>
-              <Button type="button" tabIndex={-1} aria-label="Pin row to top" title="Pin to top" onClick={() => p.onPinRow(row.id, 'top')}>
+              <Button type="button" tabIndex={-1} aria-label={t.rowPinTop} title={t.rowPinTopTitle} onClick={() => p.onPinRow(row.id, 'top')}>
                 <icons.pinTop />
               </Button>
-              <Button type="button" tabIndex={-1} aria-label="Pin row to bottom" title="Pin to bottom" onClick={() => p.onPinRow(row.id, 'bottom')}>
+              <Button type="button" tabIndex={-1} aria-label={t.rowPinBottom} title={t.rowPinBottomTitle} onClick={() => p.onPinRow(row.id, 'bottom')}>
                 <icons.pinBottom />
               </Button>
             </>
@@ -204,18 +208,19 @@ function HierarchyControls<R>({ p, isGroupRow }: { p: CellProps<R>; isGroupRow: 
 }
 
 export function GroupLabel<R>({ row }: { row: RenderRow<R> }) {
+  const { text: t, locale } = useLocaleText()
   if (row.type === 'footer') {
     return (
       <>
-        <strong>Total</strong> <span className="gk-count">({row.childCount.toLocaleString()})</span>
+        <strong>{t.groupTotal}</strong> <span className="gk-count">({formatNumber(row.childCount, locale)})</span>
       </>
     )
   }
   const text =
     row.groupValue == null || row.groupValue === ''
-      ? '(empty)'
+      ? t.groupEmpty
       : row.groupValue instanceof Date
-        ? row.groupValue.toLocaleDateString()
+        ? formatDate(row.groupValue, locale)
         : String(row.groupValue)
   return (
     <>

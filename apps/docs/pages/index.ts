@@ -6,6 +6,7 @@ import { page as demoRealTimePage } from './demoRealTime'
 import { page as demoTimeOffPage } from './demoTimeOff'
 import { page as demoInventoryPage } from './demoInventory'
 import { page as columnsPage } from './columns'
+import { page as localizationPage } from './localization'
 import { page as sortingPage } from './sorting'
 import { page as filteringPage } from './filtering'
 import { page as paginationPage } from './pagination'
@@ -45,6 +46,7 @@ export const pages: PageDef[] = [
   demoTimeOffPage,
   demoInventoryPage,
   columnsPage,
+  localizationPage,
   sortingPage,
   filteringPage,
   paginationPage,

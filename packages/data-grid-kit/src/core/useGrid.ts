@@ -17,6 +17,7 @@ import { buildTreeResult } from './serverTreeResult'
 
 import { useMeasuredHeights } from './useMeasuredHeights'
 import { visiblePivot } from './pivotModel'
+import { resolveLocaleText } from './localeText'
 import { PIVOT_ROWS_FIELD, buildPivotColumns, pivotAggSortOf, pivotInputOf, pivotSortOf, withDerivedColumns } from './pivot'
 import { type ColumnDef, type GridOptions, type GridState, type RenderRow, type RowId } from './types'
 
@@ -194,10 +195,17 @@ export function useGrid<R = any>(options: GridOptions<R>): GridInstance<R> {
     [ctrl, tree, dsVersion, paged, effective.paginationModel.page, pageSize, detailIds, expandedSet, effective.expandAllByDefault, effective.rowGroupingModel, effective.aggregationModel],
   )
 
+  const text = useMemo(() => resolveLocaleText(options.localeText), [options.localeText])
+  // The generated pivot columns say a few of those texts: they are rebuilt when what they would say changes, not when the
+  // object does (a `localeText` written inline is a new object every render, and the columns must not be laid out again for it).
+  const pivotTextKey = [text.pivotRowsHeader, text.pivotTotalGroup, text.aggregationSum, text.aggregationAvg, text.aggregationMin, text.aggregationMax, text.aggregationCount, text.aggregationSize, text.pivotYear('\u0000'), text.pivotQuarter('\u0000'), text.pivotQuarterValue(1)].join('\u0001')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const pivotText = useMemo(() => text, [pivotTextKey])
+
   // columns the pipeline knows: the real ones, plus (for the pivot panel) what is derived from them
   const sourceColumns = useMemo(
-    () => (options.pivoting ? withDerivedColumns(options.columns, options.pivotDerivedColumns) : options.columns),
-    [options.pivoting, options.columns, options.pivotDerivedColumns],
+    () => (options.pivoting ? withDerivedColumns(options.columns, options.pivotDerivedColumns, pivotText) : options.columns),
+    [options.pivoting, options.columns, options.pivotDerivedColumns, pivotText],
   )
   const pivotInput = useMemo(
     () => (pivotActive ? pivotInputOf(effective.pivotModel, !!options.pivotTotals) : undefined),
@@ -230,9 +238,9 @@ export function useGrid<R = any>(options: GridOptions<R>): GridInstance<R> {
 
   // pivot mode swaps the columns for generated ones: a row-label column and one column per distinct column value
   const layoutColumns = useMemo(
-    () => (pivotActive ? buildPivotColumns(result.pivotColumns, sourceColumns, effective.pivotModel, options.pivotColumnDef) : options.columns),
+    () => (pivotActive ? buildPivotColumns(result.pivotColumns, sourceColumns, effective.pivotModel, options.pivotColumnDef, pivotText) : options.columns),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [pivotActive, result.pivotColumns, sourceColumns, effective.pivotModel, options.columns],
+    [pivotActive, result.pivotColumns, sourceColumns, effective.pivotModel, options.columns, pivotText],
   )
   const pivotInfo = useMemo<PivotInfo | null>(() => {
     if (!pivotActive) return null
@@ -367,7 +375,7 @@ export function useGrid<R = any>(options: GridOptions<R>): GridInstance<R> {
     [selectionSet, result],
   )
 
-  return { api, options, rowHeight, headerHeight, headerRowHeight, headerDepth, pivot: pivotInfo, layout, result, rows: result.rows, rowRange, colRange, geometry, reportRowHeights, detailSlots, detailRange, reorderAllowed, server, footer, pinnedTop, pinnedBottom, state: effective, isSelected }
+  return { api, options, text, locale: options.locale, rowHeight, headerHeight, headerRowHeight, headerDepth, pivot: pivotInfo, layout, result, rows: result.rows, rowRange, colRange, geometry, reportRowHeights, detailSlots, detailRange, reorderAllowed, server, footer, pinnedTop, pinnedBottom, state: effective, isSelected }
 }
 
 export type { ColumnDef }

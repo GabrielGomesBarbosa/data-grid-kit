@@ -52,6 +52,16 @@
         "default": "./dist/core.cjs"
       }
     },
+    "./locales": {
+      "import": {
+        "types": "./dist/locales.d.ts",
+        "default": "./dist/locales.js"
+      },
+      "require": {
+        "types": "./dist/locales.d.cts",
+        "default": "./dist/locales.cjs"
+      }
+    },
     "./styles.css": "./dist/styles.css",
     "./structure.css": "./dist/structure.css",
     "./theme.css": "./dist/theme.css",
@@ -99,6 +109,9 @@
     "*": {
       "core": [
         "./dist/core.d.ts"
+      ],
+      "locales": [
+        "./dist/locales.d.ts"
       ]
     }
   }

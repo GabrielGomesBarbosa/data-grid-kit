@@ -1,31 +1,44 @@
 import type { ReactNode } from 'react'
 import { useBase } from '../base'
 import { useIcons } from '../icons'
-import { defaultFilterItem, getColumnType, getFilterOperators, operatorNeedsValue, optionLabel, optionValue, type ColumnDef, type FilterItem, type FilterOperator, type GridInstance } from '../../core'
+import { defaultFilterItem, getColumnType, getFilterOperators, operatorNeedsValue, optionLabel, optionValue, type ColumnDef, type FilterItem, type FilterOperator, type GridInstance, type GridLocaleText } from '../../core'
 import { title } from './shared'
 import { cx } from '../cx'
+import { useLocaleText } from '../localeContext'
 import type { PanelProps } from './types'
 
 /* ------------------------------------------------------------ filter panel */
 
+/** the operator names core gives, by the key that translates them (the symbols = > ≥ < ≤ are the same everywhere) */
+const OPERATOR_TEXT: Record<string, keyof GridLocaleText> = {
+  contains: 'filterContains',
+  equals: 'filterEquals',
+  'starts with': 'filterStartsWith',
+  'ends with': 'filterEndsWith',
+  'is empty': 'filterIsEmpty',
+  'is not empty': 'filterIsNotEmpty',
+  is: 'filterIs',
+}
+
 function ValueInput({ col, item, onChange, first }: { col: ColumnDef; item: FilterItem; onChange: (v: string) => void; first?: boolean }) {
   const { Input, Select } = useBase()
+  const { text: t } = useLocaleText()
   const type = getColumnType(col)
   const value = item.value == null ? '' : String(item.value)
   const focus = first ? { 'data-autofocus': '' } : undefined // the popover puts the focus here when it opens
   if (!operatorNeedsValue(item.operator)) return <span className="gk-muted">-</span>
   if (type === 'boolean') {
     return (
-      <Select aria-label="Value" value={value} onChange={(e) => onChange(e.target.value)} {...focus}>
+      <Select aria-label={t.filterValue} value={value} onChange={(e) => onChange(e.target.value)} {...focus}>
         <option value="" />
-        <option value="true">true</option>
-        <option value="false">false</option>
+        <option value="true">{t.filterTrue}</option>
+        <option value="false">{t.filterFalse}</option>
       </Select>
     )
   }
   if (type === 'singleSelect') {
     return (
-      <Select aria-label="Value" value={value} onChange={(e) => onChange(e.target.value)} {...focus}>
+      <Select aria-label={t.filterValue} value={value} onChange={(e) => onChange(e.target.value)} {...focus}>
         <option value="" />
         {(col.valueOptions ?? []).map((o) => (
           <option key={String(optionValue(o))} value={String(optionValue(o))}>
@@ -37,9 +50,9 @@ function ValueInput({ col, item, onChange, first }: { col: ColumnDef; item: Filt
   }
   return (
     <Input
-      aria-label="Value"
+      aria-label={t.filterValue}
       type={type === 'number' ? 'number' : type === 'date' ? 'date' : 'text'}
-      placeholder="Value"
+      placeholder={t.filterValue}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       {...focus}
@@ -60,7 +73,7 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 export function FilterPanel<R>({ grid, className, onClose }: PanelProps<R>) {
   const { Button, Select } = useBase()
   const icons = useIcons()
-  const { api, state } = grid
+  const { api, state, text: t } = grid
   const columns = grid.options.columns.filter((c) => c.filterable !== false)
   const model = state.filterModel
   // With no filter yet the panel opens on one ready row, so there is something to fill in at once. The row is only shown:
@@ -89,24 +102,24 @@ export function FilterPanel<R>({ grid, className, onClose }: PanelProps<R>) {
         const update = (patch: Partial<FilterItem>) => setItems(items.map((x, j) => (j === i ? { ...x, ...patch } : x)))
         return (
           <div className="gk-filter-row" key={i}>
-            <Button type="button" className="gk-icon-btn" aria-label="Remove filter" title="Remove filter" onClick={() => remove(i)}>
+            <Button type="button" className="gk-icon-btn" aria-label={t.filterRemove} title={t.filterRemove} onClick={() => remove(i)}>
               <icons.close />
             </Button>
             {i === 1 && items.length > 1 ? (
               <Select
-                aria-label="Logic"
+                aria-label={t.filterLogic}
                 value={model.logic ?? 'and'}
                 onChange={(e) => api.setFilterModel({ ...model, logic: e.target.value as 'and' | 'or' })}
               >
-                <option value="and">And</option>
-                <option value="or">Or</option>
+                <option value="and">{t.filterAnd}</option>
+                <option value="or">{t.filterOr}</option>
               </Select>
             ) : (
-              <span className="gk-filter-logic">{i === 0 ? 'Where' : (model.logic ?? 'and') === 'or' ? 'Or' : 'And'}</span>
+              <span className="gk-filter-logic">{i === 0 ? t.filterWhere : (model.logic ?? 'and') === 'or' ? t.filterOr : t.filterAnd}</span>
             )}
-            <Field label="Column">
+            <Field label={t.filterColumn}>
               <Select
-                aria-label="Column"
+                aria-label={t.filterColumn}
                 value={item.field}
                 onChange={(e) => {
                   const next = columns.find((c) => c.field === e.target.value)!
@@ -120,16 +133,16 @@ export function FilterPanel<R>({ grid, className, onClose }: PanelProps<R>) {
                 ))}
               </Select>
             </Field>
-            <Field label="Operator">
-              <Select aria-label="Operator" value={item.operator} onChange={(e) => update({ operator: e.target.value as FilterOperator })}>
+            <Field label={t.filterOperator}>
+              <Select aria-label={t.filterOperator} value={item.operator} onChange={(e) => update({ operator: e.target.value as FilterOperator })}>
                 {operators.map((o) => (
                   <option key={o.value} value={o.value}>
-                    {o.label}
+                    {OPERATOR_TEXT[o.label] ? t[OPERATOR_TEXT[o.label]!] as string : o.label}
                   </option>
                 ))}
               </Select>
             </Field>
-            <Field label="Value">
+            <Field label={t.filterValue}>
               <ValueInput col={col} item={item} first={i === 0} onChange={(value) => update({ value })} />
             </Field>
           </div>
@@ -137,11 +150,11 @@ export function FilterPanel<R>({ grid, className, onClose }: PanelProps<R>) {
       })}
       <div className="gk-panel-actions gk-filter-actions">
         <Button type="button" className="gk-link-btn" onClick={addItem}>
-          <icons.add /> Add filter
+          <icons.add /> {t.filterAdd}
         </Button>
         {model.items.length > 0 && (
           <Button type="button" className="gk-link-btn" onClick={() => setItems([])}>
-            <icons.trash /> Remove all
+            <icons.trash /> {t.filterRemoveAll}
           </Button>
         )}
       </div>

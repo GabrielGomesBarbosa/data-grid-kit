@@ -284,13 +284,13 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
     }))
   const belowBody = hdr + pinnedTop.length + rows.length + detailSlots.length
   const pinnedTopBlock: PinnedBlock<R> | null = pinnedTop.length
-    ? { side: 'top', label: 'Pinned rows (top)', style: { top: headerHeight, height: pinnedTop.length * rowHeight, width: totalWidth }, rows: pinnedRowProps(pinnedTop, 'top', hdr) }
+    ? { side: 'top', label: grid.text.pinnedRowsTop, style: { top: headerHeight, height: pinnedTop.length * rowHeight, width: totalWidth }, rows: pinnedRowProps(pinnedTop, 'top', hdr) }
     : null
   const pinnedBottomBlock: PinnedBlock<R> | null =
     pinnedBottom.length > 0 || footer
       ? {
           side: 'bottom',
-          label: footer ? 'Pinned rows and totals' : 'Pinned rows (bottom)',
+          label: footer ? grid.text.pinnedRowsAndTotals : grid.text.pinnedRowsBottom,
           style: { height: (pinnedBottom.length + (footer ? 1 : 0)) * rowHeight, width: totalWidth },
           rows: [...pinnedRowProps(pinnedBottom, 'bottom', belowBody), ...(footer ? pinnedRowProps([footer], 'bottom', belowBody + pinnedBottom.length) : [])],
         }

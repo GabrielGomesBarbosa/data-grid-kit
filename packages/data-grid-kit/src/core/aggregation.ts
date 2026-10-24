@@ -1,4 +1,5 @@
 import { compareValues, isNil } from './values'
+import { formatDate, formatNumber, type GridLocaleText } from './localeText'
 import type { ColumnDef, ColumnType, CustomAggregation } from './types'
 
 export type BuiltinAggregation = 'sum' | 'avg' | 'min' | 'max' | 'count' | 'size'
@@ -20,8 +21,18 @@ export const BUILTIN_AGGREGATIONS: Record<BuiltinAggregation, BuiltinInfo> = {
 
 export const isBuiltinAggregation = (name: string): name is BuiltinAggregation => name in BUILTIN_AGGREGATIONS
 
-export function aggregationLabel(name: string, custom?: Record<string, CustomAggregation>): string {
-  if (isBuiltinAggregation(name)) return BUILTIN_AGGREGATIONS[name].label
+const BUILTIN_TEXT: Record<BuiltinAggregation, keyof GridLocaleText> = {
+  sum: 'aggregationSum',
+  avg: 'aggregationAvg',
+  min: 'aggregationMin',
+  max: 'aggregationMax',
+  count: 'aggregationCount',
+  size: 'aggregationSize',
+}
+
+/** The name of a function as the user sees it; `text` (the grid's) translates the built-in ones. */
+export function aggregationLabel(name: string, custom?: Record<string, CustomAggregation>, text?: Pick<GridLocaleText, 'aggregationSum' | 'aggregationAvg' | 'aggregationMin' | 'aggregationMax' | 'aggregationCount' | 'aggregationSize'>): string {
+  if (isBuiltinAggregation(name)) return text ? (text[BUILTIN_TEXT[name] as keyof typeof text] as string) : BUILTIN_AGGREGATIONS[name].label
   return custom?.[name]?.label ?? name
 }
 
@@ -120,9 +131,9 @@ export function accFinish(acc: AggAcc, kind: BuiltinAggregation): unknown {
 }
 
 /** Text for an aggregated value: counts as integers, otherwise through the column's formatter. */
-export function formatAggregateValue(col: ColumnDef, name: string, value: unknown): string {
+export function formatAggregateValue(col: ColumnDef, name: string, value: unknown, locale?: string): string {
   if (value == null || value === '') return ''
-  if (name === 'count' || name === 'size') return Number(value).toLocaleString()
+  if (name === 'count' || name === 'size') return formatNumber(Number(value), locale)
   if (col.valueFormatter) {
     try {
       // aggregates have no row: formatters that only read the value work as they are
@@ -131,7 +142,7 @@ export function formatAggregateValue(col: ColumnDef, name: string, value: unknow
       /* a formatter that needs the row cannot format an aggregate: fall through */
     }
   }
-  if (value instanceof Date) return value.toLocaleDateString()
-  if (typeof value === 'number') return value.toLocaleString(undefined, { maximumFractionDigits: 2 })
+  if (value instanceof Date) return formatDate(value, locale)
+  if (typeof value === 'number') return formatNumber(value, locale, { maximumFractionDigits: 2 })
   return String(value)
 }

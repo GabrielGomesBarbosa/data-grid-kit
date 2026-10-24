@@ -21,6 +21,7 @@ export interface PopoversProps<R> {
 export function Popovers<R>(p: PopoversProps<R>) {
   const { Button } = useBase()
   const { grid, menu, panel } = p
+  const t = grid.text
   const { slots, slotProps } = useSlots<R>()
   const { popover: Popover, columnMenu: ColumnMenu, filterPanel: FilterPanel, columnsPanel: ColumnsPanel, pivotPanel: PivotPanel } = slots
   const item = 'gk-menu-item'
@@ -29,35 +30,35 @@ export function Popovers<R>(p: PopoversProps<R>) {
   return (
     <>
       {menu && (
-        <Popover anchor={menu.anchor} onClose={p.closeMenu} label="Column menu" role="menu" align="end" {...popoverProps('gk-menu')}>
+        <Popover anchor={menu.anchor} onClose={p.closeMenu} label={t.columnMenu} role="menu" align="end" {...popoverProps('gk-menu')}>
           <ColumnMenu grid={grid} field={menu.field} onClose={p.closeMenu} onFilter={p.onFilter} aggregation={p.aggregationMenu && !grid.pivot} {...slotProps.columnMenu} />
         </Popover>
       )}
       {panel?.kind === 'filters' && (
-        <Popover anchor={panel.anchor} onClose={p.closePanel} label="Filters" {...popoverProps()}>
+        <Popover anchor={panel.anchor} onClose={p.closePanel} label={t.toolbarFilters} {...popoverProps()}>
           <FilterPanel grid={grid} onClose={p.closePanel} {...slotProps.filterPanel} />
         </Popover>
       )}
       {panel?.kind === 'columns' && (
-        <Popover anchor={panel.anchor} onClose={p.closePanel} label="Columns" {...popoverProps()}>
+        <Popover anchor={panel.anchor} onClose={p.closePanel} label={t.toolbarColumns} {...popoverProps()}>
           <ColumnsPanel grid={grid} {...slotProps.columnsPanel} />
         </Popover>
       )}
       {panel?.kind === 'pivot' && (
-        <Popover anchor={panel.anchor} onClose={p.closePanel} label="Pivot" {...popoverProps()}>
+        <Popover anchor={panel.anchor} onClose={p.closePanel} label={t.toolbarPivot} {...popoverProps()}>
           <PivotPanel grid={grid} onClose={p.closePanel} {...slotProps.pivotPanel} />
         </Popover>
       )}
       {panel?.kind === 'export' && (
-        <Popover anchor={panel.anchor} onClose={p.closePanel} label="Export" role="menu" {...popoverProps('gk-menu')}>
+        <Popover anchor={panel.anchor} onClose={p.closePanel} label={t.toolbarExport} role="menu" {...popoverProps('gk-menu')}>
           <Button type="button" role="menuitem" className={item} onClick={() => p.onExportCsv(false)}>
-            Download CSV
+            {t.exportCsv}
           </Button>
           <Button type="button" role="menuitem" className={item} disabled={grid.state.selection.length === 0} onClick={() => p.onExportCsv(true)}>
-            Download CSV (selected rows)
+            {t.exportCsvSelected}
           </Button>
           <Button type="button" role="menuitem" className={item} onClick={p.onExportXlsx}>
-            Download Excel (.xlsx)
+            {t.exportXlsx}
           </Button>
         </Popover>
       )}

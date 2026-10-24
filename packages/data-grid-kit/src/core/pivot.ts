@@ -1,8 +1,9 @@
-import { isBuiltinAggregation } from './aggregation'
+import { aggregationLabel, isBuiltinAggregation } from './aggregation'
 import type { PivotColumn, PivotInput } from './pipeline'
 import { isPivotValueField } from './pipeline/contract'
 import type { ColumnDef, PivotModel } from './types'
 import { moveValueEntry, visiblePivot } from './pivotModel'
+import type { GridLocaleText } from './localeText'
 
 /** field of the column that carries the row group labels in pivot mode */
 export const PIVOT_ROWS_FIELD = '__gk_pivot_rows__'
@@ -13,7 +14,7 @@ const title = (c: ColumnDef) => c.headerName ?? c.field
  * Columns a date column offers to the pivot panel: its year and its quarter. They are ordinary columns with a
  * getter, so they can be rows, columns or values like any other.
  */
-export function defaultPivotDerived<R>(col: ColumnDef<R>): ColumnDef<R>[] | undefined {
+export function defaultPivotDerived<R>(col: ColumnDef<R>, text?: Pick<GridLocaleText, 'pivotYear' | 'pivotQuarter' | 'pivotQuarterValue'>): ColumnDef<R>[] | undefined {
   if (col.type !== 'date') return undefined
   const date = (row: R) => {
     const v = col.valueGetter ? col.valueGetter(row) : (row as Record<string, unknown>)[col.field]
@@ -21,8 +22,8 @@ export function defaultPivotDerived<R>(col: ColumnDef<R>): ColumnDef<R>[] | unde
     return d && !Number.isNaN(d.getTime()) ? d : null
   }
   return [
-    { field: `${col.field}-year`, headerName: `${title(col)} (year)`, valueGetter: (row) => date(row)?.getFullYear() ?? null },
-    { field: `${col.field}-quarter`, headerName: `${title(col)} (quarter)`, valueGetter: (row) => { const d = date(row); return d ? `Q${Math.floor(d.getMonth() / 3) + 1}` : null } },
+    { field: `${col.field}-year`, headerName: text ? text.pivotYear(title(col)) : `${title(col)} (year)`, valueGetter: (row) => date(row)?.getFullYear() ?? null },
+    { field: `${col.field}-quarter`, headerName: text ? text.pivotQuarter(title(col)) : `${title(col)} (quarter)`, valueGetter: (row) => { const d = date(row); if (!d) return null; const q = Math.floor(d.getMonth() / 3) + 1; return text ? text.pivotQuarterValue(q) : `Q${q}` } },
   ]
 }
 
@@ -30,9 +31,10 @@ export function defaultPivotDerived<R>(col: ColumnDef<R>): ColumnDef<R>[] | unde
 export function withDerivedColumns<R>(
   columns: ColumnDef<R>[],
   derive: false | ((col: ColumnDef<R>) => ColumnDef<R>[] | undefined) | undefined,
+  text?: Pick<GridLocaleText, 'pivotYear' | 'pivotQuarter' | 'pivotQuarterValue'>,
 ): ColumnDef<R>[] {
   if (derive === false) return columns
-  const fn = derive ?? defaultPivotDerived
+  const fn = derive ?? ((col: ColumnDef<R>) => defaultPivotDerived(col, text))
   const have = new Set(columns.map((c) => c.field))
   const out = columns.slice()
   for (const c of columns) {
@@ -61,13 +63,14 @@ export function buildPivotColumns<R>(
   source: ColumnDef<R>[],
   model: PivotModel,
   overrides?: (field: string, path: string[]) => Partial<ColumnDef<R>> | undefined,
+  text?: Pick<GridLocaleText, 'pivotRowsHeader' | 'pivotTotalGroup' | 'aggregationSum' | 'aggregationAvg' | 'aggregationMin' | 'aggregationMax' | 'aggregationCount' | 'aggregationSize'>,
 ): ColumnDef<R>[] {
   const byField = new Map(source.map((c) => [c.field, c]))
   const rowsTitle = visiblePivot(model).rows.map((f) => (byField.has(f) ? title(byField.get(f)!) : f)).join(' / ')
   const out: ColumnDef<R>[] = [
     {
       field: PIVOT_ROWS_FIELD,
-      headerName: rowsTitle || 'Rows',
+      headerName: rowsTitle || (text?.pivotRowsHeader ?? 'Rows'),
       width: 220,
       filterable: false,
       editable: false,
@@ -82,8 +85,8 @@ export function buildPivotColumns<R>(
     if (!orig) continue
     out.push({
       field: pc.field,
-      headerName: `${title(orig)} (${pc.aggFunc})`,
-      group: pc.total ? ['Total'] : pc.path,
+      headerName: `${title(orig)} (${text ? aggregationLabel(pc.aggFunc, undefined, text) : pc.aggFunc})`,
+      group: pc.total ? [text?.pivotTotalGroup ?? 'Total'] : pc.path,
       type: 'number',
       width: Math.max(orig.width ?? 0, 130),
       minWidth: orig.minWidth,

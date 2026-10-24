@@ -1,4 +1,5 @@
 import { useBase } from './base'
+import { useLocaleText } from './localeContext'
 import { useRef, type ReactNode } from 'react'
 import {
   formatDateInput,
@@ -55,6 +56,7 @@ function InputEditor({
   onCancel: () => void
 }) {
   const { Input } = useBase()
+  const { text: t } = useLocaleText()
   const ref = useRef<HTMLInputElement | null>(null)
   // a commit/cancel fires at most once; blur after Enter/Escape must not commit again
   const settled = useRef(false)
@@ -100,7 +102,7 @@ function InputEditor({
       className="gk-editor"
       type={type === 'number' ? 'number' : type === 'date' ? 'date' : 'text'}
       defaultValue={initial}
-      aria-label="Edit cell"
+      aria-label={t.editCell}
       onKeyDown={(e) => {
         e.stopPropagation()
         if (e.key === 'Enter') {
@@ -130,12 +132,13 @@ function BooleanEditor({
   onCancel: () => void
 }) {
   const { Checkbox } = useBase()
+  const { text: t } = useLocaleText()
   return (
     <Checkbox
       autoFocus
       type="checkbox"
       className="gk-checkbox"
-      aria-label="Edit cell"
+      aria-label={t.editCell}
       defaultChecked={value === true}
       onChange={(e) => void onCommit(e.target.checked)}
       onKeyDown={(e) => {
@@ -160,12 +163,13 @@ function SelectEditor<R>({
   onCancel: () => void
 }) {
   const { Select } = useBase()
+  const { text: t } = useLocaleText()
   const options = col.valueOptions ?? []
   return (
     <Select
       autoFocus
       className="gk-editor"
-      aria-label="Edit cell"
+      aria-label={t.editCell}
       defaultValue={value == null ? '' : String(value)}
       onChange={(e) => {
         const picked = options.find((o) => String(optionValue(o)) === e.target.value)

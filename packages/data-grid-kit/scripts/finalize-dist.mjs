@@ -3,7 +3,7 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 
 const DIRECTIVE = "'use client';"
-for (const file of ['dist/index.js', 'dist/core.js', 'dist/index.cjs', 'dist/core.cjs']) {
+for (const file of ['dist/index.js', 'dist/core.js', 'dist/locales.js', 'dist/index.cjs', 'dist/core.cjs', 'dist/locales.cjs']) {
   const path = new URL(`../${file}`, import.meta.url)
   const code = readFileSync(path, 'utf8')
   if (!code.startsWith(DIRECTIVE)) writeFileSync(path, DIRECTIVE + code.split(DIRECTIVE).join(''))

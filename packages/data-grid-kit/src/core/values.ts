@@ -1,3 +1,4 @@
+import { formatDate } from './localeText'
 import type { ColumnDef } from './types'
 
 /* ------------------------------------------------------------------ values */
@@ -6,11 +7,11 @@ export function getCellValue<R>(col: ColumnDef<R>, row: R): unknown {
   return col.valueGetter ? col.valueGetter(row) : (row as Record<string, unknown>)[col.field]
 }
 
-export function formatCellValue<R>(col: ColumnDef<R>, row: R): string {
+export function formatCellValue<R>(col: ColumnDef<R>, row: R, locale?: string): string {
   const value = getCellValue(col, row)
   if (col.valueFormatter) return col.valueFormatter(value, row)
   if (value == null) return ''
-  if (value instanceof Date) return value.toLocaleDateString()
+  if (value instanceof Date) return formatDate(value, locale)
   return String(value)
 }
 

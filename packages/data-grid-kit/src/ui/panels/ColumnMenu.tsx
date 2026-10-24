@@ -23,7 +23,7 @@ export interface ColumnMenuProps<R> {
 }
 
 export function ColumnMenu<R>({ grid, field, onClose, onFilter, aggregation = true }: ColumnMenuProps<R>) {
-  const { api, state, layout, options } = grid
+  const { api, state, layout, options, text: t } = grid
   // the columns on screen, so the generated ones (pivot) have a menu too
   const col = layout.all.find((c) => c.field === field)
   if (!col) return null
@@ -41,36 +41,36 @@ export function ColumnMenu<R>({ grid, field, onClose, onFilter, aggregation = tr
       {col.sortable !== false && (
         <>
           <Item disabled={sort?.direction === 'asc'} onClick={run(() => api.setSortModel([{ field, direction: 'asc' }]))}>
-            Sort ascending
+            {t.menuSortAsc}
           </Item>
           <Item disabled={sort?.direction === 'desc'} onClick={run(() => api.setSortModel([{ field, direction: 'desc' }]))}>
-            Sort descending
+            {t.menuSortDesc}
           </Item>
           {sort && (
-            <Item onClick={run(() => api.setSortModel(state.sortModel.filter((s) => s.field !== field)))}>Unsort</Item>
+            <Item onClick={run(() => api.setSortModel(state.sortModel.filter((s) => s.field !== field)))}>{t.menuUnsort}</Item>
           )}
           <hr className="gk-menu-sep" />
         </>
       )}
-      {col.filterable !== false && <Item onClick={() => onFilter(field)}>Filter…</Item>}
+      {col.filterable !== false && <Item onClick={() => onFilter(field)}>{t.menuFilter}</Item>}
       {col.pinnable !== false && (
         <>
           <Item disabled={side === 'left'} onClick={run(() => api.pinColumn(field, 'left'))}>
-            Pin to left
+            {t.menuPinLeft}
           </Item>
           <Item disabled={side === 'right'} onClick={run(() => api.pinColumn(field, 'right'))}>
-            Pin to right
+            {t.menuPinRight}
           </Item>
-          {side && <Item onClick={run(() => api.pinColumn(field, null))}>Unpin</Item>}
+          {side && <Item onClick={run(() => api.pinColumn(field, null))}>{t.menuUnpin}</Item>}
         </>
       )}
       {col.reorderable !== false && (
         <>
           <Item disabled={!neighborInGroup(layout, field, -1)} onClick={run(() => api.moveColumnBy(field, -1))}>
-            Move left
+            {t.menuMoveLeft}
           </Item>
           <Item disabled={!neighborInGroup(layout, field, 1)} onClick={run(() => api.moveColumnBy(field, 1))}>
-            Move right
+            {t.menuMoveRight}
           </Item>
         </>
       )}
@@ -78,22 +78,22 @@ export function ColumnMenu<R>({ grid, field, onClose, onFilter, aggregation = tr
         <>
           <hr className="gk-menu-sep" />
           <div className="gk-menu-heading" role="presentation">
-            Aggregate
+            {t.menuAggregate}
           </div>
           <Item onClick={run(() => api.setAggregation(field, null))}>
-            {currentAgg ? '\u00a0\u00a0' : '✓ '}None
+            {currentAgg ? '\u00a0\u00a0' : '✓ '}{t.menuAggregateNone}
           </Item>
           {aggChoices.map((name) => (
             <Item key={name} onClick={run(() => api.setAggregation(field, name))}>
               {currentAgg === name ? '✓ ' : '\u00a0\u00a0'}
-              {aggregationLabel(name, options.aggregationFunctions)}
+              {aggregationLabel(name, options.aggregationFunctions, t)}
             </Item>
           ))}
         </>
       )}
       <hr className="gk-menu-sep" />
       <Item disabled={visibleCount <= 1} onClick={run(() => api.setColumnVisibility(field, false))}>
-        Hide column
+        {t.menuHide}
       </Item>
     </>
   )

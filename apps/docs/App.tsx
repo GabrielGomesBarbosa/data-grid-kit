@@ -34,7 +34,7 @@ function useTheme(): [Theme, (t: Theme) => void] {
 
 const GROUPS: PageDef['group'][] = ['Getting started', 'Demos', 'Main features', 'Advanced features', 'Guides', 'Reference']
 /** pages for features added recently */
-const NEW = new Set(['pivoting', 'excel-export', 'server-side-data', 'demo-real-time', 'demo-time-off', 'demo-inventory'])
+const NEW = new Set(['localization', 'pivoting', 'excel-export', 'server-side-data', 'demo-real-time', 'demo-time-off', 'demo-inventory'])
 const REPO = 'https://github.com/GabrielGomesBarbosa/data-grid-kit'
 
 /** `#/page` or `#/page/section` */

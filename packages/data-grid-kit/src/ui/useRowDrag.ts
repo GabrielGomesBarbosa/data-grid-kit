@@ -14,7 +14,7 @@ export function useRowDrag<R>(c: GridCtx<R>) {
   const announceMove = (id: RenderRow['id']) =>
     setTimeout(() => {
       const res = gridRef.current.result
-      setAnnouncement(`Row moved to position ${res.dataIndexOf(id) + 1} of ${res.dataCount}`)
+      setAnnouncement(gridRef.current.text.rowMoved(res.dataIndexOf(id) + 1, res.dataCount))
     }, 0)
 
   const startRowDrag = (id: RenderRow['id'], e: ReactPointerEvent<HTMLElement>) => {

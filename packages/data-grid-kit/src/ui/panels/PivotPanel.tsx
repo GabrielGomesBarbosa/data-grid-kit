@@ -21,7 +21,7 @@ export function PivotPanel<R>({ grid, className, onClose }: PanelProps<R>) {
   const [open, setOpen] = useState({ rows: true, columns: true, values: true })
   const [query, setQuery] = useState('')
   const icons = useIcons()
-  const { api, state, options } = grid
+  const { api, state, options, text: t } = grid
   const model = state.pivotModel
   const fields: ColumnDef[] = (grid.pivot?.sourceColumns ?? options.columns).filter((c) => !c.pivot)
   const byField = new Map(fields.map((c) => [c.field, c]))
@@ -92,7 +92,7 @@ export function PivotPanel<R>({ grid, className, onClose }: PanelProps<R>) {
     <span
       className="gk-pivot-grip"
       aria-hidden="true"
-      title={`Drag ${name(field)} to another list`}
+      title={t.pivotDrag(name(field))}
       onPointerDown={(e) => startDrag(field, e, entry)}
     >
       <icons.dragHandle />
@@ -102,8 +102,8 @@ export function PivotPanel<R>({ grid, className, onClose }: PanelProps<R>) {
   const visibility = (entry: PivotEntry, field: string, hidden: boolean | undefined) => (
     <Checkbox
       type="checkbox"
-      aria-label={`Show ${name(field)}`}
-      title={hidden ? 'Hidden from the table' : 'Shown in the table'}
+      aria-label={t.pivotShow(name(field))}
+      title={hidden ? t.pivotHidden : t.pivotShown}
       checked={!hidden}
       onChange={(e) => update((m) => setPivotHidden(m, entry, !e.target.checked))}
     />
@@ -120,13 +120,13 @@ export function PivotPanel<R>({ grid, className, onClose }: PanelProps<R>) {
     const i = list.indexOf(field)
     return (
       <span className="gk-pivot-actions">
-        <Button type="button" aria-label={`Move ${name(field)} up`} disabled={i === 0} onClick={() => place(field, section, list[i - 1]!)}>
+        <Button type="button" aria-label={t.pivotMoveUp(name(field))} disabled={i === 0} onClick={() => place(field, section, list[i - 1]!)}>
           <icons.moveUp />
         </Button>
-        <Button type="button" aria-label={`Move ${name(field)} down`} disabled={i === list.length - 1} onClick={() => place(field, section, list[i + 2] ?? null)}>
+        <Button type="button" aria-label={t.pivotMoveDown(name(field))} disabled={i === list.length - 1} onClick={() => place(field, section, list[i + 2] ?? null)}>
           <icons.moveDown />
         </Button>
-        <Button type="button" aria-label={`Remove ${name(field)}`} onClick={() => place(field, null)}>
+        <Button type="button" aria-label={t.pivotRemove(name(field))} onClick={() => place(field, null)}>
           <icons.close />
         </Button>
       </span>
@@ -161,22 +161,22 @@ export function PivotPanel<R>({ grid, className, onClose }: PanelProps<R>) {
     <div className={cx('gk-panel gk-pivot', className)} data-dragging={drag ? '' : undefined}>
       <div className="gk-pivot-head">
         <label className="gk-pivot-mode">
-          <Checkbox type="checkbox" role="switch" aria-label="Pivot mode" checked={state.pivotMode} onChange={(e) => api.setPivotMode(e.target.checked)} />
-          <span>Pivot</span>
+          <Checkbox type="checkbox" role="switch" aria-label={t.pivotMode} checked={state.pivotMode} onChange={(e) => api.setPivotMode(e.target.checked)} />
+          <span>{t.pivotTitle}</span>
         </label>
         {onClose && (
-          <Button type="button" className="gk-icon-btn" aria-label="Close pivot panel" title="Close" onClick={onClose}>
+          <Button type="button" className="gk-icon-btn" aria-label={t.pivotClose} title={t.pivotCloseTitle} onClick={onClose}>
             <icons.close />
           </Button>
         )}
       </div>
       <label className="gk-pivot-search">
         <icons.search />
-        <Input type="search" placeholder="Search fields" aria-label="Search fields" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <Input type="search" placeholder={t.pivotSearch} aria-label={t.pivotSearch} value={query} onChange={(e) => setQuery(e.target.value)} />
       </label>
 
-      <ul className="gk-pivot-list gk-pivot-fields" aria-label="Available fields" data-pivot-section="fields" data-over={overOf('fields') ? '' : undefined}>
-        {free.length === 0 && empty(q ? 'No field matches' : 'Every field is in use')}
+      <ul className="gk-pivot-list gk-pivot-fields" aria-label={t.pivotAvailableFields} data-pivot-section="fields" data-over={overOf('fields') ? '' : undefined}>
+        {free.length === 0 && empty(q ? t.pivotNoFieldMatch : t.pivotAllFieldsUsed)}
         {free
           .map((c) => {
           const at = where(c.field)
@@ -193,10 +193,10 @@ export function PivotPanel<R>({ grid, className, onClose }: PanelProps<R>) {
                     key={sec}
                     type="button"
                     disabled={at === sec || (sec === 'values' && !canValue(c.field))}
-                    aria-label={`Add ${title(c)} to ${sec}`}
+                    aria-label={(sec === 'rows' ? t.pivotAddToRows : sec === 'columns' ? t.pivotAddToColumns : t.pivotAddToValues)(title(c))}
                     onClick={() => place(c.field, sec)}
                   >
-                    {sec === 'rows' ? 'Row' : sec === 'columns' ? 'Column' : 'Value'}
+                    {sec === 'rows' ? t.pivotAddRow : sec === 'columns' ? t.pivotAddColumn : t.pivotAddValue}
                   </Button>
                 ))}
               </span>
@@ -205,10 +205,10 @@ export function PivotPanel<R>({ grid, className, onClose }: PanelProps<R>) {
         })}
       </ul>
 
-      {section('rows', 'Rows', model.rows.length)}
+      {section('rows', t.pivotRows, model.rows.length)}
       {open.rows && (
-      <ul {...list('rows', 'Pivot rows')}>
-        {model.rows.length === 0 && empty('Drag a field here to group the rows by it')}
+      <ul {...list('rows', t.pivotRowsList)}>
+        {model.rows.length === 0 && empty(t.pivotDropRows)}
         {model.rows.map((f) => (
           <li key={f} data-pivot-field={f} data-drop={dropMark('rows', f)} data-dragged={drag?.field === f ? '' : undefined} data-hidden={model.hiddenRows?.includes(f) ? '' : undefined}>
             {grip(f)}
@@ -220,24 +220,24 @@ export function PivotPanel<R>({ grid, className, onClose }: PanelProps<R>) {
       </ul>
       )}
 
-      {section('columns', 'Columns', model.columns.length)}
+      {section('columns', t.pivotColumns, model.columns.length)}
       {open.columns && (
-      <ul {...list('columns', 'Pivot columns')}>
-        {model.columns.length === 0 && empty('Drag a field here to spread it into columns')}
+      <ul {...list('columns', t.pivotColumnsList)}>
+        {model.columns.length === 0 && empty(t.pivotDropColumns)}
         {model.columns.map((c) => (
           <li key={c.field} data-pivot-field={c.field} data-drop={dropMark('columns', c.field)} data-dragged={drag?.field === c.field ? '' : undefined} data-hidden={c.hidden ? '' : undefined}>
             {grip(c.field)}
             {visibility({ section: 'columns', field: c.field }, c.field, c.hidden)}
             <span className="gk-pivot-name">{name(c.field)}</span>
             <Select
-              aria-label={`Sort ${name(c.field)} columns`}
+              aria-label={t.pivotSortColumns(name(c.field))}
               value={c.sort ?? 'asc'}
               onChange={(e) =>
                 update((m) => ({ ...m, columns: m.columns.map((x) => (x.field === c.field ? { ...x, sort: e.target.value as 'asc' | 'desc' } : x)) }))
               }
             >
-              <option value="asc">A → Z</option>
-              <option value="desc">Z → A</option>
+              <option value="asc">{t.pivotSortAsc}</option>
+              <option value="desc">{t.pivotSortDesc}</option>
             </Select>
             {arrows(columnFields, c.field, 'columns')}
           </li>
@@ -245,10 +245,10 @@ export function PivotPanel<R>({ grid, className, onClose }: PanelProps<R>) {
       </ul>
       )}
 
-      {section('values', 'Values', model.values.length)}
+      {section('values', t.pivotValues, model.values.length)}
       {open.values && (
-      <ul {...list('values', 'Pivot values')}>
-        {model.values.length === 0 && empty('Drag a field here to aggregate it')}
+      <ul {...list('values', t.pivotValuesList)}>
+        {model.values.length === 0 && empty(t.pivotDropValues)}
         {model.values.map((v, i) => {
           const col = byField.get(v.field)
           const fns = (col ? availableAggregations(col) : []).filter(isBuiltinAggregation)
@@ -267,27 +267,27 @@ export function PivotPanel<R>({ grid, className, onClose }: PanelProps<R>) {
               {visibility({ section: 'values', index: i }, v.field, v.hidden)}
               <span className="gk-pivot-name">{name(v.field)}</span>
               <Select
-                aria-label={`Function for ${name(v.field)}`}
+                aria-label={t.pivotFunctionFor(name(v.field))}
                 value={v.aggFunc}
                 onChange={(e) => update((m) => setValueFunc(m, i, e.target.value))}
               >
                 {fns.map((f) => (
                   <option key={f} value={f} disabled={taken(f)}>
-                    {aggregationLabel(f)}
+                    {aggregationLabel(f, undefined, t)}
                   </option>
                 ))}
               </Select>
               <span className="gk-pivot-actions">
-                <Button type="button" aria-label={`Add another function for ${name(v.field)}`} title="Use this field again with another function" disabled={!spare} onClick={() => spare && update((m) => addPivotValue(m, v.field, spare))}>
+                <Button type="button" aria-label={t.pivotAddFunction(name(v.field))} title={t.pivotAddFunctionTitle} disabled={!spare} onClick={() => spare && update((m) => addPivotValue(m, v.field, spare))}>
                   +
                 </Button>
-                <Button type="button" aria-label={`Move ${name(v.field)} up`} disabled={i === 0} onClick={() => update((m) => moveValueEntry(m, i, i - 1))}>
+                <Button type="button" aria-label={t.pivotMoveUp(name(v.field))} disabled={i === 0} onClick={() => update((m) => moveValueEntry(m, i, i - 1))}>
                   <icons.moveUp />
                 </Button>
-                <Button type="button" aria-label={`Move ${name(v.field)} down`} disabled={i === model.values.length - 1} onClick={() => update((m) => moveValueEntry(m, i, i + 2 > model.values.length ? null : i + 2))}>
+                <Button type="button" aria-label={t.pivotMoveDown(name(v.field))} disabled={i === model.values.length - 1} onClick={() => update((m) => moveValueEntry(m, i, i + 2 > model.values.length ? null : i + 2))}>
                   <icons.moveDown />
                 </Button>
-                <Button type="button" aria-label={`Remove ${name(v.field)}`} onClick={() => update((m) => removePivotValue(m, i))}>
+                <Button type="button" aria-label={t.pivotRemove(name(v.field))} onClick={() => update((m) => removePivotValue(m, i))}>
                   <icons.close />
                 </Button>
               </span>
@@ -297,7 +297,7 @@ export function PivotPanel<R>({ grid, className, onClose }: PanelProps<R>) {
       </ul>
       )}
 
-      <p className="gk-pivot-hint">Drag a field's grip to a list, or back onto the field list to remove it. Esc cancels.</p>
+      <p className="gk-pivot-hint">{t.pivotHint}</p>
       {drag && (
         <div className="gk-pivot-ghost" style={{ left: drag.x + 10, top: drag.y + 10 }} aria-hidden="true">
           {name(drag.field)}

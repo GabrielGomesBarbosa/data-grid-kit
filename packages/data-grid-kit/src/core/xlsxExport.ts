@@ -1,5 +1,6 @@
 import { optionLabel, optionValue } from './columns'
 import { getCellValue } from './values'
+import { formatDate, type GridLocaleText } from './localeText'
 import type { XlsxWorkerLike } from './xlsxWorkerClient'
 import type { XlsxColumn, XlsxOptions, XlsxRow, XlsxSheet, XlsxStyle, XlsxValue } from './xlsx'
 import type { ColumnDef, RenderRow, RowId } from './types'
@@ -39,29 +40,29 @@ export interface XlsxExportOptions extends XlsxOptions {
   worker?: () => XlsxWorkerLike
 }
 
-const textOf = <R>(col: ColumnDef<R>, row: R, value: unknown): string => {
+const textOf = <R>(col: ColumnDef<R>, row: R, value: unknown, locale?: string): string => {
   if (col.valueFormatter) return col.valueFormatter(value, row)
   if (value == null) return ''
   if (col.type === 'singleSelect' && col.valueOptions) {
     const hit = col.valueOptions.find((o) => optionValue(o) === value)
     if (hit !== undefined) return String(optionLabel(hit))
   }
-  if (value instanceof Date) return value.toLocaleDateString()
+  if (value instanceof Date) return formatDate(value, locale)
   return String(value)
 }
 
 /** One cell of a data row: typed for numbers, booleans and dates, formatted text for the rest. */
-function dataCell<R>(col: ColumnDef<R>, row: R, formatted: boolean): XlsxValue {
+function dataCell<R>(col: ColumnDef<R>, row: R, formatted: boolean, locale?: string): XlsxValue {
   const value = getCellValue(col, row)
   if (value == null || value === '') return null
   if (!formatted) {
     if (typeof value === 'number' || typeof value === 'boolean' || value instanceof Date) return value
   }
-  return textOf(col, row, value)
+  return textOf(col, row, value, locale)
 }
 
 /** One cell of an aggregate (a group row, a tree parent, the total): values come straight from the aggregation. */
-function aggregateCell<R>(col: ColumnDef<R>, value: unknown, formatted: boolean): XlsxValue {
+function aggregateCell<R>(col: ColumnDef<R>, value: unknown, formatted: boolean, locale?: string): XlsxValue {
   if (value == null || value === '') return null
   if (!formatted && (typeof value === 'number' || value instanceof Date)) return value
   if (col.valueFormatter) {
@@ -71,7 +72,7 @@ function aggregateCell<R>(col: ColumnDef<R>, value: unknown, formatted: boolean)
       /* a formatter that needs the row can't format an aggregate */
     }
   }
-  return value instanceof Date ? value.toLocaleDateString() : String(value)
+  return value instanceof Date ? formatDate(value, locale) : String(value)
 }
 
 /**
@@ -86,8 +87,12 @@ export function sheetOfGrid<R>(input: {
   widthOf: (field: string) => number
   selection?: ReadonlySet<RowId>
   options: XlsxExportOptions
+  /** the grid's texts (the label of an empty group, of the total row) and the locale dates are written in */
+  text?: Pick<GridLocaleText, 'groupEmpty' | 'groupTotal'>
+  locale?: string
 }): XlsxSheet {
-  const { columns, rows, totals, options } = input
+  const { columns, rows, totals, options, locale } = input
+  const emptyLabel = input.text?.groupEmpty ?? '(empty)'
   const formatted = !!options.formatted
   const sheetColumns: XlsxColumn[] = columns.map((c) => ({
     header: c.headerName ?? c.field,
@@ -98,7 +103,7 @@ export function sheetOfGrid<R>(input: {
     validationList:
       options.validateSelects && c.type === 'singleSelect' && c.valueOptions ? c.valueOptions.map((o) => String(optionLabel(o))) : undefined,
   }))
-  const label = (r: RenderRow<R>) => (r.groupValue == null || r.groupValue === '' ? '(empty)' : r.groupValue instanceof Date ? r.groupValue.toLocaleDateString() : String(r.groupValue))
+  const label = (r: RenderRow<R>) => (r.groupValue == null || r.groupValue === '' ? emptyLabel : r.groupValue instanceof Date ? formatDate(r.groupValue, locale) : String(r.groupValue))
 
   function* generate(): Generator<XlsxRow> {
     for (const r of rows) {
@@ -108,16 +113,16 @@ export function sheetOfGrid<R>(input: {
       for (let i = 0; i < columns.length; i++) {
         const col = columns[i]!
         const agg = r.aggregates
-        if (agg && col.field in agg) cells[i] = aggregateCell(col, agg[col.field], formatted)
+        if (agg && col.field in agg) cells[i] = aggregateCell(col, agg[col.field], formatted, locale)
         else if (isGroup) cells[i] = i === 0 ? label(r) : null
-        else if (r.row !== undefined) cells[i] = dataCell(col, r.row, formatted)
+        else if (r.row !== undefined) cells[i] = dataCell(col, r.row, formatted, locale)
         else cells[i] = null
       }
       if (isGroup && cells[0] == null) cells[0] = label(r)
       yield { cells, level: r.depth, bold: isGroup || undefined }
     }
     if (totals && Object.keys(totals).length) {
-      yield { cells: columns.map((c, i) => (i === 0 ? 'Total' : aggregateCell(c, totals[c.field], formatted))), bold: true }
+      yield { cells: columns.map((c, i) => (i === 0 ? (input.text?.groupTotal ?? 'Total') : aggregateCell(c, totals[c.field], formatted, locale))), bold: true }
     }
   }
 

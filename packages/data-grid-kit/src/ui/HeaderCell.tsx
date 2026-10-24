@@ -34,7 +34,7 @@ export function HeaderCell<R>({
 }: HeaderCellProps<R>) {
   const { Button } = useBase()
   const icons = useIcons()
-  const { api, state, layout } = grid
+  const { api, state, layout, text: t } = grid
   const sort = state.sortModel.find((s) => s.field === col.field)
   const side = layout.pinnedSide.get(col.field)
   const sortable = col.sortable !== false
@@ -84,7 +84,7 @@ export function HeaderCell<R>({
         {sort && <span className="gk-sort">{sort.direction === 'asc' ? <icons.sortAsc /> : <icons.sortDesc />}</span>}
       </Button>
       {side && (
-        <span className="gk-pin-mark" title={`Pinned ${side}`} aria-hidden="true">
+        <span className="gk-pin-mark" title={t.columnPinned(side)} aria-hidden="true">
           {side === 'left' ? <icons.pinLeft /> : <icons.pinRight />}
         </span>
       )}
@@ -94,7 +94,7 @@ export function HeaderCell<R>({
           className="gk-menu-btn"
           data-gk-anchor
           aria-haspopup="menu"
-          aria-label={`${col.headerName ?? col.field} column menu`}
+          aria-label={t.columnMenuOf(col.headerName ?? col.field)}
           onClick={(e) => onOpenMenu(col.field, e.currentTarget.getBoundingClientRect())}
         >
           <icons.columnMenu />

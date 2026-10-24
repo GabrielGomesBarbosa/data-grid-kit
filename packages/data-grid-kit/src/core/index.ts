@@ -1,4 +1,5 @@
 export * from './types'
+export * from './localeText'
 export * from './store'
 export * from './pipeline'
 export * from './layout'
