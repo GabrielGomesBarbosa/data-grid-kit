@@ -1,2 +1,3 @@
 export * from './core'
-export { Grid, type GridProps, type UIColumnDef } from './ui/Grid'
+export { Grid } from './ui/Grid'
+export type { GridProps, UIColumnDef } from './ui/types'
