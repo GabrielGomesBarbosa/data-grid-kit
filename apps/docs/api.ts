@@ -86,6 +86,7 @@ export const gridProps: PropRow[] = [
   { name: 'onClipboardCopy', type: '(text: string) => void', description: 'Text was copied or cut from the grid: what went to the clipboard.' },
   { name: 'isCellEditable', type: '(row: R, field: string) => boolean', description: 'Extra per-cell gate on top of column.editable.' },
   { name: 'onReady', type: '(api: GridApi<R>) => void', description: 'Receives the imperative API once the grid mounts.' },
+  { name: 'apiRef', type: 'MutableRefObject<GridApi<R> | null>', description: 'Gets the api when the grid mounts and null when it unmounts. Create it with useGridApiRef().' },
 ]
 
 export const columnProps: PropRow[] = [

@@ -15,7 +15,10 @@ export const page: PageDef = {
       <PropsTable rows={columnProps} />
       <h2>Imperative API</h2>
       <p>
-        Available from <code>onReady</code> or from <code>useGrid()</code> (<code>grid.api</code>).
+        Available from <code>onReady</code>, from an <code>apiRef</code> (<code>const apiRef = useGridApiRef()</code>, then <code>{'<Grid apiRef={apiRef} />'}</code> and{' '}
+        <code>apiRef.current</code> in handlers and effects), from <code>useGridApiContext()</code> inside the grid (a slot, <code>renderCell</code>, <code>renderHeader</code>) or from{' '}
+        <code>useGrid()</code> (<code>grid.api</code>). <code>useGridSelector((state) =&gt; state.sortModel.length)</code> reads a slice of the state inside the grid and re-renders only
+        when it changes.
       </p>
       <PropsTable rows={apiMethods} />
     </>

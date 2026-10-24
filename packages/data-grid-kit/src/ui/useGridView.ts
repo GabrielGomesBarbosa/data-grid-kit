@@ -55,6 +55,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
     csvFileName = 'export.csv',
     xlsxFileName = 'export.xlsx',
     onReady,
+    apiRef,
     autosizeOnMount = false,
     autosizeOptions,
     onRowClick,
@@ -98,6 +99,13 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
   useEffect(() => {
     onReady?.(api)
   }, [api, onReady])
+  useEffect(() => {
+    if (!apiRef) return
+    apiRef.current = api
+    return () => {
+      apiRef.current = null
+    }
+  }, [api, apiRef])
 
   const onScroll = useViewport(api, scrollerRef, gridRef)
 

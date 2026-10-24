@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react'
+import { type MutableRefObject, type ReactNode } from 'react'
 import { type AutosizeOptions, type ColumnDef, type FilterItem, type FilterOperatorDef, type GridApi, type GridOptions, type RenderRow, type RowId } from '../core'
 import { type EditCellParams } from './Editors'
 import type { GridSlotProps, GridSlots } from './slotTypes'
@@ -86,4 +86,6 @@ export interface GridProps<R = any> extends Omit<GridOptions<R>, 'columns'>, Gri
   /** file name of the Excel download (default export.xlsx) */
   xlsxFileName?: string
   onReady?: (api: GridApi<R>) => void
+  /** receives the api when the grid mounts (and `null` when it unmounts): create it with `useGridApiRef` */
+  apiRef?: MutableRefObject<GridApi<R> | null>
 }

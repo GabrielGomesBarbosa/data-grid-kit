@@ -3,6 +3,7 @@ import { isFiltering } from '../core'
 import { Header } from './Header'
 import { ColumnDragFeedback, RowDragFeedback } from './DragFeedback'
 import { Popovers } from './Popovers'
+import { ApiProvider } from './apiContext'
 import { LocaleProvider } from './localeContext'
 import { SlotsProvider } from './slotsContext'
 import { ToolbarContext } from './toolbarParts'
@@ -32,6 +33,7 @@ export function Grid<R = any>(props: GridProps<R>) {
   )
 
   return (
+    <ApiProvider value={view.grid.api}>
     <LocaleProvider value={localeValue}>
     <SlotsProvider value={view.slotsValue}>
       <div {...view.getRootProps()}>
@@ -86,5 +88,6 @@ export function Grid<R = any>(props: GridProps<R>) {
       </div>
     </SlotsProvider>
     </LocaleProvider>
+    </ApiProvider>
   )
 }
