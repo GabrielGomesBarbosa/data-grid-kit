@@ -1,0 +1,8 @@
+:root { color-scheme: light dark; }
+body { margin: 0; font: 14px system-ui, sans-serif; background: #fff; color: #0f172a; }
+@media (prefers-color-scheme: dark) { body { background: #020617; color: #e2e8f0; } }
+main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+h1 { font-size: 20px; margin: 0 0 8px; }
+nav { display: flex; gap: 16px; margin-bottom: 16px; }
+nav a { color: #2563eb; }
+p.note { opacity: 0.75; max-width: 70ch; }

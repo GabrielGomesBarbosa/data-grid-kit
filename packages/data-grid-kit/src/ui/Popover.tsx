@@ -1,4 +1,5 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useIsomorphicLayoutEffect } from '../core/isomorphic'
 import { createPortal } from 'react-dom'
 
 export interface PopoverProps {
@@ -21,7 +22,7 @@ export function Popover({ anchor, onClose, children, label, role = 'dialog', ali
   const ref = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
 
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const el = ref.current
     if (!el) return
     const w = el.offsetWidth

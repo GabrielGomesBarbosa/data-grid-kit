@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { useIsomorphicLayoutEffect } from './isomorphic'
 import { createStore, useStore, type Store } from './store'
 import {
   DEFAULT_HEADER_HEIGHT,
@@ -808,13 +809,18 @@ export function useGrid<R = any>(options: GridOptions<R>): GridInstance<R> {
   }
   const ctrl = hasDataSource ? ctrlRef.current : undefined
   const noSubscribe = useCallback(() => () => {}, [])
-  const dsVersion = useSyncExternalStore(ctrl ? ctrl.subscribe : noSubscribe, ctrl ? ctrl.getVersion : () => 0)
+  const dsVersion = useSyncExternalStore(
+    ctrl ? ctrl.subscribe : noSubscribe,
+    ctrl ? ctrl.getVersion : () => 0,
+    // the server renders the same snapshot: nothing has been requested there
+    ctrl ? ctrl.getVersion : () => 0,
+  )
 
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     ctrl?.resume()
     return () => ctrl?.destroy()
   }, [ctrl])
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (!ctrl) return
     ctrl.configure({
       chunkSize,

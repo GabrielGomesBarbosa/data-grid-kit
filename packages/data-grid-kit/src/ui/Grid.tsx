@@ -4,7 +4,6 @@ import {
   useMemo,
   useEffect,
   useId,
-  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -41,6 +40,7 @@ import {
   type RenderRow,
 } from '../core'
 import type { ColumnLayout } from '../core/layout'
+import { useIsomorphicLayoutEffect } from '../core/isomorphic'
 import { CellEditor, type EditCellParams, type EditMove } from './Editors'
 import { ColumnMenu, ColumnsPanel, FilterPanel, PivotPanel } from './Panels'
 import { Popover } from './Popover'
@@ -318,7 +318,7 @@ function DetailPanel({
   const inner = useRef<HTMLDivElement>(null)
   const measure = useRef(onMeasure)
   measure.current = onMeasure
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const el = inner.current
     if (!auto || !el) return
     const report = () => measure.current(el.offsetHeight)
@@ -799,7 +799,7 @@ export function Grid<R = any>(props: GridProps<R>) {
   }, [api, onReady])
 
   // keep the viewport size in the store
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const el = scrollerRef.current
     if (!el) return
     const measure = () => api.setViewport(el.clientWidth, el.clientHeight)
