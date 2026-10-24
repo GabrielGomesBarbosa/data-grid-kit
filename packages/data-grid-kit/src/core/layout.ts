@@ -21,6 +21,45 @@ export interface ColumnLayout<R = any> {
   pinnedSide: Map<string, 'left' | 'right'>
 }
 
+/** below this a `flex` column does not shrink when the others leave it no room (a scrollbar appears instead) */
+const FLEX_FLOOR = 100
+
+/**
+ * The widths of the `flex` columns: what the fixed columns leave of the viewport, shared in proportion to `flex`, each within
+ * its `minWidth` / `maxWidth` (a column that hits a limit takes it and the rest share what is left). A column the user resized
+ * counts as fixed. With no room at all every flex column keeps its floor.
+ */
+function flexWidthsOf<R>(
+  cols: ColumnDef<R>[],
+  resized: Record<string, number>,
+  viewportWidth: number,
+  clamp: (col: ColumnDef<R> | undefined, w: number) => number,
+): Map<string, number> {
+  const out = new Map<string, number>()
+  let flexing = cols.filter((c) => (c.flex ?? 0) > 0 && resized[c.field] === undefined)
+  if (flexing.length === 0) return out
+  const isFlexing = new Set(flexing.map((c) => c.field))
+  let free = viewportWidth
+  for (const c of cols) if (!isFlexing.has(c.field)) free -= clamp(c, resized[c.field] ?? c.width ?? DEFAULT_COLUMN_WIDTH)
+  const floorOf = (c: ColumnDef<R>) => c.minWidth ?? FLEX_FLOOR
+  while (flexing.length > 0) {
+    const total = flexing.reduce((s, c) => s + c.flex!, 0)
+    const share = (c: ColumnDef<R>) => (free * c.flex!) / total
+    const low = flexing.find((c) => share(c) < floorOf(c))
+    const high = low ? undefined : flexing.find((c) => c.maxWidth !== undefined && share(c) > c.maxWidth)
+    const stuck = low ?? high
+    if (!stuck) {
+      for (const c of flexing) out.set(c.field, Math.floor(share(c)))
+      break
+    }
+    const w = low ? floorOf(stuck) : stuck.maxWidth!
+    out.set(stuck.field, w)
+    free -= w
+    flexing = flexing.filter((c) => c !== stuck)
+  }
+  return out
+}
+
 /**
  * Resolve visibility, order and pinning into three column groups.
  * Pinned columns keep the order they were pinned in; the rest follow `columnOrder`.
@@ -28,6 +67,8 @@ export interface ColumnLayout<R = any> {
 export function computeColumnLayout<R>(
   columns: ColumnDef<R>[],
   state: Pick<GridState, 'columnOrder' | 'columnWidths' | 'columnVisibility' | 'pinnedColumns'>,
+  /** the width the columns have to share: only needed (and only used) when a column has `flex` */
+  viewportWidth = 0,
 ): ColumnLayout<R> {
   const byField = new Map(columns.map((c) => [c.field, c]))
   const isVisible = (c: ColumnDef<R>) => state.columnVisibility[c.field] ?? !c.hidden
@@ -57,10 +98,11 @@ export function computeColumnLayout<R>(
   state.columnOrder.forEach(place)
   columns.forEach((c) => place(c.field)) // columns missing from the saved order
 
+  const clamp = (col: ColumnDef<R> | undefined, w: number) => Math.min(col?.maxWidth ?? Infinity, Math.max(col?.minWidth ?? DEFAULT_MIN_WIDTH, w))
+  const flexWidths = flexWidthsOf([...left, ...center, ...right], state.columnWidths, viewportWidth, clamp)
   const width = (field: string) => {
     const col = byField.get(field)
-    const w = state.columnWidths[field] ?? col?.width ?? DEFAULT_COLUMN_WIDTH
-    return Math.max(col?.minWidth ?? DEFAULT_MIN_WIDTH, w)
+    return clamp(col, state.columnWidths[field] ?? flexWidths.get(field) ?? col?.width ?? DEFAULT_COLUMN_WIDTH)
   }
 
   const centerOffsets = new Float64Array(center.length + 1)

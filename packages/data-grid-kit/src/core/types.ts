@@ -86,6 +86,14 @@ export interface ColumnDef<R = any> {
   headerName?: string
   width?: number
   minWidth?: number
+  /** the widest the column can be (also when resized) */
+  maxWidth?: number
+  /**
+   * Share the width the other columns leave free, in proportion to this number (`flex: 2` gets twice the share of `flex: 1`),
+   * within `minWidth` and `maxWidth`. Overrides `width`; a column the user resizes becomes fixed. With no room it keeps `minWidth`
+   * (default 100) and the grid scrolls.
+   */
+  flex?: number
   sortable?: boolean
   filterable?: boolean
   resizable?: boolean

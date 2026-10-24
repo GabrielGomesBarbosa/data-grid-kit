@@ -249,6 +249,8 @@ export function useGrid<R = any>(options: GridOptions<R>): GridInstance<R> {
     return { columns: result.pivotColumns, aggNames, sourceColumns }
   }, [pivotActive, result.pivotColumns, sourceColumns])
 
+  // the grid's width only matters to the layout when a column has `flex`: otherwise a resize must not rebuild it
+  const flexWidth = layoutColumns.some((c) => (c.flex ?? 0) > 0) ? effective.viewport.width : 0
   const layout = useMemo(
     () =>
       computeColumnLayout(layoutColumns, {
@@ -257,8 +259,8 @@ export function useGrid<R = any>(options: GridOptions<R>): GridInstance<R> {
         columnVisibility: effective.columnVisibility,
         // the group labels stay in view while the pivot columns scroll
         pinnedColumns: pivotActive ? { ...effective.pinnedColumns, left: [PIVOT_ROWS_FIELD, ...effective.pinnedColumns.left] } : effective.pinnedColumns,
-      }),
-    [layoutColumns, pivotActive, effective.columnOrder, effective.columnWidths, effective.columnVisibility, effective.pinnedColumns],
+      }, flexWidth),
+    [layoutColumns, pivotActive, effective.columnOrder, effective.columnWidths, effective.columnVisibility, effective.pinnedColumns, flexWidth],
   )
 
   layoutRef.current = layout

@@ -84,6 +84,8 @@ export const columnProps: PropRow[] = [
   { name: 'valueFormatter', type: '(value: unknown, row: R) => string', description: 'Display text. Also used by the quick filter, and by CSV when formatted: true.' },
   { name: 'sortComparator', type: '(a: unknown, b: unknown) => number', description: 'Replaces the default ordering. Receives raw values.' },
   { name: 'align', type: "'left' | 'right' | 'center'", description: 'Defaults by type: numbers right, booleans center.' },
+  { name: 'flex', type: 'number', description: 'Share the width the other columns leave free, in proportion (flex: 2 gets twice the share of flex: 1), within minWidth and maxWidth. Overrides width; a column the user resizes becomes fixed. With no room it keeps minWidth (default 100) and the grid scrolls.' },
+  { name: 'maxWidth', type: 'number', description: 'The widest the column can be, also when resized.' },
   { name: 'headerAlign', type: "'left' | 'right' | 'center'", description: "Alignment of the header's content (default: the same as align)." },
   { name: 'description', type: 'string', description: "A tooltip on the header, for when the name says too little." },
   { name: 'headerClassName', type: 'string', description: "Class names for the column's header cell." },
