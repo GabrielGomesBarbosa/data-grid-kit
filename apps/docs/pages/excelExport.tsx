@@ -88,7 +88,7 @@ await api.exportXlsx({
         <li><strong>Numbers, booleans and dates are typed cells</strong>, not text, so Excel can sum, sort and format them. The grid's <code>valueFormatter</code> is not applied to them (use <code>numFmts</code> for Excel formats); other columns are written as their formatted text, and <code>singleSelect</code> as the option's label.</li>
         <li><strong>Dates</strong> are written as the wall-clock date and time (Excel has no time zones) with the format <code>yyyy-mm-dd</code>.</li>
         <li><strong>Text is never a formula.</strong> Values are stored as inline strings, so <code>=1+1</code> stays text and no CSV-style escaping is needed.</li>
-        <li><strong>Group rows</strong> carry their label and aggregates and are bold; their rows are <em>outline levels</em>, so Excel can collapse them with the +/− buttons. A total row follows when the grid has one.</li>
+        <li><strong>Group rows</strong> carry their label and aggregates and are bold; their rows are <em>outline levels</em>, so Excel can collapse them with the +/- buttons. A total row follows when the grid has one.</li>
         <li><strong>Pivot tables</strong> export with their column groups as merged header cells and the numbers as numbers.</li>
         <li>Empty values leave the cell empty; <code>NaN</code>, infinities and invalid dates too. Text over Excel's 32,767-character limit is cut.</li>
       </ul>

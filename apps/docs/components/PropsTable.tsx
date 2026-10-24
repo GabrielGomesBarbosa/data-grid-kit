@@ -26,7 +26,7 @@ export function PropsTable({ rows }: { rows: PropRow[] }) {
               <td>
                 <code className="type">{r.type}</code>
               </td>
-              <td>{r.default ? <code>{r.default}</code> : <span className="muted">—</span>}</td>
+              <td>{r.default ? <code>{r.default}</code> : <span className="muted">-</span>}</td>
               <td>{r.description}</td>
             </tr>
           ))}

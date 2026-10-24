@@ -106,7 +106,7 @@ export function StressPage() {
         detailPanelHeight="auto"
         renderDetailPanel={({ row }) => (
           <div>
-            <strong>{row.name}</strong> — {row.role} in {row.team}, {row.country}.
+            <strong>{row.name}</strong>: {row.role} in {row.team}, {row.country}.
             <p style={{ margin: '8px 0 0' }}>Hired {row.hired.toLocaleDateString()} · salary ${row.salary.toLocaleString()} · {row.email}</p>
           </div>
         )}

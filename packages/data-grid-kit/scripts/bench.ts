@@ -112,6 +112,6 @@ for (const n of [100_000, 500_000]) {
   }).toFixed(1)
   out['(for scale) rebuild from scratch'] = cold({ ...sorted }).toFixed(1)
 
-  console.log(`\n=== ${n.toLocaleString()} rows — median of runs, ms ===`)
+  console.log(`\n=== ${n.toLocaleString()} rows, median of runs (ms) ===`)
   console.table(out)
 }

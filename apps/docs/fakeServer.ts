@@ -3,7 +3,7 @@ import { makeEmployees, type Employee } from './data'
 
 export interface RequestRecord {
   id: number
-  /** "rows 100–199 · sorted by salary ↓ · filter “eng”" */
+  /** "rows 100-199 · sorted by salary ↓ · filter “eng”" */
   text: string
   status: 'pending' | 'done' | 'aborted' | 'failed'
   ms: number | null
@@ -102,7 +102,7 @@ export function createFakeServer(total: number, knownCount = true): FakeServer {
   const describe = (p: GetRowsParams) => {
     const sort = p.sortModel[0] ? ` · by ${p.sortModel[0].field} ${p.sortModel[0].direction === 'asc' ? '↑' : '↓'}` : ''
     const f = p.filterModel.quickFilter ? ` · “${p.filterModel.quickFilter}”` : p.filterModel.items.length ? ` · ${p.filterModel.items.length} filter(s)` : ''
-    return `rows ${p.start.toLocaleString()}–${p.end.toLocaleString()}${sort}${f}`
+    return `rows ${p.start.toLocaleString()}-${p.end.toLocaleString()}${sort}${f}`
   }
 
   const server: FakeServer = {

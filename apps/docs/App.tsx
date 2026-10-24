@@ -73,7 +73,7 @@ export default function App() {
 
   // a new page starts at the top; a new section of the same page scrolls to it
   useEffect(() => {
-    document.title = `${page.title} — data-grid-kit`
+    document.title = `${page.title} | data-grid-kit`
     setMenuOpen(false)
   }, [page])
 

@@ -11,7 +11,7 @@ function ValueInput({ col, item, onChange }: { col: ColumnDef; item: FilterItem;
   const { Input, Select } = useBase()
   const type = getColumnType(col)
   const value = item.value == null ? '' : String(item.value)
-  if (!operatorNeedsValue(item.operator)) return <span className="gk-muted">—</span>
+  if (!operatorNeedsValue(item.operator)) return <span className="gk-muted">-</span>
   if (type === 'boolean') {
     return (
       <Select aria-label="Value" value={value} onChange={(e) => onChange(e.target.value)}>
