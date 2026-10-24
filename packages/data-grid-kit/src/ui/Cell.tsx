@@ -5,7 +5,7 @@ import { type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactN
 import { aggregationLabel, defaultAlign, formatAggregateValue, formatCellValue, formatDate, formatNumber, getCellValue, type CellRef, type CustomAggregation, type RenderRow } from '../core'
 import { useLocaleText } from './localeContext'
 import { CellEditor, type EditMove } from './Editors'
-import { type UIColumnDef } from './types'
+import { type GridProps, type UIColumnDef } from './types'
 
 const INDENT = 18
 
@@ -43,6 +43,7 @@ export interface CellProps<R> {
   /** undefined: this row has no detail panel */
   detailState: 'open' | 'closed' | undefined
   onToggleDetail: (id: RenderRow['id']) => void
+  getCellClassName?: GridProps<R>['getCellClassName']
   /** show the grip that starts a row drag */
   reorderHandle: boolean
   onRowDragStart: ((id: RenderRow['id'], e: ReactPointerEvent<HTMLElement>) => void) | undefined
@@ -99,13 +100,21 @@ export function Cell<R>(p: CellProps<R>) {
         : formatCellValue(col, row.row, locale)
   }
   const align = defaultAlign(col)
+  // classes from the data: the column's, then the grid's; only computed when one was given (most cells have neither)
+  let dataClass: string | undefined
+  if (col.cellClassName !== undefined || p.getCellClassName) {
+    const value = row.row !== undefined ? getCellValue(col, row.row) : undefined
+    const fromColumn = typeof col.cellClassName === 'function' ? (row.row !== undefined ? col.cellClassName({ value, row: row.row }) : undefined) : col.cellClassName
+    const fromGrid = p.getCellClassName?.({ id: row.id, row: row.row, renderRow: row, field: col.field, colDef: col, value })
+    dataClass = cx(fromColumn, fromGrid) || undefined
+  }
   return (
     <div
       id={p.id}
       role="gridcell"
       aria-colindex={p.colIndex + 1}
       aria-selected={p.focused || undefined}
-      className={cx('gk-cell', p.className)}
+      className={cx('gk-cell', dataClass, p.className)}
       data-align={align}
       data-field={col.field}
       data-focused={p.focused ? '' : undefined}

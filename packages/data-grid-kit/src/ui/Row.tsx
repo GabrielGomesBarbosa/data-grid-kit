@@ -3,7 +3,7 @@ import { renderSections } from './sections'
 import { memo, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { type CellRef, type ColumnDef, type CustomAggregation, type Range, type RenderRow } from '../core'
 import { type EditMove } from './Editors'
-import { type UIColumnDef } from './types'
+import { type GridProps, type UIColumnDef } from './types'
 import { cx } from './cx'
 import { useSlots } from './slotsContext'
 
@@ -51,6 +51,10 @@ export interface RowProps<R> {
   dragging: boolean
   /** the row is sized by its content (`getRowHeight` returned 'auto'): its cells keep their natural height */
   auto?: boolean
+  /** class names from `getRowClassName` */
+  rowClassName?: string
+  /** from the grid's `getCellClassName` (passed to every cell) */
+  getCellClassName?: GridProps<R>['getCellClassName']
   /** added to the row's class names and style (`slotProps.row`) */
   className?: string
   style?: CSSProperties
@@ -119,6 +123,7 @@ function RowInner<R>(p: RowProps<R>) {
         onFillStart={p.onFillStart}
         detailState={p.detailState}
         onToggleDetail={p.onToggleDetail}
+        getCellClassName={p.getCellClassName}
         reorderHandle={p.canReorder}
         onRowDragStart={p.onRowDragStart}
         {...slotProps.cell}
@@ -143,7 +148,7 @@ function RowInner<R>(p: RowProps<R>) {
       role="row"
       aria-rowindex={p.ariaRow}
       aria-selected={p.selected === true}
-      className={cx('gk-row', p.className)}
+      className={cx('gk-row', p.rowClassName, p.className)}
       data-group={row.type === 'group' && row.row === undefined ? '' : undefined}
       data-footer={row.type === 'footer' ? '' : undefined}
       data-detail-open={p.detailState === 'open' ? '' : undefined}
@@ -152,6 +157,7 @@ function RowInner<R>(p: RowProps<R>) {
       data-selected={p.selected === true ? '' : undefined}
       data-odd={p.index % 2 ? '' : undefined}
       data-rowindex={p.pinSide ? undefined : p.index}
+      data-row-id={p.pinSide || row.type === 'footer' ? String(row.id) : undefined}
       data-pinned={p.pinSide}
       style={{
         height: rowHeight,

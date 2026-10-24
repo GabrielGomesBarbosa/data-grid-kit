@@ -17,6 +17,7 @@ import { useColumnDrag } from './useColumnDrag'
 import { useKeyboard } from './useKeyboard'
 import { usePanels } from './usePanels'
 import { useRowDrag } from './useRowDrag'
+import { useGridEvents } from './useGridEvents'
 
 const NO_SLOT_PROPS: GridSlotProps = {}
 
@@ -76,6 +77,13 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
     csvFileName = 'export.csv',
     xlsxFileName = 'export.xlsx',
     onReady,
+    onRowClick,
+    onRowDoubleClick,
+    onCellClick,
+    onCellDoubleClick,
+    onCellKeyDown,
+    onColumnHeaderClick,
+    onColumnHeaderDoubleClick,
     slots: userSlots,
     slotProps = NO_SLOT_PROPS,
     ...options
@@ -94,6 +102,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
     // giving a renderer is enough to turn the feature on
     detailPanelHeight: options.detailPanelHeight ?? (renderDetailPanel ? DETAIL_DEFAULT : undefined),
   } as GridOptions<R>)
+  const events = useGridEvents<R>(grid, { onRowClick, onRowDoubleClick, onCellClick, onCellDoubleClick, onCellKeyDown, onColumnHeaderClick, onColumnHeaderDoubleClick })
   const { api, layout, rows, rowRange, colRange, rowHeight, headerHeight, headerDepth, state, geometry, detailSlots, detailRange } = grid
   /** aria-rowindex of the first body row: the header takes one row per level of column groups, plus the titles */
   const hdr = 2 + headerDepth
@@ -197,6 +206,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
     aggNames,
     aggCustom: props.aggregationFunctions,
     onToggleDetail: api.toggleDetailPanel,
+    getCellClassName: props.getCellClassName,
   }
 
   const bodyRows: BodyRow<R>[] = []
@@ -221,6 +231,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
         auto: props.getRowHeight?.({ id: r.id, row: r.row, depth: r.depth }) === 'auto',
         row: r,
         index: i,
+        rowClassName: props.getRowClassName?.({ id: r.id, row: r.row, renderRow: r, index: i }),
         hasHierarchy,
         selected: grid.isSelected(r),
         focusedField: here ? focused!.field : undefined,
@@ -267,6 +278,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
       ...rowShared,
       row: r,
       index: i,
+      rowClassName: props.getRowClassName?.({ id: r.id, row: r.row, renderRow: r, index: i }),
       hasHierarchy: false,
       selected: grid.isSelected(r),
       focusedField: undefined,
@@ -327,6 +339,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
           tabIndex: 0,
           onScroll,
           onKeyDown,
+          ...events,
           onCopy,
           onCut,
           onPaste,

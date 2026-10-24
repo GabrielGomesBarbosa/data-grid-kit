@@ -95,6 +95,14 @@ export interface ColumnDef<R = any> {
   groupable?: boolean
   hidden?: boolean
   align?: 'left' | 'right' | 'center'
+  /** alignment of the header's content (default: the same as `align`) */
+  headerAlign?: 'left' | 'right' | 'center'
+  /** a tooltip on the header: what the column holds, when its name does not say enough */
+  description?: string
+  /** class names for this column's header cell */
+  headerClassName?: string
+  /** class names for this column's cells: a string, or a function of the cell's value and row (data rows only) */
+  cellClassName?: string | ((params: { value: unknown; row: R }) => string | undefined)
   /** read the raw value for sorting, filtering and grouping */
   valueGetter?: (row: R) => unknown
   /** text shown in the cell */

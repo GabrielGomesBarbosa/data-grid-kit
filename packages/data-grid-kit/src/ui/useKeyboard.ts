@@ -83,8 +83,8 @@ export function useKeyboard<R>(c: GridCtx<R>) {
   }, [api, scrollerRef])
 
   const onKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
-    // keys typed into editors, buttons and inputs belong to them
-    if (e.target !== e.currentTarget) return
+    // keys typed into editors, buttons and inputs belong to them; an `onCellKeyDown` that called preventDefault took this one
+    if (e.target !== e.currentTarget || e.defaultPrevented) return
     const g = gridRef.current
     const at = focusPosition()
 
@@ -184,6 +184,7 @@ export function useKeyboard<R>(c: GridCtx<R>) {
   }
 
   const onBodyClick = (e: ReactMouseEvent<HTMLDivElement>) => {
+    if (e.defaultPrevented) return
     const cell = (e.target as Element).closest<HTMLElement>('.gk-cell')
     const rowEl = cell?.closest<HTMLElement>('.gk-row')
     if (!cell || !rowEl) return
@@ -195,6 +196,7 @@ export function useKeyboard<R>(c: GridCtx<R>) {
     if (tag !== 'INPUT' && tag !== 'SELECT') scrollerRef.current?.focus({ preventScroll: true })
   }
   const onBodyDoubleClick = (e: ReactMouseEvent<HTMLDivElement>) => {
+    if (e.defaultPrevented) return
     const cell = (e.target as Element).closest<HTMLElement>('.gk-cell')
     const rowEl = cell?.closest<HTMLElement>('.gk-row')
     if (!cell || !rowEl) return

@@ -59,8 +59,9 @@ export function HeaderCell<R>({
       role="columnheader"
       aria-colindex={colIndex + 1}
       aria-sort={sort ? (sort.direction === 'asc' ? 'ascending' : 'descending') : sortable ? 'none' : undefined}
-      className={cx('gk-header-cell', className)}
-      data-align={defaultAlign(col)}
+      className={cx('gk-header-cell', col.headerClassName, className)}
+      title={col.description}
+      data-align={col.headerAlign ?? defaultAlign(col)}
       data-field={col.field}
       data-sort={sort?.direction}
       data-pinned={side}
@@ -76,11 +77,11 @@ export function HeaderCell<R>({
         className="gk-header-title"
         disabled={!sortable}
         onClick={(e) => {
-          if (suppressClick()) return // this click is the end of a column drag
+          if (suppressClick() || e.defaultPrevented) return // the end of a column drag, or an `onColumnHeaderClick` that took the click
           api.toggleSort(col.field, e.shiftKey)
         }}
       >
-        <span className="gk-header-label">{col.headerName ?? col.field}</span>
+        <span className="gk-header-label">{col.renderHeader ? col.renderHeader({ field: col.field, colDef: col }) : (col.headerName ?? col.field)}</span>
         {sort && <span className="gk-sort">{sort.direction === 'asc' ? <icons.sortAsc /> : <icons.sortDesc />}</span>}
       </Button>
       {side && (
