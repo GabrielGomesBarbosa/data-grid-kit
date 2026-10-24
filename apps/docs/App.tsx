@@ -32,9 +32,9 @@ function useTheme(): [Theme, (t: Theme) => void] {
   return [theme, apply]
 }
 
-const GROUPS: PageDef['group'][] = ['Getting started', 'Main features', 'Advanced features', 'Guides', 'Reference']
+const GROUPS: PageDef['group'][] = ['Getting started', 'Demos', 'Main features', 'Advanced features', 'Guides', 'Reference']
 /** pages for features added recently */
-const NEW = new Set(['pivoting', 'excel-export', 'server-side-data'])
+const NEW = new Set(['pivoting', 'excel-export', 'server-side-data', 'demo-real-time', 'demo-time-off', 'demo-inventory'])
 const REPO = 'https://github.com/GabrielGomesBarbosa/data-grid-kit'
 
 /** `#/page` or `#/page/section` */
@@ -70,6 +70,11 @@ export default function App() {
   const prev = pages[index - 1]
   const next = pages[index + 1]
   const nav = useMemo(() => GROUPS.map((g) => ({ group: g, items: pages.filter((p) => p.group === g) })), [])
+
+  // arriving at a page (a link, search, previous / next) shows its group; collapsing a group by hand always works
+  useEffect(() => {
+    setClosed((c) => (c.has(page.group) ? new Set([...c].filter((g) => g !== page.group)) : c))
+  }, [page.id, page.group])
 
   // a new page starts at the top; a new section of the same page scrolls to it
   useEffect(() => {
@@ -177,7 +182,7 @@ export default function App() {
       </header>
       <nav id="sidebar" className="sidebar" data-open={menuOpen} aria-label="Documentation">
         {nav.map(({ group, items }) => {
-          const open = !closed.has(group) || items.some((p) => p.id === page.id)
+          const open = !closed.has(group)
           return (
             <div key={group}>
               <h2>

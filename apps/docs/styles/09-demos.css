@@ -1,0 +1,268 @@
+/* Colours shared by the demos (the grid's own theme has no up / down colours) */
+:root {
+  --up: #15803d;
+  --up-soft: #dcfce7;
+  --down: #b91c1c;
+  --down-soft: #fee2e2;
+  --warn: #b45309;
+  --warn-soft: #fef3c7;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --up: #4ade80;
+    --up-soft: #14532d;
+    --down: #f87171;
+    --down-soft: #4c1d1d;
+    --warn: #fbbf24;
+    --warn-soft: #452a0a;
+  }
+}
+:root[data-theme='dark'] {
+  --up: #4ade80;
+  --up-soft: #14532d;
+  --down: #f87171;
+  --down-soft: #4c1d1d;
+  --warn: #fbbf24;
+  --warn-soft: #452a0a;
+}
+
+.demo-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 8px;
+  flex-wrap: wrap;
+}
+.demo-head h3 {
+  margin: 0;
+  font-size: 16px;
+}
+.demo-head .spacer {
+  flex: 1;
+}
+.demo-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.demo-chip[aria-pressed='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+/* real-time data */
+.rt-symbol {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.rt-logo {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+.rt-spark {
+  display: block;
+}
+.rt-pill {
+  display: inline-block;
+  min-width: 78px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  background: var(--up-soft);
+  color: var(--text);
+  animation-duration: 0.9s;
+  animation-timing-function: ease-out;
+}
+.rt-pill[data-down] {
+  background: var(--down-soft);
+}
+.rt-pill[data-flash='up'] {
+  animation-name: rt-flash-up;
+}
+.rt-pill[data-flash='down'] {
+  animation-name: rt-flash-down;
+}
+@keyframes rt-flash-up {
+  0% {
+    box-shadow: 0 0 0 0 var(--up);
+    background: var(--up);
+    color: #fff;
+  }
+  100% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
+@keyframes rt-flash-down {
+  0% {
+    box-shadow: 0 0 0 0 var(--down);
+    background: var(--down);
+    color: #fff;
+  }
+  100% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
+.rt-up {
+  color: var(--up);
+}
+.rt-down {
+  color: var(--down);
+}
+
+/* time off calendar */
+.cal .gk-header-label {
+  white-space: pre-line;
+  text-align: center;
+  line-height: 1.25;
+  width: 100%;
+}
+.cal .gk-header-cell[data-field='employee'] .gk-header-label {
+  text-align: left;
+}
+.cal-person {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.cal-person small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+.cal-avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+.cal-day {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+.cal-day[data-weekend] {
+  background: color-mix(in srgb, var(--muted) 8%, transparent);
+}
+.cal-count {
+  color: var(--muted);
+}
+.cal-tile {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  font-size: 16px;
+}
+.cal-tile[data-kind='sick'] {
+  background: var(--down-soft);
+  border-color: var(--down);
+}
+.cal-bar {
+  position: absolute;
+  inset: 6px 0;
+  display: grid;
+  place-items: center;
+  background: var(--up-soft);
+  border: 1px solid var(--up);
+  border-left-width: 0;
+  border-right-width: 0;
+}
+.cal-bar[data-start] {
+  margin-left: 4px;
+  border-left-width: 1px;
+  border-radius: 8px 0 0 8px;
+}
+.cal-bar[data-end] {
+  margin-right: 4px;
+  border-right-width: 1px;
+  border-radius: 0 8px 8px 0;
+}
+.cal-bar[data-start][data-end] {
+  border-radius: 8px;
+}
+
+/* inventory */
+.inv .gk-header-label {
+  white-space: pre-line;
+  line-height: 1.2;
+}
+.inv .gk-header-label::first-line {
+  font-size: 14px;
+}
+.inv-product {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.inv-tile {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  font-size: 22px;
+}
+.inv-tile.big {
+  width: 96px;
+  height: 96px;
+  font-size: 44px;
+  border-radius: 12px;
+}
+.inv-status {
+  display: inline-flex;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.inv-status[data-status='in-stock'] {
+  background: var(--up-soft);
+  color: var(--up);
+}
+.inv-status[data-status='restocking'] {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+.inv-status[data-status='out-of-stock'] {
+  background: var(--down-soft);
+  color: var(--down);
+}
+.inv-stars {
+  color: #f59e0b;
+  letter-spacing: 1px;
+}
+.inv-off {
+  color: var(--border);
+}
+.inv-detail {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  padding: 12px 20px;
+}
+.inv-detail p {
+  margin: 4px 0;
+}

@@ -2,6 +2,9 @@ import type { PageDef } from './shared'
 import { page as overviewPage } from './overview'
 import { page as quickstartPage } from './quickstart'
 import { page as featuresPage } from './features'
+import { page as demoRealTimePage } from './demoRealTime'
+import { page as demoTimeOffPage } from './demoTimeOff'
+import { page as demoInventoryPage } from './demoInventory'
 import { page as columnsPage } from './columns'
 import { page as sortingPage } from './sorting'
 import { page as filteringPage } from './filtering'
@@ -38,6 +41,9 @@ export const pages: PageDef[] = [
   overviewPage,
   quickstartPage,
   featuresPage,
+  demoRealTimePage,
+  demoTimeOffPage,
+  demoInventoryPage,
   columnsPage,
   sortingPage,
   filteringPage,

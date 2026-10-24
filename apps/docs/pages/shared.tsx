@@ -3,7 +3,7 @@ import { Demo } from '../components/Demo'
 
 export interface PageDef {
   id: string
-  group: 'Getting started' | 'Main features' | 'Advanced features' | 'Guides' | 'Reference'
+  group: 'Getting started' | 'Demos' | 'Main features' | 'Advanced features' | 'Guides' | 'Reference'
   title: string
   intro: string
   body: () => ReactNode
