@@ -51,7 +51,7 @@
     "build": "tsup && cp src/ui/styles.css dist/styles.css",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "bench": "tsx scripts/bench.ts && tsx scripts/xlsx-bench.mts"
+    "bench": "tsx scripts/bench.ts && tsx scripts/xlsx-bench.ts"
   },
   "peerDependencies": {
     "react": ">=18"
