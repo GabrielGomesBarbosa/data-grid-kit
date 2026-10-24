@@ -9,7 +9,6 @@ import reactHooks from 'eslint-plugin-react-hooks'
  */
 const legacyLarge = [
   'packages/data-grid-kit/src/core/pipeline.ts', // #39
-  'packages/data-grid-kit/src/core/useGrid.ts', // #40
   'packages/data-grid-kit/src/core/dataSource.ts', // #42
   'apps/docs/pages.tsx', // #43
 ]
