@@ -1,5 +1,18 @@
 # data-grid-kit
 
+## 0.6.0
+
+### Minor Changes
+
+- cd0a34c: Columns panel: a search box, one tri-state Show/Hide All checkbox and Reset (back to each column's own `hidden`). Every column can now be hidden: the grid shows "No columns" with a Manage columns button that opens the panel. New `api.setColumnVisibilityModel(model)` replaces the visibility of all columns at once; `NoRowsOverlayProps` gets `onManageColumns`; `GridView` gets `openPanel`.
+- 1ba08d9: The toolbar is made of exported parts: `Toolbar`, `ToolbarTitle`, `ToolbarSeparator`, `ToolbarButton`, `ColumnsButton`, `FilterButton`, `PivotButton`, `ExportButton`, `QuickFilter` and `useToolbar()` (the grid provides a context around `slots.toolbar`), so a toolbar of your own can mix them with any controls. The default toolbar is now a bar of icon buttons with tooltips, a title (`slotProps.toolbar.title`) and a quick search that opens from its button. Five new replaceable icons: `columns`, `filter`, `pivot`, `download`, `search`. Behaviour change: the quick search box is opened from its button instead of always visible.
+
+### Patch Changes
+
+- d7ebccc: Popovers (filter panel, column menu, panels) stay inside the window when their content grows or the window is resized: the position is computed again when the popover changes size. The filter row wraps on narrow screens.
+- 80d5d47: The quick search button and the box it opens have room between them, and the box is as tall as the toolbar buttons.
+- db1415b: Selects inside the grid (toolbar, filter and pivot panels, pager) draw their own arrow with room around it instead of the native one against the border. The arrow is part of the theme stylesheet, so `structure.css` leaves selects native.
+
 ## 0.5.0
 
 ### Minor Changes
