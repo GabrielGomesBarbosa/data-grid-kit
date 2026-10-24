@@ -87,41 +87,79 @@ describe('Popover position', () => {
   })
 })
 
-describe('Popover follows its button', () => {
-  it('when the page scrolls the popover moves with the button', () => {
-    const button = { rect: rect(100, 140, 40) }
+describe('Popover and scrolling', () => {
+  const openWith = (button: { rect: DOMRect }, onClose: () => void) => {
     stage({ current: 200 }, button)
-    open(button.rect)
-    expect(screen.getByRole('dialog').style.top).toBe('74px') // 40 + 30 + 4
-    button.rect = rect(100, 140, -60) // scrolled up by 100
+    return render(<Popover anchor={button.rect} onClose={onClose} label="p">x</Popover>)
+  }
+
+  it('does not move with the page (a position written on scroll would shake): it closes when its button moves', () => {
+    const button = { rect: rect(100, 140, 40) }
+    let closed = 0
+    openWith(button, () => closed++)
+    const top = screen.getByRole('dialog').style.top
+    button.rect = rect(100, 140, -60) // the page scrolled
     act(() => {
       fireEvent.scroll(document)
     })
-    expect(screen.getByRole('dialog').style.top).toBe('-26px') // it leaves the screen with its button, attached to it
-    button.rect = rect(100, 140, 140)
-    act(() => {
-      fireEvent.scroll(document)
-    })
-    expect(screen.getByRole('dialog').style.top).toBe('174px')
+    expect(closed).toBe(1)
+    expect(screen.getByRole('dialog').style.top).toBe(top) // and it was not written to on the way
   })
 
-  it('scrolling inside the popover does not move it', () => {
+  it('keeps watching from where it opened, even when the parent renders again with a new onClose', () => {
     const button = { rect: rect(100, 140, 40) }
     stage({ current: 200 }, button)
-    open(button.rect)
-    button.rect = rect(100, 140, 300) // the button moved, but the scroll below is the popover's own
+    const anchor = button.rect // the same object for as long as the popover is open
+    let closed = 0
+    const view = render(<Popover anchor={anchor} onClose={() => closed++} label="p">x</Popover>)
+    button.rect = rect(100, 140, 20) // moved 20px, then the parent re-renders (a live update) before the next scroll event
+    view.rerender(<Popover anchor={anchor} onClose={() => closed++} label="p">x</Popover>)
+    act(() => {
+      fireEvent.scroll(document)
+    })
+    expect(closed).toBe(1)
+  })
+
+  it('a scroll that does not move the button leaves it open (a sub-pixel change is not a move)', () => {
+    const button = { rect: rect(100, 140, 40) }
+    let closed = 0
+    openWith(button, () => closed++)
+    button.rect = rect(100, 140, 40.5)
+    act(() => {
+      fireEvent.scroll(document)
+    })
+    expect(closed).toBe(0)
+  })
+
+  it('scrolling inside the popover is not the page moving: it stays open', () => {
+    const button = { rect: rect(100, 140, 40) }
+    let closed = 0
+    openWith(button, () => closed++)
+    button.rect = rect(100, 140, 300)
     act(() => {
       fireEvent.scroll(screen.getByRole('dialog'))
     })
-    expect(screen.getByRole('dialog').style.top).toBe('74px')
+    expect(closed).toBe(0)
   })
 
-  it('without a button to follow it stays put', () => {
-    stage({ current: 200 })
-    open(rect(100, 140, 40))
+  it('a sideways move of the button (a grid scrolled horizontally) closes it too', () => {
+    const button = { rect: rect(100, 140, 40) }
+    let closed = 0
+    openWith(button, () => closed++)
+    button.rect = rect(60, 100, 40)
     act(() => {
       fireEvent.scroll(document)
     })
-    expect(screen.getByRole('dialog').style.top).toBe('74px')
+    expect(closed).toBe(1)
+  })
+
+  it('with no button to watch a scroll does nothing', () => {
+    stage({ current: 200 })
+    let closed = 0
+    render(<Popover anchor={rect(100, 140, 40)} onClose={() => closed++} label="p">x</Popover>)
+    act(() => {
+      fireEvent.scroll(document)
+    })
+    expect(closed).toBe(0)
   })
 })

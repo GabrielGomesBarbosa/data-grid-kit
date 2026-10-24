@@ -20,15 +20,21 @@ export interface PopoverProps {
  */
 export function Popover({ anchor, onClose, children, label, role = 'dialog', align = 'start', className }: PopoverProps) {
   const ref = useRef<HTMLDivElement>(null)
+  // the latest onClose without making the effect below start over each time the parent renders (live data re-renders often)
+  const closeRef = useRef(onClose)
+  closeRef.current = onClose
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
 
-  // Placed under its button and kept inside the window. It follows the button when the page or a container scrolls, and
-  // moves again when its own size changes (the filter panel grows with each filter) or the window does.
+  // Placed under its button and kept inside the window. It does not follow the button when the page scrolls: a position
+  // written from a scroll handler is always a frame behind the browser's own scrolling, and the popover would shake. A
+  // popover that is portalled (the grid clips what sticks out of it) is let go when its button moves instead: it closes.
+  // It does move again when its own size changes (the filter panel grows with each filter) or the window is resized.
   useIsomorphicLayoutEffect(() => {
     const el = ref.current
     if (!el) return
     // the button the popover belongs to, found where the anchor was when it opened (the popover is still hidden: it can't be hit)
     const button = document.elementFromPoint?.(anchor.left + anchor.width / 2, anchor.top + anchor.height / 2)?.closest('[data-gk-anchor], button') ?? null
+    const start = button?.getBoundingClientRect()
     const place = () => {
       const a = button?.isConnected ? button.getBoundingClientRect() : anchor
       const w = el.offsetWidth
@@ -44,7 +50,9 @@ export function Popover({ anchor, onClose, children, label, role = 'dialog', ali
       setPos((p) => (p && p.top === top && p.left === left ? p : { top, left }))
     }
     const onScroll = (e: Event) => {
-      if (!el.contains(e.target as Node)) place() // scrolling inside the popover (a long list) must not move it
+      if (!button || !start || el.contains(e.target as Node)) return // scrolling inside the popover (a long list) is not the page moving
+      const now = button.getBoundingClientRect()
+      if (Math.abs(now.top - start.top) > 1 || Math.abs(now.left - start.left) > 1) closeRef.current()
     }
     place()
     const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(place)
