@@ -31,6 +31,8 @@ export interface GridApi<R = any> {
   pinColumn(field: string, side: PinSide | null): void
   setColumnWidth(field: string, width: number): void
   setColumnVisibility(field: string, visible: boolean): void
+  /** replace the visibility of every column at once (`{}` goes back to each column's own `hidden`); every column may be hidden */
+  setColumnVisibilityModel(model: Record<string, boolean>): void
   moveColumn(field: string, toIndex: number): void
   /** move a column next to another one in the same group (pinned left / scrolling / pinned right) */
   reorderColumn(field: string, target: string, placement: DropPlacement): boolean

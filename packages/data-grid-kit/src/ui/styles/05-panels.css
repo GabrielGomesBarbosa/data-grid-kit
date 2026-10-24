@@ -49,6 +49,7 @@
   gap: 8px;
 }
 .gk-panel select,
+.gk-panel input[type='search'],
 .gk-panel input[type='text'],
 .gk-panel input[type='number'],
 .gk-panel input[type='date'] {
@@ -117,4 +118,28 @@
 .gk-root select:disabled,
 .gk-popover select:disabled {
   opacity: 0.6;
+}
+
+/* columns panel and the no-columns state */
+.gk-columns-search {
+  box-sizing: border-box;
+  width: 100%;
+}
+.gk-columns-footer {
+  align-items: center;
+  justify-content: space-between;
+}
+.gk-columns-footer label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.gk-no-columns {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.gk-no-columns p {
+  margin: 0;
 }

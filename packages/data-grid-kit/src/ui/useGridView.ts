@@ -199,7 +199,8 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
   }
 
   const bodyRows: BodyRow<R>[] = []
-  for (let i = rowRange.start; i < rowRange.end; i++) {
+  // with no columns there is nothing to draw in a row: the empty state is shown instead
+  for (let i = rowRange.start; layout.all.length > 0 && i < rowRange.end; i++) {
     const r = rows[i]
     const ariaRow = hdr + pinnedTop.length + i + geometry.slotsBefore(i)
     if (!r) {
@@ -350,6 +351,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
     pinnedTop: pinnedTopBlock,
     pinnedBottom: pinnedBottomBlock,
     toolbar: toolbar ? { grid, panel, onPanel: openPanel, onExport: doExport } : null,
+    openPanel,
     footer: paging || grid.server ? { grid, paging, rects } : null,
     loading: !!grid.server?.loading,
     error: grid.server?.error ? { message: grid.server.error.message, retry: () => api.refreshData() } : null,

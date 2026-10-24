@@ -8,7 +8,7 @@ import type { PopoversProps } from './Popovers'
 import type { RowProps } from './Row'
 import type { SkeletonRowProps } from './SkeletonRow'
 import type { SlotsValue } from './slotsContext'
-import type { ToolbarProps } from './Toolbar'
+import type { PanelKind, ToolbarProps } from './Toolbar'
 
 /** A row of the scrolling body: a real row, or the placeholder of a server row that has not arrived. */
 export type BodyRow<R> = { type: 'row'; key: string | number; props: RowProps<R> } | { type: 'skeleton'; key: string; props: SkeletonRowProps }
@@ -52,6 +52,8 @@ export interface GridView<R> {
   pinnedTop: PinnedBlock<R> | null
   pinnedBottom: PinnedBlock<R> | null
   toolbar: ToolbarProps<R> | null
+  /** open a panel (columns, filters, export, pivot) next to `anchor` */
+  openPanel: (kind: PanelKind, anchor: DOMRect) => void
   footer: FooterProps<R> | null
   loading: boolean
   error: { message: string; retry: () => void } | null

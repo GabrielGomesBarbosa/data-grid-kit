@@ -56,7 +56,7 @@ export function Grid<R = any>(props: GridProps<R>) {
                 ))}
             </div>
             {pinnedBottom && pinnedBlock(pinnedBottom)}
-            <slots.noRowsOverlay grid={view.grid} {...slotProps.noRowsOverlay} />
+            <slots.noRowsOverlay grid={view.grid} onManageColumns={(anchor) => view.openPanel('columns', anchor)} {...slotProps.noRowsOverlay} />
           </div>
         </div>
         {view.footer && <slots.footer {...view.footer} {...slotProps.footer} />}
