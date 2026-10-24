@@ -147,3 +147,12 @@ table.plain th button {
   padding-top: 16px;
   border-top: 1px solid var(--border);
 }
+
+.demo-rich {
+  font-weight: 600;
+  color: var(--accent, #1d6fdc);
+}
+.demo-footer {
+  padding: 6px 12px;
+  font-size: 13px;
+}

@@ -26,6 +26,7 @@ import { page as rowReorderingPage } from './rowReordering'
 import { page as treeDataPage } from './treeData'
 import { page as rowGroupingPage } from './rowGrouping'
 import { page as headlessPage } from './headless'
+import { page as customizationPage } from './customization'
 import { page as performancePage } from './performance'
 import { page as apiPage } from './api'
 
@@ -59,6 +60,7 @@ export const pages: PageDef[] = [
   rowReorderingPage,
   treeDataPage,
   rowGroupingPage,
+  customizationPage,
   headlessPage,
   performancePage,
   apiPage,
