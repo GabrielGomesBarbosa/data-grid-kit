@@ -50,6 +50,8 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
     cellSelection = false,
     clipboard = true,
     onClipboardCopy,
+    onColumnHeaderDragStart,
+    onColumnHeaderDragEnd,
     fillHandle = true,
     className,
     csvFileName = 'export.csv',
@@ -121,7 +123,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
     !!renderDetailPanel && detailPanelToggle && r.row !== undefined && (grid.options.isDetailPanelAvailable?.(r.row) ?? true)
 
   /* ---- interactions: each hook gets what the grid computed above and returns what the others need ---- */
-  const ctx = { cellSelection, api, state, grid, layout, fillHandle, scrollerRef, gridRef, hasHierarchy, hierarchyField, hasDetail, checkboxSelection, rowSelectionOnClick, rows, clipboard, onClipboardCopy, setPanel, setMenu, menu, columns, csvFileName } as GridCtx<R>
+  const ctx = { cellSelection, api, state, grid, layout, fillHandle, scrollerRef, gridRef, hasHierarchy, hierarchyField, hasDetail, checkboxSelection, rowSelectionOnClick, rows, clipboard, onClipboardCopy, onColumnHeaderDragStart, onColumnHeaderDragEnd, setPanel, setMenu, menu, columns, csvFileName } as GridCtx<R>
   Object.assign(ctx, useCellSelection(ctx))
   Object.assign(ctx, useRowDrag(ctx))
   Object.assign(ctx, useKeyboard(ctx))

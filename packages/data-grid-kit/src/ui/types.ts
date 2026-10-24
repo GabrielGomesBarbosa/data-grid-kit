@@ -57,6 +57,10 @@ export interface GridProps<R = any> extends Omit<GridOptions<R>, 'columns'>, Gri
   columnControls?: boolean
   /** drag headers to reorder columns (default true; per column: reorderable: false) */
   columnReorder?: boolean
+  /** a header started to be dragged to a new place */
+  onColumnHeaderDragStart?: (params: { field: string }) => void
+  /** the drag of a header ended: `dropped` is false when it was cancelled (Escape) */
+  onColumnHeaderDragEnd?: (params: { field: string; dropped: boolean }) => void
   /** show pin-to-top / pin-to-bottom buttons on rows (flat grids only) */
   rowPinning?: boolean
   /** content of a row's detail panel; setting it turns on detail panels (see also `detailPanelHeight`) */

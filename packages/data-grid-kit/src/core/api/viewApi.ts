@@ -40,11 +40,14 @@ export function viewApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'setSortModel' | 
       set((s) => ({ columnVisibility: { ...s.columnVisibility, [field]: visible } })),
     setColumnVisibilityModel: (model) => set({ columnVisibility: { ...model } }),
     moveColumn(field, toIndex) {
+      const oldIndex = store.getState().columnOrder.indexOf(field)
       set((s) => {
         const order = s.columnOrder.filter((f) => f !== field)
         order.splice(Math.max(0, Math.min(toIndex, order.length)), 0, field)
         return { columnOrder: order }
       })
+      const targetIndex = store.getState().columnOrder.indexOf(field)
+      if (oldIndex !== targetIndex) optionsRef.current.onColumnOrderChange?.({ field, oldIndex, targetIndex })
     },
     reorderColumn(field, target, placement) {
       const layout = layoutRef.current
@@ -53,6 +56,10 @@ export function viewApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'setSortModel' | 
       const change = planColumnMove(optionsRef.current.columns, s, layout, field, target, placement)
       if (!change) return false
       set(change)
+      const after = store.getState().columnOrder
+      const oldIndex = s.columnOrder.indexOf(field)
+      const targetIndex = after.indexOf(field)
+      if (oldIndex !== targetIndex) optionsRef.current.onColumnOrderChange?.({ field, oldIndex, targetIndex })
       return true
     },
     moveColumnBy(field, delta) {

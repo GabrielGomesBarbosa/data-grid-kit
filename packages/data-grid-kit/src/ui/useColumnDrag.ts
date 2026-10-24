@@ -4,7 +4,7 @@ import type { GridCtx, DropTarget } from './ctx'
 import { pointerDrag } from './pointerDrag'
 
 export function useColumnDrag<R>(c: GridCtx<R>) {
-  const { gridRef, scrollerRef, api } = c
+  const { gridRef, scrollerRef, api, onColumnHeaderDragStart, onColumnHeaderDragEnd } = c
 
   /* ---- column drag & drop ---- */
 
@@ -29,6 +29,7 @@ export function useColumnDrag<R>(c: GridCtx<R>) {
 
   const startColumnDrag = (field: string, e: ReactPointerEvent<HTMLElement>) => {
     let target: DropTarget | null = null
+    let started = false
     let x = e.clientX
     let y = e.clientY
     const publish = () => {
@@ -41,7 +42,11 @@ export function useColumnDrag<R>(c: GridCtx<R>) {
         threshold: 5,
         touchHoldMs: 350,
         cancelOnEscape: true,
-        onStart: () => document.body.classList.add('gk-col-dragging'),
+        onStart: () => {
+          document.body.classList.add('gk-col-dragging')
+          started = true
+          onColumnHeaderDragStart?.({ field })
+        },
         onMove: (mx, my) => {
           x = mx
           y = my
@@ -64,6 +69,7 @@ export function useColumnDrag<R>(c: GridCtx<R>) {
           setDrag(null)
         },
         onEnd: (outcome) => {
+          if (started) onColumnHeaderDragEnd?.({ field, dropped: outcome === 'dropped' })
           if (outcome !== 'dropped') return
           // the click that follows pointerup belongs to the drag, not to the sort button
           justDragged.current = true

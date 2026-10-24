@@ -1,3 +1,4 @@
+import { DEFAULT_MIN_WIDTH } from '../layout'
 import type { ApiContext } from './context'
 import type { AutosizeOptions, ColumnMeasurer, GridApi } from '../gridTypes'
 import type { Store } from '../store'
@@ -37,6 +38,11 @@ export function autosizeApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'autosizeColu
         if (spare > 0 && mine > 0) for (const f of fitted) widths[f] = Math.floor(widths[f]! + (spare * widths[f]!) / mine)
       }
       set((s) => ({ columnWidths: { ...s.columnWidths, ...widths } }))
+      // the width each column really has: what was measured, within the column's limits
+      for (const [field, width] of Object.entries(widths)) {
+        const col = c.optionsRef.current.columns.find((x) => x.field === field)
+        c.optionsRef.current.onColumnWidthChange?.({ field, width: Math.min(col?.maxWidth ?? Infinity, Math.max(col?.minWidth ?? DEFAULT_MIN_WIDTH, width)) })
+      }
       return widths
     },
   }

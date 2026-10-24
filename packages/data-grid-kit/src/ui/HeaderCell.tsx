@@ -1,7 +1,7 @@
 import { useBase } from './base'
 import { useIcons } from './icons'
 import { type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
-import { defaultAlign, type GridInstance } from '../core'
+import { DEFAULT_MIN_WIDTH, defaultAlign, type GridInstance } from '../core'
 import { cx } from './cx'
 import { type UIColumnDef } from './types'
 
@@ -47,10 +47,18 @@ export function HeaderCell<R>({
     const startX = e.clientX
     const startW = layout.width(col.field)
     const dir = side === 'right' ? -1 : 1 // right-pinned columns grow leftwards
-    const move = (ev: PointerEvent) => api.setColumnWidth(col.field, startW + dir * (ev.clientX - startX))
+    // the width the column really gets: what the pointer asked for, within the column's limits
+    let width = startW
+    const move = (ev: PointerEvent) => {
+      const asked = startW + dir * (ev.clientX - startX)
+      width = Math.min(col.maxWidth ?? Infinity, Math.max(col.minWidth ?? DEFAULT_MIN_WIDTH, asked))
+      api.setColumnWidth(col.field, asked)
+      grid.options.onColumnResize?.({ field: col.field, width })
+    }
     const up = () => {
       window.removeEventListener('pointermove', move)
       window.removeEventListener('pointerup', up)
+      if (width !== startW) grid.options.onColumnWidthChange?.({ field: col.field, width })
     }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)

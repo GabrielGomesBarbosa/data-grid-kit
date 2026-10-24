@@ -356,6 +356,12 @@ export interface GridOptions<R = any> {
   /** a paste is about to be applied / was applied (with how many cells changed, were skipped or rejected) */
   onClipboardPasteStart?: (params: { text: string }) => void
   onClipboardPasteEnd?: (result: { applied: number; skipped: number; rejected: number }) => void
+  /** a column is being resized (fires on every move of the pointer) */
+  onColumnResize?: (params: { field: string; width: number }) => void
+  /** a column's width changed for good: the resize ended, or it was fitted to its content */
+  onColumnWidthChange?: (params: { field: string; width: number }) => void
+  /** a column was moved: positions are in the order of all the columns (hidden ones too) */
+  onColumnOrderChange?: (params: { field: string; oldIndex: number; targetIndex: number }) => void
   /** `'cell'` (default): one cell is edited at a time. `'row'`: every editable cell of a row at once, saved together (Enter, or a click outside). */
   editMode?: 'cell' | 'row'
   /** a cell is about to be edited: return `false` to stop it */

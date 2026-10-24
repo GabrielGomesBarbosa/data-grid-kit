@@ -40,6 +40,8 @@ export interface GridCtx<R> {
   rows: RenderRow<R>[]
   clipboard: boolean
   onClipboardCopy: ((text: string) => void) | undefined
+  onColumnHeaderDragStart: ((params: { field: string }) => void) | undefined
+  onColumnHeaderDragEnd: ((params: { field: string; dropped: boolean }) => void) | undefined
   setPanel: React.Dispatch<React.SetStateAction<PanelState | null>>
   setMenu: React.Dispatch<React.SetStateAction<{ field: string; anchor: DOMRect; } | null>>
   menu: { field: string; anchor: DOMRect; } | null
