@@ -2,6 +2,29 @@
   "name": "data-grid-kit",
   "version": "0.1.0",
   "description": "Headless-first React data grid: hooks + store core, unstyled-friendly UI",
+  "license": "MIT",
+  "author": "Gabriel Gomes Barbosa",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GabrielGomesBarbosa/data-grid-kit.git",
+    "directory": "packages/data-grid-kit"
+  },
+  "homepage": "https://github.com/GabrielGomesBarbosa/data-grid-kit#readme",
+  "bugs": {
+    "url": "https://github.com/GabrielGomesBarbosa/data-grid-kit/issues"
+  },
+  "keywords": [
+    "react",
+    "data-grid",
+    "datagrid",
+    "table",
+    "headless",
+    "virtualization",
+    "pivot",
+    "tree-data",
+    "row-grouping",
+    "typescript"
+  ],
   "type": "module",
   "sideEffects": [
     "**/*.css"
@@ -20,7 +43,9 @@
     "./styles.css": "./dist/styles.css"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsup && cp src/ui/styles.css dist/styles.css",
@@ -44,5 +69,8 @@
     "typescript": "^5.6.0",
     "vite": "^5.4.0",
     "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
