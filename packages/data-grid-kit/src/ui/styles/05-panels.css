@@ -1,6 +1,6 @@
 /* ---- popovers, menus, panels ---- */
 .gk-popover {
-  position: fixed;
+  position: absolute;
   z-index: 1000;
   min-width: 160px;
   max-width: min(640px, calc(100vw - 16px));

@@ -23,20 +23,23 @@ export function Popover({ anchor, onClose, children, label, role = 'dialog', ali
   // the latest onClose without making the effect below start over each time the parent renders (live data re-renders often)
   const closeRef = useRef(onClose)
   closeRef.current = onClose
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
+  const [pos, setPos] = useState<{ top: number; left: number; maxHeight?: number } | null>(null)
 
-  // Placed under its button and kept inside the window. It does not follow the button when the page scrolls: a position
-  // written from a scroll handler is always a frame behind the browser's own scrolling, and the popover would shake. A
-  // popover that is portalled (the grid clips what sticks out of it) is let go when its button moves instead: it closes.
-  // It does move again when its own size changes (the filter panel grows with each filter) or the window is resized.
+  // Placed under the button it was opened from, kept inside the window, and written in page coordinates with
+  // `position: absolute`: the browser itself moves it with the page, so it stays glued to the button through any scroll with
+  // no script running (a position written from a scroll handler is a frame behind and would shake). It never closes on
+  // scroll. It moves again only when its own size changes (the filter panel grows with each filter) or the window is resized.
+  const origin = useRef<{ anchor: DOMRect; x: number; y: number } | null>(null)
   useIsomorphicLayoutEffect(() => {
     const el = ref.current
     if (!el) return
-    // the button the popover belongs to, found where the anchor was when it opened (the popover is still hidden: it can't be hit)
-    const button = document.elementFromPoint?.(anchor.left + anchor.width / 2, anchor.top + anchor.height / 2)?.closest('[data-gk-anchor], button') ?? null
-    const start = button?.getBoundingClientRect()
+    if (origin.current?.anchor !== anchor) {
+      // what the popover is positioned against: the page, unless the site positions <body>
+      const base = el.offsetParent?.getBoundingClientRect()
+      origin.current = { anchor, x: base ? base.left : -window.scrollX, y: base ? base.top : -window.scrollY }
+    }
     const place = () => {
-      const a = button?.isConnected ? button.getBoundingClientRect() : anchor
+      const a = anchor
       const w = el.offsetWidth
       const h = el.offsetHeight
       const room = window.innerWidth - 8
@@ -45,24 +48,29 @@ export function Popover({ anchor, onClose, children, label, role = 'dialog', ali
       if (align === 'start' && left + w > room && a.right - w >= 8) left = a.right - w
       else if (align === 'end' && left < 8 && a.left + w <= room) left = a.left
       left = Math.max(8, Math.min(left, room - w))
+      // under the button; above it when only there it fits; when it fits on neither side, on the roomier side with a
+      // height that scrolls inside (pushed against the window's edge it would sit on top of its own button)
+      const below = window.innerHeight - 8 - (a.bottom + 4)
+      const above = a.top - 4 - 8
       let top = a.bottom + 4
-      if (top + h > window.innerHeight - 8) top = Math.max(8, a.top - h - 4)
-      setPos((p) => (p && p.top === top && p.left === left ? p : { top, left }))
-    }
-    const onScroll = (e: Event) => {
-      if (!button || !start || el.contains(e.target as Node)) return // scrolling inside the popover (a long list) is not the page moving
-      const now = button.getBoundingClientRect()
-      if (Math.abs(now.top - start.top) > 1 || Math.abs(now.left - start.left) > 1) closeRef.current()
+      let maxHeight: number | undefined
+      if (h > below && h <= above) top = a.top - h - 4
+      else if (h > below) {
+        maxHeight = Math.max(120, Math.max(below, above))
+        if (above > below) top = a.top - Math.min(h, maxHeight) - 4
+      }
+      // from the window to the page, as the page was when the anchor was measured (later renders must not use today's scroll)
+      const x = left - origin.current!.x
+      const y = top - origin.current!.y
+      setPos((p) => (p && p.top === y && p.left === x && p.maxHeight === maxHeight ? p : { top: y, left: x, maxHeight }))
     }
     place()
     const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(place)
     observer?.observe(el)
     window.addEventListener('resize', place)
-    window.addEventListener('scroll', onScroll, true)
     return () => {
       observer?.disconnect()
       window.removeEventListener('resize', place)
-      window.removeEventListener('scroll', onScroll, true)
     }
   }, [anchor, align])
 
@@ -113,7 +121,7 @@ export function Popover({ anchor, onClose, children, label, role = 'dialog', ali
       role={role}
       aria-label={label}
       className={`gk-popover ${className ?? ''}`}
-      style={{ top: pos?.top ?? 0, left: pos?.left ?? 0, visibility: pos ? 'visible' : 'hidden' }}
+      style={{ top: pos?.top ?? 0, left: pos?.left ?? 0, maxHeight: pos?.maxHeight, visibility: pos ? 'visible' : 'hidden' }}
       onKeyDown={onKeyDown}
     >
       {children}

@@ -6,7 +6,6 @@ afterEach(() => {
   cleanup()
   delete (HTMLElement.prototype as any).offsetWidth
   delete (HTMLElement.prototype as any).offsetHeight
-  delete (document as any).elementFromPoint
 })
 
 const rect = (left: number, right: number, top = 40) => ({ left, right, top, bottom: top + 30, width: right - left, height: 30, x: left, y: top, toJSON: () => ({}) }) as DOMRect
@@ -22,20 +21,13 @@ class FakeObserver {
   disconnect() {}
 }
 
-/** a window 1000 wide, a popover `width` wide, and (optionally) a button under the anchor that can move */
-function stage(width: { current: number }, button?: { rect: DOMRect }) {
+/** a window 1000 wide, a popover `width` wide */
+function stage(width: { current: number }) {
   notify = []
   ;(globalThis as any).ResizeObserver = FakeObserver
   Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, get: () => width.current })
   Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, get: () => 100 })
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1000 })
-  if (button) {
-    const el = document.createElement('button')
-    el.setAttribute('data-gk-anchor', '')
-    el.getBoundingClientRect = () => button.rect
-    document.body.appendChild(el)
-    ;(document as any).elementFromPoint = () => el
-  }
 }
 const left = () => screen.getByRole('dialog').style.left
 const open = (anchor: DOMRect, align?: 'start' | 'end') => render(<Popover anchor={anchor} onClose={() => {}} label="p" align={align}>x</Popover>)
@@ -88,78 +80,78 @@ describe('Popover position', () => {
 })
 
 describe('Popover and scrolling', () => {
-  const openWith = (button: { rect: DOMRect }, onClose: () => void) => {
-    stage({ current: 200 }, button)
-    return render(<Popover anchor={button.rect} onClose={onClose} label="p">x</Popover>)
-  }
-
-  it('does not move with the page (a position written on scroll would shake): it closes when its button moves', () => {
-    const button = { rect: rect(100, 140, 40) }
+  it('is positioned against the page, so the browser moves it with the scroll: nothing is written and it never closes', () => {
+    stage({ current: 200 })
     let closed = 0
-    openWith(button, () => closed++)
-    const top = screen.getByRole('dialog').style.top
-    button.rect = rect(100, 140, -60) // the page scrolled
+    render(<Popover anchor={rect(100, 140, 40)} onClose={() => closed++} label="p">x</Popover>)
+    const style = screen.getByRole('dialog').getAttribute('style')
     act(() => {
+      window.scrollTo?.(0, 300)
       fireEvent.scroll(document)
-    })
-    expect(closed).toBe(1)
-    expect(screen.getByRole('dialog').style.top).toBe(top) // and it was not written to on the way
-  })
-
-  it('keeps watching from where it opened, even when the parent renders again with a new onClose', () => {
-    const button = { rect: rect(100, 140, 40) }
-    stage({ current: 200 }, button)
-    const anchor = button.rect // the same object for as long as the popover is open
-    let closed = 0
-    const view = render(<Popover anchor={anchor} onClose={() => closed++} label="p">x</Popover>)
-    button.rect = rect(100, 140, 20) // moved 20px, then the parent re-renders (a live update) before the next scroll event
-    view.rerender(<Popover anchor={anchor} onClose={() => closed++} label="p">x</Popover>)
-    act(() => {
-      fireEvent.scroll(document)
-    })
-    expect(closed).toBe(1)
-  })
-
-  it('a scroll that does not move the button leaves it open (a sub-pixel change is not a move)', () => {
-    const button = { rect: rect(100, 140, 40) }
-    let closed = 0
-    openWith(button, () => closed++)
-    button.rect = rect(100, 140, 40.5)
-    act(() => {
-      fireEvent.scroll(document)
+      fireEvent.scroll(window)
     })
     expect(closed).toBe(0)
+    expect(screen.getByRole('dialog').getAttribute('style')).toBe(style)
   })
 
-  it('scrolling inside the popover is not the page moving: it stays open', () => {
-    const button = { rect: rect(100, 140, 40) }
+  it('opened on a scrolled page it is written in page coordinates (window position + scroll offset)', () => {
+    stage({ current: 200 })
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 500 })
+    Object.defineProperty(window, 'scrollX', { configurable: true, value: 30 })
+    try {
+      render(<Popover anchor={rect(100, 140, 40)} onClose={() => {}} label="p">x</Popover>)
+      const el = screen.getByRole('dialog')
+      expect(el.style.left).toBe('130px') // 100 + 30
+      expect(el.style.top).toBe('574px') // 40 + 30 (button) + 4 gap + 500
+    } finally {
+      Object.defineProperty(window, 'scrollY', { configurable: true, value: 0 })
+      Object.defineProperty(window, 'scrollX', { configurable: true, value: 0 })
+    }
+  })
+
+  it('a re-placement after the page scrolled (its size changed) keeps the page position it opened at', () => {
+    stage({ current: 200 })
+    render(<Popover anchor={rect(100, 140, 40)} onClose={() => {}} label="p">x</Popover>)
+    const before = screen.getByRole('dialog').style.top
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 200 })
+    try {
+      act(() => notify.forEach((cb) => cb()))
+      expect(screen.getByRole('dialog').style.top).toBe(before)
+    } finally {
+      Object.defineProperty(window, 'scrollY', { configurable: true, value: 0 })
+    }
+  })
+
+  it('scrolling inside the popover leaves it where it is', () => {
+    stage({ current: 200 })
     let closed = 0
-    openWith(button, () => closed++)
-    button.rect = rect(100, 140, 300)
+    render(<Popover anchor={rect(100, 140, 40)} onClose={() => closed++} label="p">x</Popover>)
     act(() => {
       fireEvent.scroll(screen.getByRole('dialog'))
     })
     expect(closed).toBe(0)
   })
+})
 
-  it('a sideways move of the button (a grid scrolled horizontally) closes it too', () => {
-    const button = { rect: rect(100, 140, 40) }
-    let closed = 0
-    openWith(button, () => closed++)
-    button.rect = rect(60, 100, 40)
-    act(() => {
-      fireEvent.scroll(document)
-    })
-    expect(closed).toBe(1)
+describe('Popover vertical placement', () => {
+  const tall = (h: number) => Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, get: () => h })
+  const win = (h: number) => Object.defineProperty(window, 'innerHeight', { configurable: true, value: h })
+
+  it('goes above the button when it only fits there', () => {
+    stage({ current: 200 })
+    win(768)
+    tall(300)
+    open(rect(100, 140, 500)) // 530 + 4 + 300 > 760, above has 488
+    expect(screen.getByRole('dialog').style.top).toBe('196px') // 500 - 300 - 4
   })
 
-  it('with no button to watch a scroll does nothing', () => {
+  it('fits on neither side: stays under the button with a height that scrolls, never on top of it', () => {
     stage({ current: 200 })
-    let closed = 0
-    render(<Popover anchor={rect(100, 140, 40)} onClose={() => closed++} label="p">x</Popover>)
-    act(() => {
-      fireEvent.scroll(document)
-    })
-    expect(closed).toBe(0)
+    win(768)
+    tall(511)
+    open(rect(100, 140, 310)) // below has 768 - 8 - 344 = 416, above 298
+    const el = screen.getByRole('dialog')
+    expect(el.style.top).toBe('344px')
+    expect(el.style.maxHeight).toBe('416px')
   })
 })
