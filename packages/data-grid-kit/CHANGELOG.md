@@ -1,5 +1,17 @@
 # data-grid-kit
 
+## 0.7.0
+
+### Minor Changes
+
+- 21f60f9: Popovers line their right edge up with the button when they do not fit on its left edge (they used to be pushed against the window edge), and they follow the button when the page or a container scrolls. The filter panel is redesigned: outlined fields with their names (Column, Operator, Value), a quiet remove icon first in each row, and Add filter / Remove all with icons along the bottom. The `close` icon is now a line icon, and `add` and `trash` are new replaceable icons (23 in all).
+- 21f60f9: The filter panel opens on one ready row (no "No filters" text to click past): the row is only shown, and becomes a filter when you change something in it. The Filters button counts only filters that filter (a row with nothing typed is not counted). Popovers move the focus inside once they are positioned (a hidden element cannot take focus, so it never worked in a browser) and the filter panel's value box gets it.
+
+### Patch Changes
+
+- 21f60f9: Docs: the price flash in the real-time demo keeps its round corners (the flash is a layer that fades, instead of animating the pill's background and shadow).
+- 2da47c8: The no-columns state is a message ("No columns are visible. Check the column visibility settings.") instead of a message with a button: the Manage columns button opened its panel away from the button when the page was scrolled. `NoRowsOverlayProps.onManageColumns` is removed (it was added in 0.6.0).
+
 ## 0.6.0
 
 ### Minor Changes
