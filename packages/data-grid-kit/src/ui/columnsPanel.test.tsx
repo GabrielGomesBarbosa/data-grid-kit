@@ -94,25 +94,21 @@ describe('columns panel', () => {
 })
 
 describe('a grid with no columns', () => {
-  it('shows "No columns" and no rows, with a Manage columns button that opens the panel', () => {
+  it('says so instead of drawing empty rows, and the columns panel brings them back', () => {
     const { container } = open()
     fireEvent.click(panel().getByLabelText('Show/Hide All'))
     fireEvent.click(panel().getByLabelText('Show/Hide All')) // hide all
-    expect(screen.getByText('No columns')).toBeTruthy()
+    expect(screen.getByText('No columns are visible.')).toBeTruthy()
+    expect(screen.getByText('Check the column visibility settings.')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Manage columns' })).toBeNull() // just a message: no button to place
     expect(container.querySelectorAll('.gk-row[data-rowindex]')).toHaveLength(0)
-    fireEvent.keyDown(document, { key: 'Escape' })
-    expect(screen.queryByRole('dialog')).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'Manage columns' }))
-    expect(screen.getByRole('dialog')).toBeTruthy()
     fireEvent.click(panel().getByLabelText('Show/Hide All'))
-    expect(screen.queryByText('No columns')).toBeNull()
+    expect(screen.queryByText('No columns are visible.')).toBeNull()
     expect(container.querySelectorAll('.gk-row[data-rowindex]').length).toBeGreaterThan(0)
   })
 
-  it('without a toolbar the way back is the Manage columns button too', () => {
+  it('a grid whose columns are all hidden from the start shows the message too', () => {
     render(<Grid<P> rows={rows} columns={columns.map((c) => ({ ...c, hidden: true }))} />)
-    expect(screen.getByText('No columns')).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', { name: 'Manage columns' }))
-    expect(screen.getByRole('dialog', { name: /column/i })).toBeTruthy()
+    expect(screen.getByText('No columns are visible.')).toBeTruthy()
   })
 })

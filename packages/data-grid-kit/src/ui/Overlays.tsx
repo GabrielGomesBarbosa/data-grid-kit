@@ -13,8 +13,6 @@ export interface ErrorOverlayProps extends OverlayProps {
 }
 export interface NoRowsOverlayProps<R> extends OverlayProps {
   grid: GridInstance<R>
-  /** opens the columns panel next to `anchor`: the 'Manage columns' button of the no-columns state calls it */
-  onManageColumns?: (anchor: DOMRect) => void
 }
 
 /** The thin bar shown while server-side rows load. */
@@ -34,19 +32,14 @@ export function ErrorBanner({ message, onRetry, className, style }: ErrorOverlay
   )
 }
 
-/** What the body shows when there is nothing to show: no columns (with a way to bring them back), a hint in pivot mode, otherwise "No rows". */
-export function EmptyState<R>({ grid, className, style, onManageColumns }: NoRowsOverlayProps<R>) {
-  const { Button } = useBase()
+/** What the body shows when there is nothing to show: no columns, a hint in pivot mode, otherwise "No rows". */
+export function EmptyState<R>({ grid, className, style }: NoRowsOverlayProps<R>) {
   const { pivot, state, rows, server } = grid
   if (!pivot && grid.layout.all.length === 0) {
     return (
       <div className={cx('gk-empty gk-no-columns', className)} style={style}>
-        <p>No columns</p>
-        {onManageColumns && (
-          <Button type="button" data-gk-anchor onClick={(e) => onManageColumns(e.currentTarget.getBoundingClientRect())}>
-            Manage columns
-          </Button>
-        )}
+        <p>No columns are visible.</p>
+        <p className="gk-muted">Check the column visibility settings.</p>
       </div>
     )
   }

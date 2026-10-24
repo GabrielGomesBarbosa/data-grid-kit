@@ -78,6 +78,8 @@
   display: block;
 }
 .rt-pill {
+  position: relative;
+  isolation: isolate; /* the flash layer sits behind the text but above the pill's own background */
   display: inline-block;
   min-width: 78px;
   padding: 2px 8px;
@@ -86,36 +88,46 @@
   font-variant-numeric: tabular-nums;
   background: var(--up-soft);
   color: var(--text);
-  animation-duration: 0.9s;
-  animation-timing-function: ease-out;
 }
 .rt-pill[data-down] {
   background: var(--down-soft);
 }
-.rt-pill[data-flash='up'] {
-  animation-name: rt-flash-up;
+/*
+ * The flash is a layer with the pill's own radius (inherited) whose opacity is the only thing animated, so the corners
+ * stay round in every browser. Animating `background` and `box-shadow` on the pill itself drew square corners in some.
+ */
+.rt-pill[data-flash]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  opacity: 0;
+  animation: rt-flash 0.9s ease-out;
 }
-.rt-pill[data-flash='down'] {
-  animation-name: rt-flash-down;
+.rt-pill[data-flash='up']::after {
+  background: var(--up);
 }
-@keyframes rt-flash-up {
+.rt-pill[data-flash='down']::after {
+  background: var(--down);
+}
+.rt-pill[data-flash] {
+  animation: rt-flash-text 0.9s ease-out;
+}
+@keyframes rt-flash {
   0% {
-    box-shadow: 0 0 0 0 var(--up);
-    background: var(--up);
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes rt-flash-text {
+  0% {
     color: #fff;
   }
   100% {
-    box-shadow: 0 0 0 6px transparent;
-  }
-}
-@keyframes rt-flash-down {
-  0% {
-    box-shadow: 0 0 0 0 var(--down);
-    background: var(--down);
-    color: #fff;
-  }
-  100% {
-    box-shadow: 0 0 0 6px transparent;
+    color: var(--text);
   }
 }
 .rt-up {
