@@ -1,5 +1,19 @@
 # data-grid-kit
 
+## 0.11.0
+
+### Minor Changes
+
+- f0684e7: The api from outside and inside the grid. `useGridApiRef()` and the `apiRef` prop give the api to the component that renders the grid; `useGridApiContext()` gives it to slots and renderers (`renderCell`, `renderHeader`...); `useGridSelector(selector)` reads a slice of the state and re-renders only when that slice changes.
+- c1521d1: Clipboard events and options. `onClipboardCopy`, `onBeforeClipboardPasteStart` (return `false`, or a promise of it, to cancel a paste), `onClipboardPasteStart` and `onClipboardPasteEnd`, and `disableClipboardPaste`. Ctrl/Cmd+D and Ctrl/Cmd+R fill the selection down and to the right (`api.fillSelection`), and `fillSeries` makes the fill handle continue numbers a constant step apart instead of repeating them (off by default: fills repeat as before).
+- 3a51cc2: Column events. `onColumnResize` (while a divider is dragged), `onColumnWidthChange` (the width changed for good, also after a fit to content), `onColumnOrderChange` (which column moved, from where to where) and `onColumnHeaderDragStart` / `onColumnHeaderDragEnd`.
+- 9ee4d76: Column menu customization. `slotProps.columnMenu` takes `hiddenItems` (leave groups out) and `itemsBefore` / `itemsAfter` (your own items, drawn with the new `ColumnMenuItem`), a column's `columnMenu: false` turns its menu button off, and Ctrl/Cmd+Enter on a focused header opens its menu.
+- 85ed16b: Column visibility options. `hideable: false` on a column keeps it: its checkbox and the Hide item of its menu are off, and Show/Hide All skips it. The columns panel takes `disableShowHideToggle`, `disableResetButton`, `getTogglableColumns` and `toggleAllMode="filteredOnly"` through `slotProps.columnsPanel`.
+- 58cf4fd: Editing. `editMode="row"` edits every editable cell of a row together (Tab between them, Enter or a click outside saves the row in one `processRowUpdate`, Escape discards). A column's `validate` returns a message to refuse a value (it may be async; the editor shows the message and the edit stays open). `onCellEditStart`, `onCellEditStop`, `onRowEditStart` and `onRowEditStop` report when an edit starts and why it ends, and can stop or keep it by returning `false`. New `api.startRowEdit`, `setEditValue`, `commitRowEdit`, `cancelRowEdit`; `commitEdit` and `cancelEdit` take a reason. Cell editing is unchanged unless you set these.
+- eae7114: Quick filter options. `quickFilterParser` changes how the typed text is split into terms, `quickFilterLogicOperator="or"` needs only one term to match, `quickFilterIncludeHidden` searches the columns that start hidden, a column's `quickFilter` leaves it out of the search (`false`) or decides for itself (a function), and `<QuickFilter debounceMs={300} />` waits for a pause in typing.
+- cb29e10: Accessibility extras. `rowHeader: true` on a column gives its cells the `rowheader` role, so a screen reader can name each row. The shortcuts that were missing from the docs (Ctrl/Cmd+Enter on a header, Ctrl/Cmd+A, Ctrl/Cmd+D / R) are listed.
+- 58cf4fd: `api.exportState()` and `api.restoreState(state)` save and bring back the arrangement of the grid (sorting, filters, page, column order, widths, visibility and pinning, grouping, aggregation, pivot, density, expansion, pinned rows) as plain data. `sortingOrder` (grid or column) sets the turns of a click on a header, and `multipleColumnsSortingMode="always"` adds to the sort without a modifier key (Ctrl and Cmd now work like Shift). `autoHeight` sizes the grid to its rows.
+
 ## 0.10.0
 
 ### Minor Changes
