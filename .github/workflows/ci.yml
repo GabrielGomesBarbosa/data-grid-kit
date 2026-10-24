@@ -1,9 +1,9 @@
 name: CI
 
+# Manual only while GitHub Actions minutes are unavailable. The same checks run locally in the pre-push hook
+# (`npm run check`). Restore the push / pull_request triggers when Actions can run again.
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}

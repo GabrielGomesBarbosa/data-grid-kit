@@ -14,6 +14,10 @@ npm run check      # typecheck + test + build, the same as CI
 
 Layout: `packages/data-grid-kit` (library), `apps/docs`, `apps/react-example`, `apps/next-example`. See the root README.
 
+## Checks run locally (no CI minutes needed)
+
+`npm install` sets `core.hooksPath` to `.githooks`, so **every `git push` first runs `npm run check`** (typecheck, lint, tests, builds of the library, docs and both examples; Turborepo skips what is cached). The GitHub Actions workflows are manual-only for now (`workflow_dispatch`); switch their triggers back when minutes are available. Publish the docs with `npm run docs:deploy` (builds and pushes the `gh-pages` branch).
+
 ## Definition of done
 
 A change is done when:

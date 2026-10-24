@@ -1,0 +1,5 @@
+#!/bin/sh
+# Same checks CI would run: typecheck, lint, tests and builds of every workspace (Turborepo skips what is cached).
+# Skip once in an emergency with: git push --no-verify
+echo "pre-push: npm run check"
+npm run check || { echo "pre-push: check failed, nothing was pushed"; exit 1; }

@@ -16,7 +16,9 @@
     "check": "turbo run typecheck test build",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "turbo run build --filter=data-grid-kit && changeset publish"
+    "release": "turbo run build --filter=data-grid-kit && changeset publish",
+    "prepare": "git config core.hooksPath .githooks",
+    "docs:deploy": "sh scripts/deploy-docs.sh"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.1",

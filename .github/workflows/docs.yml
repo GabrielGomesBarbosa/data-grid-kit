@@ -1,8 +1,7 @@
 name: Docs
 
+# Manual only while GitHub Actions minutes are unavailable: `npm run docs:deploy` publishes the docs from a local build.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
