@@ -27,8 +27,8 @@ export interface GridCtx<R> {
   fillHandle: boolean
   scrollerRef: React.RefObject<HTMLDivElement>
   gridRef: React.MutableRefObject<GridInstance<R>>
-  trackPointer: (start: { x: number; y: number; }, onMove: (x: number, y: number) => void, onEnd: () => void) => (() => void)
-  trackDrag: (start: { x: number; y: number; }, onCell: (cell: { row: number; col: number; }) => void, onEnd: (last: { row: number; col: number; } | null) => void) => void
+  trackPointer: (start: { x: number; y: number; pointerType?: string }, onMove: (x: number, y: number) => void, onEnd: () => void) => (() => void)
+  trackDrag: (start: { x: number; y: number; pointerType?: string }, onCell: (cell: { row: number; col: number; }) => void, onEnd: (last: { row: number; col: number; } | null) => void) => void
   setFillPreview: React.Dispatch<React.SetStateAction<RangeRect | null>>
   hasHierarchy: boolean
   hierarchyField: string | undefined

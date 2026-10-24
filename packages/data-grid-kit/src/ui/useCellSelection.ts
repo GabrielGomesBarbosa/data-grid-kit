@@ -36,11 +36,12 @@ export function useCellSelection<R>(c: GridCtx<R>) {
    */
   /** drag from `start`, scrolling the grid when the pointer nears an edge; `onEnd` runs on release */
   const trackPointer = (
-    start: { x: number; y: number },
+    start: { x: number; y: number; pointerType?: string },
     onMove: (x: number, y: number) => void,
     onEnd: () => void,
   ): (() => void) =>
     pointerDrag(start, {
+      touchHoldMs: 350, // a finger that moves at once is scrolling; a held one selects a range
       onFrame: (x, y) => {
         const el = scrollerRef.current
         const g = gridRef.current
@@ -62,7 +63,7 @@ export function useCellSelection<R>(c: GridCtx<R>) {
     })
 
   const trackDrag = (
-    start: { x: number; y: number },
+    start: { x: number; y: number; pointerType?: string },
     onCell: (cell: { row: number; col: number }) => void,
     onEnd: (last: { row: number; col: number } | null) => void,
   ) => {

@@ -66,7 +66,7 @@ export function HeaderCell<R>({
       data-pinned={side}
       style={style}
       onPointerDown={(e) => {
-        if (!onDragIntent || e.button !== 0 || e.pointerType === 'touch') return
+        if (!onDragIntent || e.button !== 0) return
         if ((e.target as Element).closest('.gk-resizer, .gk-menu-btn')) return
         onDragIntent(col.field, e)
       }}

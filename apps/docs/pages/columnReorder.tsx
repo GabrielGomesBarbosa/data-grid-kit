@@ -28,7 +28,7 @@ export const page: PageDef = {
         </li>
         <li>The sort click that ends a drag is swallowed, so dropping a header never re-sorts the column.</li>
       </ul>
-      <p className="muted">Touch screens scroll instead of dragging headers, so use the menu there.</p>
+      <p className="muted">On touch screens, press and hold a header for a moment to pick it up (moving at once scrolls, as usual); the column menu has the same moves.</p>
     </>
   ),
 }

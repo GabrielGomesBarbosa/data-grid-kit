@@ -89,7 +89,7 @@ export function useRowDrag<R>(c: GridCtx<R>) {
       g.api.selectCells({ anchor: point, focus: point }, { add: e.ctrlKey || e.metaKey })
     }
     trackDrag(
-      { x: e.clientX, y: e.clientY },
+      { x: e.clientX, y: e.clientY, pointerType: e.pointerType },
       (c) => {
         const cur = gridRef.current
         const rr = cur.rows[c.row]

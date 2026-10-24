@@ -152,6 +152,7 @@
 .gk-header-cell {
   position: relative;
   font-weight: 600;
+  user-select: none; /* a long press starts a column drag on touch screens, not a text selection */
 }
 .gk-header-title {
   all: unset;

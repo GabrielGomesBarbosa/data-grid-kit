@@ -36,9 +36,10 @@ export function useColumnDrag<R>(c: GridCtx<R>) {
       setDrag({ field, x, y, target })
     }
     pointerDrag(
-      { x, y },
+      { x, y, pointerType: e.pointerType },
       {
         threshold: 5,
+        touchHoldMs: 350,
         cancelOnEscape: true,
         onStart: () => document.body.classList.add('gk-col-dragging'),
         onMove: (mx, my) => {

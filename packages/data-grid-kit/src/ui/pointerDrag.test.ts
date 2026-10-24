@@ -112,4 +112,61 @@ describe('pointerDrag', () => {
     tick()
     expect(onFrame).toHaveBeenCalledTimes(2) // the loop stopped with the drag
   })
+
+  describe('touch', () => {
+    const touchStart = { x: 0, y: 0, pointerType: 'touch' }
+    beforeEach(() => vi.useFakeTimers())
+    afterEach(() => vi.useRealTimers())
+
+    it('a finger that rests starts the drag after the hold time', () => {
+      const onStart = vi.fn()
+      const onEnd = vi.fn()
+      pointerDrag(touchStart, { threshold: 5, touchHoldMs: 300, onStart, onEnd })
+      vi.advanceTimersByTime(299)
+      expect(onStart).not.toHaveBeenCalled()
+      vi.advanceTimersByTime(1)
+      expect(onStart).toHaveBeenCalledTimes(1)
+      fire('pointerup')
+      expect(onEnd).toHaveBeenCalledWith('dropped')
+    })
+
+    it('a finger that moves before the hold is scrolling: the drag gives up and never starts', () => {
+      const onStart = vi.fn()
+      const onEnd = vi.fn()
+      pointerDrag(touchStart, { threshold: 5, touchHoldMs: 300, onStart, onEnd })
+      move(2, 3) // drift inside the slop is fine
+      expect(onEnd).not.toHaveBeenCalled()
+      move(0, 40)
+      expect(onEnd).toHaveBeenCalledWith('cancelled')
+      vi.advanceTimersByTime(1000)
+      expect(onStart).not.toHaveBeenCalled()
+    })
+
+    it('a tap (released before the hold) is a click', () => {
+      const onEnd = vi.fn()
+      pointerDrag(touchStart, { threshold: 5, touchHoldMs: 300, onEnd })
+      vi.advanceTimersByTime(100)
+      fire('pointerup')
+      expect(onEnd).toHaveBeenCalledWith('clicked')
+    })
+
+    it('once started, the page does not scroll under the finger, and that stops with the drag', () => {
+      pointerDrag(touchStart, { threshold: 5, touchHoldMs: 300 })
+      vi.advanceTimersByTime(300)
+      const during = new Event('touchmove', { cancelable: true })
+      window.dispatchEvent(during)
+      expect(during.defaultPrevented).toBe(true)
+      fire('pointerup')
+      const after = new Event('touchmove', { cancelable: true })
+      window.dispatchEvent(after)
+      expect(after.defaultPrevented).toBe(false)
+    })
+
+    it('a mouse ignores the hold and uses the threshold', () => {
+      const onStart = vi.fn()
+      pointerDrag({ x: 0, y: 0, pointerType: 'mouse' }, { threshold: 5, touchHoldMs: 300, onStart })
+      move(10, 0)
+      expect(onStart).toHaveBeenCalledTimes(1)
+    })
+  })
 })

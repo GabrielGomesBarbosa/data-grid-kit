@@ -9,6 +9,14 @@ export interface PointerDragOptions {
   onMove?: (x: number, y: number, event: PointerEvent) => void
   /** every animation frame while the drag is on: auto-scrolling near an edge */
   onFrame?: (x: number, y: number) => void
+  /**
+   * Touch only (the start's `pointerType` is 'touch'): the drag begins after the finger rests this many ms, instead of
+   * after the threshold. Moving more than `touchSlop` pixels before that is a scroll, so the drag gives up and lets
+   * the browser pan. Once it has begun the page does not scroll under the finger.
+   */
+  touchHoldMs?: number
+  /** pixels the finger may drift while waiting for the hold (default 10) */
+  touchSlop?: number
   /** called first when the drag ends, however it ends: take the drag visuals down */
   onFinish?: () => void
   /** 'dropped': released after the drag started. 'clicked': released before the threshold. 'cancelled': Escape, pointercancel or stop() */
@@ -20,12 +28,14 @@ export interface PointerDragOptions {
  * waits for a threshold, runs a frame loop for auto-scroll and ends on release or Escape.
  * Returns a function that cancels the drag.
  */
-export function pointerDrag(start: { x: number; y: number }, o: PointerDragOptions): () => void {
-  const threshold = o.threshold ?? 0
+export function pointerDrag(start: { x: number; y: number; pointerType?: string }, o: PointerDragOptions): () => void {
+  const hold = start.pointerType === 'touch' && o.touchHoldMs ? o.touchHoldMs : 0
+  const threshold = hold ? Infinity : (o.threshold ?? 0) // a held touch starts by time, never by distance
   let { x, y } = start
   let started = threshold <= 0
   let raf = 0
   let done = false
+  let timer: ReturnType<typeof setTimeout> | undefined
 
   const loop = () => {
     o.onFrame?.(x, y)
@@ -33,6 +43,10 @@ export function pointerDrag(start: { x: number; y: number }, o: PointerDragOptio
   }
   const begin = () => {
     started = true
+    if (hold) {
+      window.addEventListener('touchmove', stopScroll, { passive: false })
+      navigator.vibrate?.(10)
+    }
     o.onStart?.()
     if (o.onFrame) raf = requestAnimationFrame(loop)
   }
@@ -43,6 +57,8 @@ export function pointerDrag(start: { x: number; y: number }, o: PointerDragOptio
     window.removeEventListener('pointerup', up)
     window.removeEventListener('pointercancel', cancel)
     window.removeEventListener('keydown', key, true)
+    window.removeEventListener('touchmove', stopScroll)
+    clearTimeout(timer)
     cancelAnimationFrame(raf)
     o.onFinish?.()
     o.onEnd?.(outcome)
@@ -51,10 +67,17 @@ export function pointerDrag(start: { x: number; y: number }, o: PointerDragOptio
     x = ev.clientX
     y = ev.clientY
     if (!started) {
+      if (hold) {
+        if (Math.hypot(x - start.x, y - start.y) > (o.touchSlop ?? 10)) end('cancelled') // the finger is scrolling
+        return
+      }
       if (Math.hypot(x - start.x, y - start.y) < threshold) return
       begin()
     }
     o.onMove?.(x, y, ev)
+  }
+  const stopScroll = (ev: TouchEvent) => {
+    if (ev.cancelable) ev.preventDefault()
   }
   const up = () => end(started ? 'dropped' : 'clicked')
   const cancel = () => end('cancelled')
@@ -69,5 +92,6 @@ export function pointerDrag(start: { x: number; y: number }, o: PointerDragOptio
   window.addEventListener('pointercancel', cancel)
   if (o.cancelOnEscape) window.addEventListener('keydown', key, true)
   if (started) begin()
+  else if (hold) timer = setTimeout(begin, hold)
   return cancel
 }
