@@ -5,11 +5,9 @@ import reactHooks from 'eslint-plugin-react-hooks'
  * Structure rules that CI (or the pre-push hook) enforces:
  *  - a source file stays under 500 lines (blank lines and comments do not count): split it before it grows
  *  - hooks follow the rules of hooks
- * `legacyLarge` lists files that are still too big. Each has an issue; remove the file from the list when it is split.
+ * No file is exempt today. To exempt one temporarily, add a config object with `files: ['<path>']` and `max-lines: off`
+ * and an issue that will split it.
  */
-const legacyLarge = [
-  'apps/docs/pages.tsx', // #43
-]
 
 export default tseslint.config(
   { ignores: ['**/dist/**', '**/.next/**', '**/node_modules/**', '**/.turbo/**', 'apps/next-example/next-env.d.ts'] },
@@ -26,5 +24,4 @@ export default tseslint.config(
   },
   // tests describe many cases: a higher limit, still not unbounded
   { files: ['**/*.test.{ts,tsx}'], rules: { 'max-lines': ['error', { max: 800, skipBlankLines: true, skipComments: true }] } },
-  { files: legacyLarge, rules: { 'max-lines': 'off' } },
 )
