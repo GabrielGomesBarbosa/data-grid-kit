@@ -1,49 +1,22 @@
 {
-  "name": "gridkit",
-  "version": "0.1.0",
-  "description": "Headless-first React data grid: hooks + store core, optional UI",
-  "type": "module",
-  "sideEffects": [
-    "**/*.css"
-  ],
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./core": {
-      "types": "./dist/core.d.ts",
-      "import": "./dist/core.js"
-    },
-    "./styles.css": "./dist/styles.css"
-  },
-  "files": [
-    "dist"
+  "name": "data-grid-kit-monorepo",
+  "private": true,
+  "description": "data-grid-kit: a headless-first, unstyled-by-default React data grid. This repository holds the library, the docs site and example apps.",
+  "packageManager": "npm@10.8.2",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
   ],
   "scripts": {
-    "dev": "vite playground",
-    "build": "tsup && cp src/ui/styles.css dist/styles.css",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "docs": "vite docs",
-    "docs:build": "vite build docs --outDir ../docs-dist --emptyOutDir"
-  },
-  "peerDependencies": {
-    "react": ">=18"
+    "dev": "turbo run dev --filter=docs",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "bench": "turbo run bench --filter=data-grid-kit",
+    "check": "turbo run typecheck test build"
   },
   "devDependencies": {
-    "@types/react": "^18.3.0",
-    "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.3.0",
-    "@testing-library/react": "^16.0.0",
-    "jsdom": "^25.0.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "tsup": "^8.3.0",
-    "typescript": "^5.6.0",
-    "vite": "^5.4.0",
-    "vitest": "^2.1.0"
+    "turbo": "^2.3.0",
+    "typescript": "^5.6.0"
   }
 }
