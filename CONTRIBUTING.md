@@ -55,3 +55,5 @@ npm run changeset      # pick data-grid-kit, the bump (patch / minor / major whi
 ```
 
 Maintainers run `npm run version-packages` (updates `packages/data-grid-kit/CHANGELOG.md` and the version), tag the commit and create a GitHub release. The apps are private and never versioned or published.
+
+The public API and the stability rules are in [docs/API_POLICY.md](docs/API_POLICY.md); `packages/data-grid-kit/src/publicApi.test.ts` snapshots the exports.
