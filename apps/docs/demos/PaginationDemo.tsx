@@ -17,6 +17,7 @@ export default function PaginationDemo() {
       columns={columns}
       height={340}
       pagination
+      pageSizeOptions={[5, 10, 25, -1]}
       initialState={{ paginationModel: { page: 0, pageSize: 10 } }}
     />
   )

@@ -282,3 +282,6 @@
 .demo-stage [role='status'] {
   white-space: nowrap;
 }
+/* the Columns demo's class names from data */
+.demo .demo-high { color: #16a34a; font-weight: 600; }
+.demo .gk-row.demo-age-30 { box-shadow: inset 3px 0 0 #6366f1; }
