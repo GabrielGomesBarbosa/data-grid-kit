@@ -1,10 +1,18 @@
 import { type ReactNode } from 'react'
-import { type AutosizeOptions, type ColumnDef, type GridApi, type GridOptions, type RenderRow, type RowId } from '../core'
+import { type AutosizeOptions, type ColumnDef, type FilterItem, type FilterOperatorDef, type GridApi, type GridOptions, type RenderRow, type RowId } from '../core'
 import { type EditCellParams } from './Editors'
 import type { GridSlotProps, GridSlots } from './slotTypes'
 import type { CellEventParams, GridEventProps } from './useGridEvents'
 
-export interface UIColumnDef<R = any> extends ColumnDef<R> {
+/** A filter operator of a column, with the input it uses for its value (the default is a text box fitted to the column's type). */
+export interface UIFilterOperator<R = any> extends FilterOperatorDef<R> {
+  /** `onChange` takes the value to store in the filter item (any type); put `focusProps` on the control that should get the focus */
+  renderInput?: (params: { item: FilterItem; onChange: (value: unknown) => void; focusProps: Record<string, unknown> }) => ReactNode
+}
+
+export interface UIColumnDef<R = any> extends Omit<ColumnDef<R>, 'filterOperators'> {
+  /** operators the filter panel offers for this column instead of the built-in ones (see `getFilterOperators` to extend them) */
+  filterOperators?: UIFilterOperator<R>[]
   renderCell?: (params: { value: unknown; row: R }) => ReactNode
   renderEditCell?: (params: EditCellParams<R>) => ReactNode
   /** what the header shows instead of `headerName` (the name is still the accessible name of the sort button's group and the menu) */

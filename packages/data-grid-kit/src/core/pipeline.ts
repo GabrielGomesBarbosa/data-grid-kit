@@ -121,7 +121,7 @@ export function createPipeline<R>(): Pipeline<R> {
       S.aggDeps = nextAggDeps
     }
 
-    const nextFilterDeps = [JSON.stringify(inp.filterModel), cols]
+    const nextFilterDeps = [JSON.stringify(inp.filterModel), cols, !!inp.ignoreDiacritics]
     const filterDirty = !S.derivedOk || !same(S.filterDeps, nextFilterDeps)
     const nextSortDeps = [inp.sortModel.map((x) => `${x.field}:${x.direction}`).join('|'), cols]
     const sortDirty = filterDirty || !same(S.sortDeps, nextSortDeps)
@@ -150,7 +150,7 @@ export function createPipeline<R>(): Pipeline<R> {
 
     if (!S.derivedOk || filterDirty) {
       S.filterDeps = nextFilterDeps
-      S.passes = createRowFilter(inp.filterModel, cols)
+      S.passes = createRowFilter(inp.filterModel, cols, inp.ignoreDiacritics)
       if (!same(S.sortDeps, nextSortDeps)) S.keysValid = false
       S.plan = makePlan(inp.sortModel, S.byField)
       S.rawCmps.clear()

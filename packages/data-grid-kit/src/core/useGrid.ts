@@ -223,6 +223,7 @@ export function useGrid<R = any>(options: GridOptions<R>): GridInstance<R> {
     getTreeDataPath: options.getTreeDataPath ? stableTreePath : undefined,
     sortModel: pipelineSort,
     filterModel: effective.filterModel,
+    ignoreDiacritics: options.ignoreDiacritics,
     rowGroupingModel: effective.rowGroupingModel,
     expandedIds: expandedSet,
     expandAllByDefault: effective.expandAllByDefault,

@@ -4,6 +4,7 @@ import { useIcons } from '../icons'
 import { defaultFilterItem, getColumnType, getFilterOperators, operatorNeedsValue, optionLabel, optionValue, type ColumnDef, type FilterItem, type FilterOperator, type GridInstance, type GridLocaleText } from '../../core'
 import { title } from './shared'
 import { cx } from '../cx'
+import type { UIColumnDef } from '../types'
 import { useLocaleText } from '../localeContext'
 import type { PanelProps } from './types'
 
@@ -12,6 +13,10 @@ import type { PanelProps } from './types'
 /** the operator names core gives, by the key that translates them (the symbols = > ≥ < ≤ are the same everywhere) */
 const OPERATOR_TEXT: Record<string, keyof GridLocaleText> = {
   contains: 'filterContains',
+  'does not contain': 'filterDoesNotContain',
+  'does not equal': 'filterDoesNotEqual',
+  'is not': 'filterIsNot',
+  'is any of': 'filterIsAnyOf',
   equals: 'filterEquals',
   'starts with': 'filterStartsWith',
   'ends with': 'filterEndsWith',
@@ -20,13 +25,19 @@ const OPERATOR_TEXT: Record<string, keyof GridLocaleText> = {
   is: 'filterIs',
 }
 
-function ValueInput({ col, item, onChange, first }: { col: ColumnDef; item: FilterItem; onChange: (v: string) => void; first?: boolean }) {
+function ValueInput({ col, item, onChange, first }: { col: UIColumnDef; item: FilterItem; onChange: (v: unknown) => void; first?: boolean }) {
   const { Input, Select } = useBase()
   const { text: t } = useLocaleText()
   const type = getColumnType(col)
   const value = item.value == null ? '' : String(item.value)
   const focus = first ? { 'data-autofocus': '' } : undefined // the popover puts the focus here when it opens
-  if (!operatorNeedsValue(item.operator)) return <span className="gk-muted">-</span>
+  if (!operatorNeedsValue(item.operator, col)) return <span className="gk-muted">-</span>
+  // an operator the column brought brings its own input, if it wants one
+  const own = col.filterOperators?.find((o) => o.value === item.operator)
+  if (own?.renderInput) return <>{own.renderInput({ item, onChange, focusProps: focus ?? {} })}</>
+  if (item.operator === 'isAnyOf') {
+    return <Input aria-label={t.filterValue} type="text" placeholder={t.filterListHint} value={Array.isArray(item.value) ? item.value.join(', ') : value} onChange={(e) => onChange(e.target.value)} {...focus} />
+  }
   if (type === 'boolean') {
     return (
       <Select aria-label={t.filterValue} value={value} onChange={(e) => onChange(e.target.value)} {...focus}>
@@ -74,7 +85,7 @@ export function FilterPanel<R>({ grid, className, onClose }: PanelProps<R>) {
   const { Button, Select } = useBase()
   const icons = useIcons()
   const { api, state, text: t } = grid
-  const columns = grid.options.columns.filter((c) => c.filterable !== false)
+  const columns = (grid.options.columns as UIColumnDef[]).filter((c) => c.filterable !== false)
   const model = state.filterModel
   // With no filter yet the panel opens on one ready row, so there is something to fill in at once. The row is only shown:
   // it becomes a filter in the model when you change something in it.

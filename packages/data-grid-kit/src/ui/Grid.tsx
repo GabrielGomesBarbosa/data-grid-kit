@@ -63,7 +63,7 @@ export function Grid<R = any>(props: GridProps<R>) {
                   ))}
               </div>
               {pinnedBottom && pinnedBlock(pinnedBottom)}
-              {isFiltering(view.grid.state.filterModel) && !view.grid.pivot ? (
+              {isFiltering(view.grid.state.filterModel, view.grid.options.columns) && !view.grid.pivot ? (
                 <slots.noResultsOverlay grid={view.grid} {...slotProps.noResultsOverlay} />
               ) : (
                 <slots.noRowsOverlay grid={view.grid} {...slotProps.noRowsOverlay} />

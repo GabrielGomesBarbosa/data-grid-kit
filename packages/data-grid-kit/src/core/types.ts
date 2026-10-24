@@ -18,11 +18,26 @@ export type FilterOperator =
   | 'lte'
   | 'isEmpty'
   | 'isNotEmpty'
+  | 'doesNotContain'
+  | 'notEquals'
+  /** the value is a list (an array, or text with commas) and the cell matches any of them */
+  | 'isAnyOf'
 
 export interface FilterItem {
   field: string
-  operator: FilterOperator
+  /** one of the built-in operators, or the `value` of one of the column's own `filterOperators` */
+  operator: FilterOperator | (string & Record<never, never>)
   value?: unknown
+}
+
+/** An operator a column brings of its own (`ColumnDef.filterOperators`). Without `getApplyFilterFn` the built-in logic of `value` is used. */
+export interface FilterOperatorDef<R = any> {
+  value: string
+  label: string
+  /** false for operators with no operand (like "is empty"): the value input is hidden. Default true. */
+  needsValue?: boolean
+  /** The test for a filter item: `null` when the item is not complete yet (no filtering). Gets the cell's value and the row. */
+  getApplyFilterFn?: (item: FilterItem, col: ColumnDef<R>) => ((value: unknown, row: R) => boolean) | null
 }
 
 export interface FilterModel {
@@ -77,6 +92,8 @@ export interface ColumnDef<R = any> {
   /** drives default alignment, filter operators, editor and CSV formatting */
   type?: ColumnType
   editable?: boolean
+  /** replaces the operators the filter panel offers for this column (spread `getFilterOperators(col)` to extend them) */
+  filterOperators?: FilterOperatorDef<R>[]
   /** options for `singleSelect` columns */
   valueOptions?: (string | number | { value: string | number; label: string })[]
   /** turn pasted text into a value (default: by column type) */
@@ -204,6 +221,8 @@ export interface GridOptions<R = any> {
    * The texts the grid shows, by key (see `GridLocaleText`). What you leave out stays in English. Keep the object (and its
    * functions) the same between renders (define it outside the component, or `useMemo` it): a new one re-renders the grid.
    */
+  /** match letters with and without accents ("cafe" finds "café") in the filters and the quick filter */
+  ignoreDiacritics?: boolean
   /** rows this returns false for cannot be selected: their checkbox is disabled, and select-all and ranges skip them. Default: all. */
   isRowSelectable?: (params: { id: RowId; row: R }) => boolean
   /** `false`: selecting a row replaces the selection instead of adding to it (default true) */

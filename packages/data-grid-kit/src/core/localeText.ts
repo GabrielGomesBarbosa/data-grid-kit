@@ -123,6 +123,13 @@ export interface GridLocaleText {
   filterTrue: string
   filterFalse: string
   filterContains: string
+  filterDoesNotContain: string
+  filterDoesNotEqual: string
+  /** "is not": for a pick-one column */
+  filterIsNot: string
+  filterIsAnyOf: string
+  /** hint in the "is any of" value box */
+  filterListHint: string
   filterEquals: string
   filterStartsWith: string
   filterEndsWith: string
@@ -282,6 +289,11 @@ export const defaultLocaleText: GridLocaleText = {
   filterTrue: 'true',
   filterFalse: 'false',
   filterContains: 'contains',
+  filterDoesNotContain: 'does not contain',
+  filterDoesNotEqual: 'does not equal',
+  filterIsNot: 'is not',
+  filterIsAnyOf: 'is any of',
+  filterListHint: 'a, b, c',
   filterEquals: 'equals',
   filterStartsWith: 'starts with',
   filterEndsWith: 'ends with',

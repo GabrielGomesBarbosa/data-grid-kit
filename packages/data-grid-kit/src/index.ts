@@ -1,6 +1,6 @@
 export * from './core'
 export { Grid } from './ui/Grid'
-export type { GridProps, UIColumnDef } from './ui/types'
+export type { GridProps, UIColumnDef, UIFilterOperator } from './ui/types'
 export type { GridSlotProps, GridSlots } from './ui/slotTypes'
 export { defaultSlots } from './ui/defaultSlots'
 export type { CellProps } from './ui/Cell'

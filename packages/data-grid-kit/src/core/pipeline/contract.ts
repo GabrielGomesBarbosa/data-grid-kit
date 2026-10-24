@@ -76,6 +76,8 @@ export interface PipelineInput<R> {
   getTreeDataPath?: (row: R) => string[]
   sortModel: SortItem[]
   filterModel: FilterModel
+  /** match letters with and without accents ("cafe" finds "café") in the filters and the quick filter */
+  ignoreDiacritics?: boolean
   rowGroupingModel: string[]
   expandedIds: ReadonlySet<RowId>
   expandAllByDefault: boolean

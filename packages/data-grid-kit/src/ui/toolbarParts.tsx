@@ -84,7 +84,7 @@ export function FilterButton({ label: labelProp, children, ...rest }: PartProps)
   const panel = usePanelButton('filters')
   const label = labelProp ?? grid.text.toolbarFilters
   // a row nothing has been typed into yet filters nothing, so it is not counted
-  const active = activeFilterCount(grid.state.filterModel)
+  const active = activeFilterCount(grid.state.filterModel, grid.options.columns)
   return (
     <ToolbarButton label={active ? `${label}, ${grid.text.toolbarFiltersActive(active)}` : label} aria-haspopup="dialog" {...panel} {...rest}>
       {children ?? <icons.filter />}
