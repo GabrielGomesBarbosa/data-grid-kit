@@ -8,7 +8,6 @@ import reactHooks from 'eslint-plugin-react-hooks'
  * `legacyLarge` lists files that are still too big. Each has an issue; remove the file from the list when it is split.
  */
 const legacyLarge = [
-  'packages/data-grid-kit/src/core/dataSource.ts', // #42
   'apps/docs/pages.tsx', // #43
 ]
 
