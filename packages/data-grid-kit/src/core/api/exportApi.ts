@@ -1,6 +1,7 @@
 import { toCsv } from '../csv'
 import { buildXlsx, XLSX_MIME } from '../xlsx'
 import { sheetOfGrid } from '../xlsxExport'
+import { buildXlsxInWorker } from '../xlsxWorkerClient'
 import { PIVOT_ROWS_FIELD } from '../pivot'
 import { type ColumnDef, type RowId } from '../types'
 import type { ApiContext } from './context'
@@ -22,7 +23,7 @@ export function exportApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'getXlsx' | 'ex
         selection: options.selectedOnly ? new Set(store.getState().selection) : undefined,
         options,
       })
-      return buildXlsx(sheet, options)
+      return options.worker ? buildXlsxInWorker(sheet, options, options.worker) : buildXlsx(sheet, options)
     },
     async exportXlsx(options = {}) {
       const bytes = await apiRef.current!.getXlsx(options)

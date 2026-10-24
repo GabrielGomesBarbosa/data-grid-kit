@@ -1,5 +1,7 @@
 import { useRef, useState } from 'react'
 import { Grid, type GridApi, type UIColumnDef } from 'data-grid-kit'
+// Vite packs the worker file for us; other bundlers: `new Worker(new URL('data-grid-kit/xlsx-worker', import.meta.url), { type: 'module' })`
+import XlsxWorker from 'data-grid-kit/xlsx-worker?worker'
 import { makeEmployees, type Employee } from '../data'
 
 const rows = makeEmployees(100_000)
@@ -45,6 +47,9 @@ export default function ExcelExportDemo() {
         </button>{' '}
         <button type="button" onClick={() => run('Formatted', { formatted: true })}>
           As formatted text
+        </button>{' '}
+        <button type="button" onClick={() => run('In a worker', { worker: () => new XlsxWorker() })}>
+          In a web worker
         </button>{' '}
         <button type="button" onClick={() => run('Selected', { selectedOnly: true })}>
           Selected rows only

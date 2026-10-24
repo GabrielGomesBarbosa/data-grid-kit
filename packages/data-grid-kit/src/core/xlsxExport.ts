@@ -1,5 +1,6 @@
 import { optionLabel, optionValue } from './columns'
 import { getCellValue } from './values'
+import type { XlsxWorkerLike } from './xlsxWorkerClient'
 import type { XlsxColumn, XlsxOptions, XlsxRow, XlsxSheet, XlsxValue } from './xlsx'
 import type { ColumnDef, RenderRow, RowId } from './types'
 
@@ -20,6 +21,11 @@ export interface XlsxExportOptions extends XlsxOptions {
   autoFilter?: boolean
   /** file name for `exportXlsx` (default "export.xlsx") */
   fileName?: string
+  /**
+   * Build the file in a web worker, so a big export does not touch the page's main thread. You create the worker:
+   * `() => new Worker(new URL('data-grid-kit/xlsx-worker', import.meta.url), { type: 'module' })`.
+   */
+  worker?: () => XlsxWorkerLike
 }
 
 const textOf = <R>(col: ColumnDef<R>, row: R, value: unknown): string => {

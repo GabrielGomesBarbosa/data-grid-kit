@@ -16,6 +16,7 @@ export default defineConfig(({ command }) => ({
       ? {
           alias: [
             { find: /^data-grid-kit\/core$/, replacement: lib('src/core/index.ts') },
+            { find: /^data-grid-kit\/xlsx-worker(\?.*)?$/, replacement: lib('src/xlsx-worker.ts') + '$1' },
             { find: /^data-grid-kit\/styles\.css$/, replacement: lib('src/ui/styles/index.css') },
             { find: /^data-grid-kit$/, replacement: lib('src/index.ts') },
           ],

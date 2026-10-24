@@ -54,7 +54,8 @@
     },
     "./styles.css": "./dist/styles.css",
     "./structure.css": "./dist/structure.css",
-    "./theme.css": "./dist/theme.css"
+    "./theme.css": "./dist/theme.css",
+    "./xlsx-worker": "./dist/xlsx-worker.js"
   },
   "files": [
     "dist",
@@ -62,7 +63,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsup && node scripts/build-css.mjs && node scripts/finalize-dist.mjs",
+    "build": "tsup && tsup --config tsup.worker.config.ts && node scripts/build-css.mjs && node scripts/finalize-dist.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "bench": "tsx scripts/bench.ts && tsx scripts/xlsx-bench.ts",
