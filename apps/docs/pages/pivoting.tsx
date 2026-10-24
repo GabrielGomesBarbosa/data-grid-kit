@@ -30,6 +30,9 @@ values:  [{ field: 'salary', aggFunc: 'avg' }]
       </p>
       <h2>The panel</h2>
       <p>
+        The panel opens <strong>docked</strong> at the right inside the grid's frame, and the grid narrows to make room; it stays open while you work, scrolls on its own and closes with its X, the toolbar button or Escape. Set <code>pivotPanelMode="popover"</code> to float it under its button instead.
+      </p>
+      <p>
         The panel has the <strong>Pivot</strong> switch and a close button, a search box for the fields, the fields not used yet (a <em>+</em> that turns into Row / Column / Value buttons when the pointer or the keyboard is on
         one), and the <em>Rows</em>, <em>Columns</em> and <em>Values</em> sections, each with a count and a chevron to fold it. Each entry has a checkbox to switch it off without losing it.
         Drag a field's grip (⋮⋮) into <em>Rows</em>, <em>Columns</em> or <em>Values</em>; drop it between two entries to choose its place, drag

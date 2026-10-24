@@ -278,3 +278,7 @@
 .inv-detail p {
   margin: 4px 0;
 }
+
+.demo-stage [role='status'] {
+  white-space: nowrap;
+}

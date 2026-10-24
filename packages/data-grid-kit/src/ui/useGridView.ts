@@ -62,6 +62,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
     height = 400,
     checkboxSelection = false,
     toolbar = false,
+    pivotPanelMode = 'docked',
     columnControls = true,
     columnReorder = true,
     rowPinning = false,
@@ -294,6 +295,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
           rows: [...pinnedRowProps(pinnedBottom, 'bottom', belowBody), ...(footer ? pinnedRowProps([footer], 'bottom', belowBody + pinnedBottom.length) : [])],
         }
       : null
+  const dockedPivot = panel?.kind === 'pivot' && pivotPanelMode === 'docked'
   const pinnedHeight = (pinnedTop.length + pinnedBottom.length + (footer ? 1 : 0)) * rowHeight
 
   const paging = props.pagination !== false
@@ -355,10 +357,11 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
     footer: paging || grid.server ? { grid, paging, rects } : null,
     loading: !!grid.server?.loading,
     error: grid.server?.error ? { message: grid.server.error.message, retry: () => api.refreshData() } : null,
+    dock: dockedPivot ? { onClose: () => setPanel(null) } : null,
     popovers: {
       grid,
       menu,
-      panel,
+      panel: dockedPivot ? null : panel, // a docked panel is not a popover
       closeMenu: () => setMenu(null),
       closePanel: () => setPanel(null),
       onFilter: openFilterFor,

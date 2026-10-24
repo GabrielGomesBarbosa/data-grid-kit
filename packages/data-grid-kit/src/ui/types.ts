@@ -14,6 +14,11 @@ export interface GridProps<R = any> extends Omit<GridOptions<R>, 'columns'> {
   checkboxSelection?: boolean
   /** toolbar with columns panel, filter panel, export and quick filter */
   toolbar?: boolean
+  /**
+   * Where the pivot panel opens: `'docked'` (default) at the right inside the grid's frame, which narrows to make room and keeps
+   * the panel open while you work; `'popover'` floating under its button.
+   */
+  pivotPanelMode?: 'docked' | 'popover'
   /** show the column menu button in headers (default true) */
   columnControls?: boolean
   /** drag headers to reorder columns (default true; per column: reorderable: false) */

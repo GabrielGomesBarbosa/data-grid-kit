@@ -22,7 +22,7 @@ export const page: PageDef = {
       <h2>Compared with MUI's demo</h2>
       <p>
         Same idea (a stock table with a coloured price, change columns and a sparkline per row; it has company logos where this has coloured badges). Notes for feedback:
-        a column has <code>renderCell</code> but no <code>renderHeader</code> and no <code>cellClassName</code>, so colours come from elements inside the cell; the sparkline is drawn by hand because the grid has no chart cell. The pivot panel opens as a popover here; MUI docks it at the right of the grid.
+        a column has <code>renderCell</code> but no <code>renderHeader</code> and no <code>cellClassName</code>, so colours come from elements inside the cell; the sparkline is drawn by hand because the grid has no chart cell. The pivot panel is docked at the right of the grid, as in MUI, and the grid narrows to make room (<code>pivotPanelMode="popover"</code> floats it instead).
       </p>
     </>
   ),

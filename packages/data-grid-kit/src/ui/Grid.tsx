@@ -29,43 +29,50 @@ export function Grid<R = any>(props: GridProps<R>) {
   return (
     <SlotsProvider value={view.slotsValue}>
       <div {...view.getRootProps()}>
-        {view.toolbar && (
-          <ToolbarContext.Provider value={view.toolbar}>
-            <slots.toolbar {...view.toolbar} {...slotProps.toolbar} />
-          </ToolbarContext.Provider>
-        )}
-        {view.loading && <slots.loadingOverlay {...slotProps.loadingOverlay} />}
-        {view.error && <slots.errorOverlay message={view.error.message} onRetry={view.error.retry} {...slotProps.errorOverlay} />}
-        <div {...view.getScrollerProps()}>
-          <div {...view.getContentProps()}>
-            <Header {...view.header} />
-            {pinnedTop && pinnedBlock(pinnedTop)}
-            <div {...view.getBodyProps()}>
-              {view.bodyRows.map((item) =>
-                item.type === 'row' ? (
-                  <RowSlot key={item.key} {...item.props} {...slotProps.row} />
-                ) : (
-                  <SkeletonRowSlot key={item.key} {...item.props} {...slotProps.skeletonRow} />
-                ),
-              )}
-              {props.renderDetailPanel &&
-                view.detailItems.map((item) => (
-                  <DetailPanelSlot key={item.key} {...item.props} {...slotProps.detailPanel}>
-                    {props.renderDetailPanel!({ row: item.row })}
-                  </DetailPanelSlot>
-                ))}
+        <div className="gk-main">
+          {view.toolbar && (
+            <ToolbarContext.Provider value={view.toolbar}>
+              <slots.toolbar {...view.toolbar} {...slotProps.toolbar} />
+            </ToolbarContext.Provider>
+          )}
+          {view.loading && <slots.loadingOverlay {...slotProps.loadingOverlay} />}
+          {view.error && <slots.errorOverlay message={view.error.message} onRetry={view.error.retry} {...slotProps.errorOverlay} />}
+          <div {...view.getScrollerProps()}>
+            <div {...view.getContentProps()}>
+              <Header {...view.header} />
+              {pinnedTop && pinnedBlock(pinnedTop)}
+              <div {...view.getBodyProps()}>
+                {view.bodyRows.map((item) =>
+                  item.type === 'row' ? (
+                    <RowSlot key={item.key} {...item.props} {...slotProps.row} />
+                  ) : (
+                    <SkeletonRowSlot key={item.key} {...item.props} {...slotProps.skeletonRow} />
+                  ),
+                )}
+                {props.renderDetailPanel &&
+                  view.detailItems.map((item) => (
+                    <DetailPanelSlot key={item.key} {...item.props} {...slotProps.detailPanel}>
+                      {props.renderDetailPanel!({ row: item.row })}
+                    </DetailPanelSlot>
+                  ))}
+              </div>
+              {pinnedBottom && pinnedBlock(pinnedBottom)}
+              <slots.noRowsOverlay grid={view.grid} {...slotProps.noRowsOverlay} />
             </div>
-            {pinnedBottom && pinnedBlock(pinnedBottom)}
-            <slots.noRowsOverlay grid={view.grid} {...slotProps.noRowsOverlay} />
           </div>
+          {view.footer && <slots.footer {...view.footer} {...slotProps.footer} />}
+          {view.rowDrag && <RowDragFeedback drag={view.rowDrag} scroller={view.scrollerRef} />}
+          <div className="gk-sr-only" role="status" aria-live="polite">
+            {view.announcement}
+          </div>
+          {view.columnDrag && <ColumnDragFeedback drag={view.columnDrag} label={view.columnDrag.label} />}
+          <Popovers {...view.popovers} />
         </div>
-        {view.footer && <slots.footer {...view.footer} {...slotProps.footer} />}
-        {view.rowDrag && <RowDragFeedback drag={view.rowDrag} scroller={view.scrollerRef} />}
-        <div className="gk-sr-only" role="status" aria-live="polite">
-          {view.announcement}
-        </div>
-        {view.columnDrag && <ColumnDragFeedback drag={view.columnDrag} label={view.columnDrag.label} />}
-        <Popovers {...view.popovers} />
+        {view.dock && (
+          <aside className="gk-dock" aria-label="Pivot panel" onKeyDown={(e) => e.key === 'Escape' && view.dock!.onClose()}>
+            <slots.pivotPanel grid={view.grid} onClose={view.dock.onClose} {...slotProps.pivotPanel} />
+          </aside>
+        )}
       </div>
     </SlotsProvider>
   )

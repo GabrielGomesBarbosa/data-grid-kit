@@ -58,6 +58,8 @@ export interface GridView<R> {
   loading: boolean
   error: { message: string; retry: () => void } | null
   popovers: PopoversProps<R>
+  /** the pivot panel, when it is open docked beside the grid (`pivotPanelMode`): render it in a column at the grid's right */
+  dock: { onClose: () => void } | null
   /** while a row or a column is being dragged: the label and drop marker to draw */
   rowDrag: { label: string; x: number; y: number; drop: RowDrop | null } | null
   columnDrag: { x: number; y: number; target: DropTarget | null; label: string } | null
