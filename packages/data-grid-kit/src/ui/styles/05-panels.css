@@ -103,3 +103,18 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* selects: our own arrow with room around it (the native one sits against the border) */
+.gk-root select,
+.gk-popover select {
+  appearance: none;
+  padding-right: 28px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+  background-size: 12px;
+}
+.gk-root select:disabled,
+.gk-popover select:disabled {
+  opacity: 0.6;
+}
