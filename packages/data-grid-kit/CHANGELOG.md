@@ -1,5 +1,11 @@
 # data-grid-kit
 
+## 0.7.1
+
+### Patch Changes
+
+- 3597257: Filter panel: the remove button is always live and shows the pointer cursor. Removing the last row (a filter, or the blank one the panel opens with) closes the panel, like closing a dialog you are finished with. `PanelProps` gets an optional `onClose`.
+
 ## 0.7.0
 
 ### Minor Changes
