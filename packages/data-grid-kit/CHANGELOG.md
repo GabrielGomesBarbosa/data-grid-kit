@@ -1,5 +1,18 @@
 # data-grid-kit
 
+## 0.10.0
+
+### Minor Changes
+
+- 2893a12: Column autosize. `api.autosizeColumns(options)` fits columns to their header and the cells that are on screen (within `minWidth` / `maxWidth`; outliers are ignored unless asked), a double click on a column's divider fits that column, and `autosizeOnMount` does it once when the first rows appear. Headless renderers register their own measurer with `api.setColumnMeasurer`.
+- 4e1e71d: Two column types. `type: 'dateTime'` holds a `Date` with its time: shown with date and time in the grid's locale, edited and filtered with a date-time input, copied and pasted as `yyyy-mm-ddThh:mm`, exported to CSV in local time and to Excel as `yyyy-mm-dd hh:mm`. `type: 'actions'` is a column of buttons from `getActions({ id, row, field })` (an action with `showInMenu` goes in a ⋮ menu; `href` makes a link); it is never sorted, filtered, edited, grouped, aggregated or exported.
+- ef44327: Density, "no results" and rows per page. `density` (`compact` / `standard` / `comfortable`, in the state, with `api.setDensity` and a `<DensityButton />` / `densitySelector` toolbar button) scales row and header heights. A filter that leaves no row now shows its own message (`noResults`, slot `noResultsOverlay`) instead of "No rows". `pageSizeOptions` adds a "Rows per page" select to the footer (`-1` for every row) and `autoPageSize` fits the page to the grid's height. Rows with no filter active show the same as before.
+- 6b2c217: Events and styling hooks. `onRowClick`, `onRowDoubleClick`, `onCellClick`, `onCellDoubleClick`, `onCellKeyDown`, `onColumnHeaderClick` and `onColumnHeaderDoubleClick` report what was hit (and `event.preventDefault()` stops what the grid would do with it). `cellClassName` (column), `getCellClassName` and `getRowClassName` (grid) add class names from the data. Columns get `renderHeader`, `headerAlign`, `description` (a header tooltip) and `headerClassName`.
+- b9575c9: More filter operators, your own operators, and accent-insensitive matching. Text columns get "does not contain", "does not equal" and "is any of"; number and date columns get "≠" and "is any of"; pick-one columns get "is not" and "is any of". A column can bring its own `filterOperators` (with `getApplyFilterFn` and an optional `renderInput`), and `getFilterOperators(col)` is the starting point to extend the built-in list. `ignoreDiacritics` makes accented and plain letters match in the filter panel and the quick filter.
+- a93354b: Fluid columns. `flex` on a column shares the width the other columns leave free, in proportion (`flex: 2` gets twice the share of `flex: 1`), within `minWidth` and `maxWidth`; a column the user resizes becomes fixed. `maxWidth` also caps any fixed column. Columns without `flex` behave as before.
+- 1e5ea92: Row selection modes. `rowSelectionOnClick` selects rows by clicking (click, Ctrl/Cmd+click, Shift+click for a range, Space, Ctrl/Cmd+A), `multipleRowSelection={false}` keeps one row at a time, and `isRowSelectable` marks rows that cannot be selected (disabled checkbox, skipped by ranges and select-all). New `api.setSelection(ids)`, `api.selectAll()` and `api.isRowSelectable(id)`. Nothing changes unless you set these props.
+- d7ffa94: Scroll API. `api.scrollToRow(id)`, `scrollToColumn(field)`, `scrollToCell(id, field)` and `scrollToIndexes({ rowIndex, colIndex })` scroll to a row and / or column ('nearest' by default, or `'start'`, `'center'`, `'end'`), accounting for the header, pinned columns and rows, per-row heights and open detail panels. `initialState.scroll` now puts the grid at that position when it appears.
+
 ## 0.9.0
 
 ### Minor Changes
