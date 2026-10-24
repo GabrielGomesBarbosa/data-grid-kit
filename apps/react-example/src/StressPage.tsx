@@ -1,7 +1,5 @@
-import { StrictMode, useMemo, useRef, useState } from 'react'
-import { createRoot } from 'react-dom/client'
+import { useMemo, useRef, useState } from 'react'
 import { Grid, type GridApi, type UIColumnDef } from 'data-grid-kit'
-import 'data-grid-kit/styles.css'
 
 interface Employee {
   id: number
@@ -54,7 +52,7 @@ const columns: UIColumnDef<Employee>[] = [
   { field: 'id', headerName: 'ID', width: 90, type: 'number' },
 ]
 
-function App() {
+export function StressPage() {
   const [count, setCount] = useState(100_000)
   const rows = useMemo(() => makeRows(count), [count])
   const [mode, setMode] = useState<'flat' | 'group' | 'tree'>('flat')
@@ -122,4 +120,3 @@ function App() {
   )
 }
 
-createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>)

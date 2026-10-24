@@ -1,0 +1,12 @@
+:root { color-scheme: light dark; }
+body { margin: 0; font: 14px system-ui, sans-serif; background: #fff; color: #0f172a; }
+@media (prefers-color-scheme: dark) { body { background: #020617; color: #e2e8f0; } }
+main { max-width: 1200px; margin: 0 auto; padding: 16px; }
+h1 { font-size: 20px; margin: 0 0 4px; }
+.lead { margin: 0 0 16px; opacity: 0.75; }
+.tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+.tabs button, .bar button, .bar select { padding: 4px 10px; cursor: pointer; }
+.tabs button[aria-selected='true'], .bar button[aria-pressed='true'] { background: #2563eb; color: #fff; border-color: #2563eb; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+.bar input[type='search'] { padding: 4px 8px; width: 200px; }
+.stat { opacity: 0.7; font-variant-numeric: tabular-nums; }
