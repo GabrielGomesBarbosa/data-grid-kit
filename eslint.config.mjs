@@ -11,8 +11,6 @@ const legacyLarge = [
   'packages/data-grid-kit/src/core/pipeline.ts', // #39
   'packages/data-grid-kit/src/core/useGrid.ts', // #40
   'packages/data-grid-kit/src/core/dataSource.ts', // #42
-  'packages/data-grid-kit/src/ui/Panels.tsx', // #41
-  'packages/data-grid-kit/src/ui/Grid.tsx', // #41
   'apps/docs/pages.tsx', // #43
 ]
 

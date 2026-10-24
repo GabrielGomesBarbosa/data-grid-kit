@@ -1,14 +1,16 @@
-import { useCallback, useMemo, useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import { countCells, useGrid, type ColumnDef, type GridOptions, type RenderRow } from '../core'
+import { useCallback, useMemo, useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { useGrid, type GridOptions, type RenderRow } from '../core'
 import { useIsomorphicLayoutEffect } from '../core/isomorphic'
 
-import { ColumnMenu, ColumnsPanel, FilterPanel, PivotPanel } from './Panels'
-import { Popover } from './Popover'
+import { Header } from './Header'
+import { Footer } from './Footer'
+import { ErrorBanner, EmptyState, LoadingBar } from './Overlays'
+import { ColumnDragFeedback, RowDragFeedback } from './DragFeedback'
+import { Popovers } from './Popovers'
 import { type UIColumnDef, type GridProps } from './types'
 import { DetailPanel } from './DetailPanel'
 import { SkeletonRow } from './SkeletonRow'
 import { Row } from './Row'
-import { HeaderCell } from './HeaderCell'
 import { Toolbar, type PanelState } from './Toolbar'
 
 import { useCellSelection } from './useCellSelection'
@@ -125,105 +127,6 @@ export function Grid<R = any>(props: GridProps<R>) {
     focusedRowIndex >= rowRange.start && focusedRowIndex < rowRange.end && focusedPos >= 0
       ? `${gridId}-r${focusedRowIndex}-c${focusedPos}`
       : undefined
-
-  const headerGroups = (cols: ColumnDef<R>[]) =>
-    cols.map((c) => (
-      <HeaderCell
-        key={c.field}
-        col={c as UIColumnDef<R>}
-        style={{ width: layout.width(c.field), flex: 'none' }}
-        colIndex={colPos.get(c.field) ?? 0}
-        grid={grid}
-        controls={columnControls}
-        onOpenMenu={openMenu}
-        onDragIntent={columnReorder && c.reorderable !== false ? startColumnDrag : undefined}
-        suppressClick={() => justDragged.current}
-      />
-    ))
-
-  const headerCenter: ReactNode[] = []
-  for (let i = colRange.start; i < colRange.end; i++) {
-    const c = layout.center[i]
-    if (!c) continue
-    headerCenter.push(
-      <HeaderCell
-        key={c.field}
-        col={c as UIColumnDef<R>}
-        style={{ position: 'absolute', left: layout.centerOffsets[i], width: layout.width(c.field), top: 0, bottom: 0 }}
-        colIndex={colPos.get(c.field) ?? 0}
-        grid={grid}
-        controls={columnControls}
-        onOpenMenu={openMenu}
-        onDragIntent={columnReorder && c.reorderable !== false ? startColumnDrag : undefined}
-        suppressClick={() => justDragged.current}
-      />,
-    )
-  }
-
-  /* ---- header groups: spans of adjacent columns that share a group path, one row per level ---- */
-  const groupSpans = useMemo(() => {
-    const spansOf = (cols: ColumnDef<R>[]) => {
-      const levels: { start: number; end: number; label: string; key: string }[][] = []
-      for (let lv = 0; lv < headerDepth; lv++) {
-        const out: { start: number; end: number; label: string; key: string }[] = []
-        let cur: (typeof out)[number] | null = null
-        cols.forEach((c, i) => {
-          const g = c.group
-          if (!g || g.length <= lv) {
-            cur = null
-            return
-          }
-          const key = g.slice(0, lv + 1).join('\u241f')
-          if (cur && cur.key === key) cur.end = i + 1
-          else out.push((cur = { start: i, end: i + 1, label: g[lv]!, key }))
-        })
-        levels.push(out)
-      }
-      return levels
-    }
-    return { left: spansOf(layout.left), center: spansOf(layout.center), right: spansOf(layout.right) }
-  }, [layout, headerDepth])
-
-  const groupLevels: ReactNode[] = []
-  for (let lv = 0; lv < headerDepth; lv++) {
-    const cell = (sp: { start: number; end: number; label: string; key: string }, style: CSSProperties, left: number) => (
-      <div key={sp.key} role="columnheader" aria-colspan={sp.end - sp.start} className="gk-header-group" style={style} title={sp.label}>
-        <span className="gk-header-group-label" style={{ left }}>
-          {sp.label}
-        </span>
-      </div>
-    )
-    const width = (cols: ColumnDef<R>[], a: number, b: number) => {
-      let w = 0
-      for (let i = a; i < b; i++) w += layout.width(cols[i]!.field)
-      return w
-    }
-    const centerCells: ReactNode[] = []
-    for (const sp of groupSpans.center[lv]!) {
-      if (sp.end <= colRange.start || sp.start >= colRange.end) continue // not near the viewport
-      const x = layout.centerOffsets[sp.start]!
-      centerCells.push(
-        cell(sp, { position: 'absolute', left: x, width: layout.centerOffsets[sp.end]! - x, top: 0, bottom: 0 }, layout.leftWidth),
-      )
-    }
-    groupLevels.push(
-      <div key={lv} className="gk-header-row" role="row" aria-rowindex={1 + lv} style={{ height: headerRowHeight, width: totalWidth }}>
-        {layout.left.length > 0 && (
-          <div className="gk-pinned gk-pinned-left" style={{ width: layout.leftWidth }}>
-            {groupSpans.left[lv]!.map((sp) => cell(sp, { width: width(layout.left, sp.start, sp.end), flex: 'none' }, 0))}
-          </div>
-        )}
-        <div className="gk-center" style={{ width: layout.centerWidth }}>
-          {centerCells}
-        </div>
-        {layout.right.length > 0 && (
-          <div className="gk-pinned gk-pinned-right" style={{ width: layout.rightWidth }}>
-            {groupSpans.right[lv]!.map((sp) => cell(sp, { width: width(layout.right, sp.start, sp.end), flex: 'none' }, 0))}
-          </div>
-        )}
-      </div>,
-    )
-  }
 
   const { pinnedTop, pinnedBottom, footer } = grid
   const aggNames = useRefMemo(
@@ -366,15 +269,8 @@ export function Grid<R = any>(props: GridProps<R>) {
   return (
     <div className={`gk-root ${cellSelection ? 'gk-cell-select' : ''} ${className ?? ''}`} style={{ height }}>
       {toolbar && <Toolbar grid={grid} panel={panel} onPanel={openPanel} onExport={doExport} />}
-      {grid.server?.loading && <div className="gk-loading" role="progressbar" aria-label="Loading rows" />}
-      {grid.server?.error && (
-        <div className="gk-error" role="alert">
-          <span>Could not load rows: {grid.server.error.message}</span>
-          <button type="button" onClick={() => api.refreshData()}>
-            Try again
-          </button>
-        </div>
-      )}
+      {grid.server?.loading && <LoadingBar />}
+      {grid.server?.error && <ErrorBanner message={grid.server.error.message} onRetry={() => api.refreshData()} />}
       <div
         ref={scrollerRef}
         className="gk-scroller"
@@ -392,24 +288,16 @@ export function Grid<R = any>(props: GridProps<R>) {
         onPaste={onPaste}
       >
         <div className="gk-content" style={{ width: totalWidth, height: bodyHeight + headerHeight + pinnedHeight }}>
-          <div className="gk-header" role="rowgroup" style={{ height: headerHeight, width: totalWidth }}>
-            {groupLevels}
-            <div className="gk-header-row" role="row" aria-rowindex={1 + headerDepth} style={{ height: headerRowHeight, width: totalWidth }}>
-              {layout.left.length > 0 && (
-                <div className="gk-pinned gk-pinned-left" style={{ width: layout.leftWidth }}>
-                  {headerGroups(layout.left)}
-                </div>
-              )}
-              <div className="gk-center" style={{ width: layout.centerWidth }}>
-                {headerCenter}
-              </div>
-              {layout.right.length > 0 && (
-                <div className="gk-pinned gk-pinned-right" style={{ width: layout.rightWidth }}>
-                  {headerGroups(layout.right)}
-                </div>
-              )}
-            </div>
-          </div>
+          <Header
+            grid={grid}
+            colPos={colPos}
+            controls={columnControls}
+            reorder={columnReorder}
+            onOpenMenu={openMenu}
+            onDragIntent={startColumnDrag}
+            justDragged={justDragged}
+            totalWidth={totalWidth}
+          />
           {pinnedTop.length > 0 && (
             <div
               className="gk-pinned-rows gk-pinned-rows-top"
@@ -442,133 +330,30 @@ export function Grid<R = any>(props: GridProps<R>) {
               {footer && pinnedRowsView([footer], 'bottom', hdr + pinnedTop.length + rows.length + detailSlots.length + pinnedBottom.length)}
             </div>
           )}
-          {grid.pivot && (state.pivotModel.rows.length === 0 || grid.pivot.columns.length === 0) ? (
-            <div className="gk-empty">
-              {state.pivotModel.rows.length === 0 ? 'Add a field as a row' : 'Add a field as a value'} in the Pivot panel to fill the table.
-            </div>
-          ) : (
-            rows.length === 0 && !grid.server?.loading && !grid.server?.error && <div className="gk-empty">No rows</div>
-          )}
+          <EmptyState grid={grid} />
         </div>
       </div>
-      {(props.pagination !== false || grid.server) && (
-        <div className="gk-footer">
-          <span>
-            {grid.server
-              ? grid.server.rowCount >= 0
-                ? `${grid.server.rowCount.toLocaleString()} rows`
-                : `${grid.server.loadedEnd.toLocaleString()}${grid.server.hasNextPage ? '+' : ''} rows`
-              : `${grid.result.filteredCount} rows`}
-            {grid.server?.loading && ' · loading…'}
-            {state.selection.length > 0 && ` · ${state.selection.length} selected`}
-            {rects.length > 0 && countCells(rects) > 1 && ` · ${countCells(rects).toLocaleString()} cells selected`}
-          </span>
-          {props.pagination !== false && (
-            <span className="gk-pager">
-              <button type="button" disabled={page <= 0} onClick={() => api.setPage(page - 1)} aria-label="Previous page">
-                ‹
-              </button>
-              <span>
-                {page + 1} / {pageCount}
-                {grid.server && grid.server.rowCount < 0 && grid.server.hasNextPage ? '+' : ''}
-              </span>
-              <button
-                type="button"
-                disabled={page >= pageCount - 1}
-                onClick={() => api.setPage(page + 1)}
-                aria-label="Next page"
-              >
-                ›
-              </button>
-            </span>
-          )}
-        </div>
-      )}
+      {(props.pagination !== false || grid.server) && <Footer grid={grid} paging={props.pagination !== false} rects={rects} />}
 
-      {rowDrag && (
-        <>
-          <div className="gk-drag-ghost" style={{ left: rowDrag.x + 12, top: rowDrag.y + 12 }}>
-            {rowDrag.label}
-          </div>
-          {rowDrag.drop && (
-            <div
-              className="gk-row-drop"
-              style={{
-                left: scrollerRef.current?.getBoundingClientRect().left ?? 0,
-                width: scrollerRef.current?.clientWidth ?? 0,
-                top: (rowDrag.drop.placement === 'before' ? rowDrag.drop.rect.top : rowDrag.drop.rect.bottom) - 1.5,
-              }}
-            />
-          )}
-        </>
-      )}
+      {rowDrag && <RowDragFeedback drag={rowDrag} scroller={scrollerRef} />}
       <div className="gk-sr-only" role="status" aria-live="polite">
         {announcement}
       </div>
-      {drag && (
-        <>
-          <div className="gk-drag-ghost" style={{ left: drag.x + 12, top: drag.y + 12 }}>
-            {columns.find((c) => c.field === drag.field)?.headerName ?? drag.field}
-          </div>
-          {drag.target && (
-            <div
-              className="gk-drop-indicator"
-              style={{
-                left: (drag.target.placement === 'before' ? drag.target.rect.left : drag.target.rect.right) - 1,
-                top: drag.target.rect.top,
-                height: drag.target.rect.height,
-              }}
-            />
-          )}
-        </>
-      )}
-      {menu && (
-        <Popover anchor={menu.anchor} onClose={() => setMenu(null)} label="Column menu" role="menu" align="end" className="gk-menu">
-          <ColumnMenu grid={grid} field={menu.field} onClose={() => setMenu(null)} onFilter={openFilterFor} aggregation={aggregationMenu && !grid.pivot} />
-        </Popover>
-      )}
-      {panel?.kind === 'filters' && (
-        <Popover anchor={panel.anchor} onClose={() => setPanel(null)} label="Filters">
-          <FilterPanel grid={grid} />
-        </Popover>
-      )}
-      {panel?.kind === 'columns' && (
-        <Popover anchor={panel.anchor} onClose={() => setPanel(null)} label="Columns">
-          <ColumnsPanel grid={grid} />
-        </Popover>
-      )}
-      {panel?.kind === 'pivot' && (
-        <Popover anchor={panel.anchor} onClose={() => setPanel(null)} label="Pivot">
-          <PivotPanel grid={grid} />
-        </Popover>
-      )}
-      {panel?.kind === 'export' && (
-        <Popover anchor={panel.anchor} onClose={() => setPanel(null)} label="Export" role="menu" className="gk-menu">
-          <button type="button" role="menuitem" className="gk-menu-item" onClick={() => doExport({})}>
-            Download CSV
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            className="gk-menu-item"
-            disabled={state.selection.length === 0}
-            onClick={() => doExport({ selectedOnly: true })}
-          >
-            Download CSV (selected rows)
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            className="gk-menu-item"
-            onClick={() => {
-              setPanel(null)
-              void api.exportXlsx({ fileName: xlsxFileName })
-            }}
-          >
-            Download Excel (.xlsx)
-          </button>
-        </Popover>
-      )}
+      {drag && <ColumnDragFeedback drag={drag} label={columns.find((c) => c.field === drag.field)?.headerName ?? drag.field} />}
+      <Popovers
+        grid={grid}
+        menu={menu}
+        panel={panel}
+        closeMenu={() => setMenu(null)}
+        closePanel={() => setPanel(null)}
+        onFilter={openFilterFor}
+        aggregationMenu={aggregationMenu}
+        onExportCsv={(selectedOnly) => doExport(selectedOnly ? { selectedOnly: true } : {})}
+        onExportXlsx={() => {
+          setPanel(null)
+          void api.exportXlsx({ fileName: xlsxFileName })
+        }}
+      />
     </div>
   )
 }

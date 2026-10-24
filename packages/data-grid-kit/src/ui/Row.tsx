@@ -1,4 +1,5 @@
 import type { ColumnLayout } from '../core/layout'
+import { renderSections } from './sections'
 import { memo, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { type CellRef, type ColumnDef, type CustomAggregation, type Range, type RenderRow } from '../core'
 import { type EditMove } from './Editors'
@@ -148,19 +149,7 @@ function RowInner<R>(p: RowProps<R>) {
           : { height: rowHeight, width: p.totalWidth, transform: `translateY(${p.top}px)` }
       }
     >
-      {layout.left.length > 0 && (
-        <div className="gk-pinned gk-pinned-left" style={{ width: layout.leftWidth }}>
-          {pinned(layout.left)}
-        </div>
-      )}
-      <div className="gk-center" style={{ width: layout.centerWidth }}>
-        {centerCells}
-      </div>
-      {layout.right.length > 0 && (
-        <div className="gk-pinned gk-pinned-right" style={{ width: layout.rightWidth }}>
-          {pinned(layout.right)}
-        </div>
-      )}
+      {renderSections(layout, pinned(layout.left), centerCells, pinned(layout.right))}
     </div>
   )
 }

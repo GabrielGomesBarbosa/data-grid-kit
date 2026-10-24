@@ -1,4 +1,5 @@
 import type { ColumnLayout } from '../core/layout'
+import { renderSections } from './sections'
 import { memo, type CSSProperties, type ReactNode } from 'react'
 import { type ColumnDef, type Range } from '../core'
 
@@ -51,19 +52,7 @@ export const SkeletonRow = memo(function SkeletonRow({
       data-odd={index % 2 ? '' : undefined}
       style={{ height: rowHeight, width: totalWidth, transform: `translateY(${top}px)` }}
     >
-      {layout.left.length > 0 && (
-        <div className="gk-pinned gk-pinned-left" style={{ width: layout.leftWidth }}>
-          {pinned(layout.left, 0)}
-        </div>
-      )}
-      <div className="gk-center" style={{ width: layout.centerWidth }}>
-        {center}
-      </div>
-      {layout.right.length > 0 && (
-        <div className="gk-pinned gk-pinned-right" style={{ width: layout.rightWidth }}>
-          {pinned(layout.right, layout.left.length + layout.center.length)}
-        </div>
-      )}
+      {renderSections(layout, pinned(layout.left, 0), center, pinned(layout.right, layout.left.length + layout.center.length))}
     </div>
   )
 })
