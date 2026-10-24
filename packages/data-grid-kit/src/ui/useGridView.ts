@@ -332,13 +332,13 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
         extra,
       ),
     getContentProps: (extra) =>
-      mergeProps({ className: 'gk-content', style: { width: totalWidth, height: geometry.totalHeight + headerHeight + pinnedHeight } }, extra),
+      mergeProps({ className: 'gk-content', style: { width: totalWidth > 0 ? totalWidth : '100%', height: geometry.totalHeight + headerHeight + pinnedHeight } }, extra),
     getBodyProps: (extra) =>
       mergeProps(
         {
           className: 'gk-body',
           role: 'rowgroup',
-          style: { height: geometry.totalHeight, ['--gk-row-h' as string]: `${rowHeight}px` },
+          style: { height: geometry.totalHeight, ['--gk-row-h' as string]: `${rowHeight}px`, ...(layout.all.length === 0 ? { backgroundImage: 'none' } : null) }, // no columns: no placeholder stripes either
           onPointerDown: onBodyPointerDown,
           onClick: onBodyClick,
           onDoubleClick: onBodyDoubleClick,
