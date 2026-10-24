@@ -1,0 +1,10 @@
+{
+  "path": ["packages/data-grid-kit/src", "apps/docs", "apps/react-example/src", "apps/next-example/app", "apps/next-example/components"],
+  "ignore": ["**/*.test.*", "**/node_modules/**", "**/dist/**", "**/.next/**", "**/*.css"],
+  "format": ["typescript", "tsx"],
+  "minLines": 5,
+  "minTokens": 50,
+  "threshold": 3,
+  "reporters": ["console"],
+  "silent": false
+}

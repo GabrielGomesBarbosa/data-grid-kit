@@ -22,18 +22,19 @@ import { buildServerResult } from './serverResult'
 import { buildXlsx, XLSX_MIME } from './xlsx'
 import { sheetOfGrid, type XlsxExportOptions } from './xlsxExport'
 import { PIVOT_ROWS_FIELD, buildPivotColumns, pivotInputOf, pivotSortOf, withDerivedColumns } from './pivot'
-import { EMPTY_PIVOT, type PivotModel } from './types'
-import type {
-  CellRef,
-  ColumnDef,
-  FilterModel,
-  GridOptions,
-  GridState,
-  PaginationModel,
-  PinSide,
-  RenderRow,
-  RowId,
-  SortItem,
+import {
+  EMPTY_PIVOT,
+  type PivotModel,
+  type CellRef,
+  type ColumnDef,
+  type FilterModel,
+  type GridOptions,
+  type GridState,
+  type PaginationModel,
+  type PinSide,
+  type RenderRow,
+  type RowId,
+  type SortItem,
 } from './types'
 
 /** height assumed for an 'auto' detail panel until its content has been measured */
@@ -933,7 +934,6 @@ export function useGrid<R = any>(options: GridOptions<R>): GridInstance<R> {
       totals && options.aggregationFooter !== false
         ? { id: '__gk_footer__', type: 'footer', depth: 0, childCount: result.filteredCount, expandable: false, expanded: false, aggregates: totals }
         : null,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [totals, result.filteredCount, options.aggregationFooter],
   )
   const pinnedHeight = (pinnedTop.length + pinnedBottom.length + (footer ? 1 : 0)) * rowHeight

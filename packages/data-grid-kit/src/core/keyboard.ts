@@ -1,5 +1,4 @@
-import type { ColumnLayout } from './layout'
-import { DEFAULT_HEADER_HEIGHT, DEFAULT_ROW_HEIGHT } from './layout'
+import { DEFAULT_HEADER_HEIGHT, DEFAULT_ROW_HEIGHT, type ColumnLayout } from './layout'
 
 export interface NavInput {
   key: string

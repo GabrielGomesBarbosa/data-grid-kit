@@ -11,7 +11,7 @@ export function usePanels<R>(c: GridCtx<R>) {
   const openMenu = useCallback((field: string, anchor: DOMRect) => {
     setPanel(null)
     setMenu((m) => (m?.field === field ? null : { field, anchor }))
-  }, [])
+  }, [setMenu, setPanel])
   const openPanel = (kind: PanelKind, anchor: DOMRect) => {
     setMenu(null)
     setPanel((p) => (p?.kind === kind ? null : { kind, anchor }))

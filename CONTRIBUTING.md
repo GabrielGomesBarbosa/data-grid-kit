@@ -23,7 +23,7 @@ Layout: `packages/data-grid-kit` (library), `apps/docs`, `apps/react-example`, `
 A change is done when:
 
 1. **Tests are updated.** New behaviour gets tests; a fixed bug gets a test that fails without the fix. Pipeline, aggregation, pivot and similar logic is covered by randomised tests that compare incremental updates with a full rebuild: keep them honest (break the code on purpose once to see the test fail).
-2. `npm run check` passes (typecheck, tests, build of the library, docs and both examples).
+2. `npm run check` passes (typecheck, tests, build of the library, docs and both examples, and `npm run lint`: ESLint with a 500-line limit per source file and no duplicate imports, plus jscpd duplicate detection under 3%). Aim for files under ~400 lines: when one grows, split it by responsibility, and share one function instead of copying it.
 3. **Docs follow the code**: the docs page, the API tables and the feature-status page are updated when behaviour or limits change.
 4. **Performance-sensitive changes are measured**: run `npm run bench` before and after and put the numbers in the PR. Do not trade a measured speed-up for convenience without saying so.
 5. Server rendering is not broken (`packages/data-grid-kit/src/core/ssr.test.tsx` renders in plain Node).

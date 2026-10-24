@@ -40,7 +40,7 @@ export function useKeyboard<R>(c: GridCtx<R>) {
       if (next.top !== el.scrollTop) el.scrollTop = next.top
       if (next.left !== el.scrollLeft) el.scrollLeft = next.left
     },
-    [],
+    [gridRef, scrollerRef],
   )
 
   const focusPosition = () => {
@@ -80,7 +80,7 @@ export function useKeyboard<R>(c: GridCtx<R>) {
   const cancelEdit = useCallback(() => {
     api.cancelEdit()
     scrollerRef.current?.focus({ preventScroll: true })
-  }, [api])
+  }, [api, scrollerRef])
 
   const onKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
     // keys typed into editors, buttons and inputs belong to them

@@ -13,17 +13,23 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "bench": "turbo run bench --filter=data-grid-kit",
-    "check": "turbo run typecheck test build",
+    "check": "turbo run typecheck test build && npm run lint",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "turbo run build --filter=data-grid-kit && changeset publish",
     "prepare": "git config core.hooksPath .githooks",
-    "docs:deploy": "sh scripts/deploy-docs.sh"
+    "docs:deploy": "sh scripts/deploy-docs.sh",
+    "lint": "eslint . && npm run dup",
+    "dup": "jscpd --config .jscpd.json"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.1",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "jscpd": "^4.3.0",
     "turbo": "^2.3.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.72.0"
   },
   "license": "MIT",
   "repository": {

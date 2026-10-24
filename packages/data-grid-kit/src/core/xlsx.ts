@@ -59,7 +59,6 @@ export function columnLetters(index: number): string {
 }
 
 // characters XML 1.0 cannot carry (control characters, lone surrogates, U+FFFE/FFFF)
-// eslint-disable-next-line no-control-regex
 const ILLEGAL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F￾￿]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g
 const escapeXml = (s: string) => s.replace(ILLEGAL, '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 

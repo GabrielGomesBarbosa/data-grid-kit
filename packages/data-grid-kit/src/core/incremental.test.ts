@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createPipeline, createRowFilter, getCellValue, type PipelineInput, type PipelineResult } from './pipeline'
-import type { CustomAggregation } from './types'
-import type { ColumnDef, FilterModel, RowId, SortItem } from './types'
+import type { ColumnDef, CustomAggregation, FilterModel, RowId, SortItem } from './types'
 
 interface Row {
   id: number

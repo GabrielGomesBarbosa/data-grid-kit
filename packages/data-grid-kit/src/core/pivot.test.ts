@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { movePivotField } from './pivot'
-import type { PivotModel } from './types'
 import { createPipeline, type PipelineInput, type PipelineResult } from './pipeline'
-import type { ColumnDef, RowId } from './types'
+import type { ColumnDef, PivotModel, RowId } from './types'
 
 interface Sale {
   id: number

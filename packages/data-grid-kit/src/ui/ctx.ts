@@ -1,6 +1,5 @@
-import type { DropPlacement } from '../core'
 import { type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ClipboardEvent as ReactClipboardEvent } from 'react'
-import { type CsvOptions, type RangeRect, type RenderRow, type GridApi, type GridState, type GridInstance } from '../core'
+import { type DropPlacement, type CsvOptions, type RangeRect, type RenderRow, type GridApi, type GridState, type GridInstance } from '../core'
 import { type EditMove } from './Editors'
 import { type UIColumnDef } from './types'
 import { type PanelKind, type PanelState } from './Toolbar'
