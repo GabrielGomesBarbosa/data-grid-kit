@@ -89,7 +89,12 @@
 .gk-quick-filter {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 8px;
+}
+.gk-quick-filter .gk-search {
+  height: 34px;
+  box-sizing: border-box;
+  padding: 0 12px;
 }
 .gk-toolbar .gk-badge {
   margin-left: 0;
