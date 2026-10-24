@@ -36,6 +36,7 @@ export interface GridCtx<R> {
   announceMove: (id: RenderRow["id"]) => NodeJS.Timeout
   hasDetail: (r: RenderRow<R>) => boolean
   checkboxSelection: boolean
+  rowSelectionOnClick: boolean
   rows: RenderRow<R>[]
   clipboard: boolean
   setPanel: React.Dispatch<React.SetStateAction<PanelState | null>>

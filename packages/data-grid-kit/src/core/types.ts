@@ -192,6 +192,10 @@ export interface GridOptions<R = any> {
    * The texts the grid shows, by key (see `GridLocaleText`). What you leave out stays in English. Keep the object (and its
    * functions) the same between renders (define it outside the component, or `useMemo` it): a new one re-renders the grid.
    */
+  /** rows this returns false for cannot be selected: their checkbox is disabled, and select-all and ranges skip them. Default: all. */
+  isRowSelectable?: (params: { id: RowId; row: R }) => boolean
+  /** `false`: selecting a row replaces the selection instead of adding to it (default true) */
+  multipleRowSelection?: boolean
   localeText?: Partial<GridLocaleText>
   /** The locale (`'pt-BR'`) numbers and dates are written in. Default: the browser's. Sorting and searching keep using the browser's. */
   locale?: string

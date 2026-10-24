@@ -1,10 +1,12 @@
-import { useCallback, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent } from 'react'
+import { useCallback, useRef, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent } from 'react'
 import { isPrintableKey, navigate, scrollToCell } from '../core'
 import { type EditMove } from './Editors'
 import type { GridCtx } from './ctx'
 
 export function useKeyboard<R>(c: GridCtx<R>) {
-  const { gridRef, scrollerRef, api, hasHierarchy, hierarchyField, cellSelection, selectAllCells, announceMove, hasDetail, checkboxSelection, rows } = c
+  const { gridRef, scrollerRef, api, hasHierarchy, hierarchyField, cellSelection, selectAllCells, announceMove, hasDetail, checkboxSelection, rowSelectionOnClick, rows } = c
+  /** where a Shift+click range starts: the row clicked last */
+  const anchor = useRef<number | null>(null)
 
   /* ---- focus + keyboard ---- */
 
@@ -152,7 +154,12 @@ export function useKeyboard<R>(c: GridCtx<R>) {
     }
     if (e.key === ' ') {
       e.preventDefault()
-      if (checkboxSelection) g.api.toggleSelection(row.id)
+      if (checkboxSelection || rowSelectionOnClick) g.api.toggleSelection(row.id)
+      return
+    }
+    if ((checkboxSelection || rowSelectionOnClick) && !cellSelection && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
+      e.preventDefault()
+      g.api.selectAll()
       return
     }
     if (e.key === 'Escape') return g.api.focusCell(null)
@@ -183,6 +190,25 @@ export function useKeyboard<R>(c: GridCtx<R>) {
     }
   }
 
+  /** a click on a row, with its modifier keys: plain selects it alone, Ctrl/Cmd adds or removes it, Shift takes the range from the last click */
+  const selectByClick = (index: number, e: ReactMouseEvent<HTMLDivElement>) => {
+    const g = gridRef.current
+    const r = g.rows[index]
+    if (!r || r.row === undefined || !g.api.isRowSelectable(r.id)) return
+    const multiple = g.options.multipleRowSelection !== false
+    const current = g.state.selection
+    if (e.shiftKey && multiple && anchor.current !== null) {
+      const [from, to] = anchor.current < index ? [anchor.current, index] : [index, anchor.current]
+      const range = g.rows.slice(from, to + 1).filter((x) => x.row !== undefined).map((x) => x.id)
+      g.api.setSelection(e.ctrlKey || e.metaKey ? [...new Set([...current, ...range])] : range)
+      return
+    }
+    anchor.current = index
+    if ((e.ctrlKey || e.metaKey) && multiple) g.api.toggleSelection(r.id)
+    else if (current.length === 1 && current[0] === r.id) g.api.clearSelection()
+    else g.api.setSelection([r.id])
+  }
+
   const onBodyClick = (e: ReactMouseEvent<HTMLDivElement>) => {
     if (e.defaultPrevented) return
     const cell = (e.target as Element).closest<HTMLElement>('.gk-cell')
@@ -192,6 +218,9 @@ export function useKeyboard<R>(c: GridCtx<R>) {
     const field = cell.dataset.field
     if (!r || !field) return
     api.focusCell({ rowId: r.id, field })
+    if (rowSelectionOnClick && !cellSelection && r.row !== undefined && !(e.target as Element).closest('button, input, select, a, textarea, .gk-fill-handle, .gk-row-handle')) {
+      selectByClick(Number(rowEl.dataset.rowindex), e)
+    }
     const tag = (e.target as Element).tagName
     if (tag !== 'INPUT' && tag !== 'SELECT') scrollerRef.current?.focus({ preventScroll: true })
   }

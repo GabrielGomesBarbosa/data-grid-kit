@@ -64,7 +64,14 @@ export interface GridApi<R = any> {
   toggleExpanded(id: RowId): void
   expandAll(): void
   collapseAll(): void
+  /** select or unselect a row (a group: its rows); rows `isRowSelectable` refuses are skipped; with `multipleRowSelection: false` selecting replaces */
   toggleSelection(id: RowId, selected?: boolean): void
+  /** replace the selection (rows that cannot be selected are dropped; with `multipleRowSelection: false` only the first stays) */
+  setSelection(ids: RowId[]): void
+  /** select every row that passes the filters, across pages (not with `multipleRowSelection: false`) */
+  selectAll(): void
+  /** whether `isRowSelectable` allows this row (a group, or a row that is not loaded, counts as selectable) */
+  isRowSelectable(id: RowId): boolean
   clearSelection(): void
   setScroll(top: number, left: number): void
   setViewport(width: number, height: number): void

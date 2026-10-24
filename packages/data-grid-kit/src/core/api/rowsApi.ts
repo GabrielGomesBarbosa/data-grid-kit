@@ -1,9 +1,17 @@
 
 import type { ApiContext } from './context'
 import type { GridApi } from '../gridTypes'
+import type { RowId } from '../types'
 
-export function rowsApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'toggleDetailPanel' | 'setDetailPanelExpanded' | 'setDetailPanelHeight' | 'canMoveRow' | 'moveRow' | 'pinRow' | 'toggleSelection' | 'clearSelection' | 'updateRows' | 'refreshData' | 'getDataSourceState'> {
-  const { set, resolveMove, pipelineRef, bump, optionsRef, leafIdsOf, ctrlRef, treeRef } = c
+export function rowsApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'toggleDetailPanel' | 'setDetailPanelExpanded' | 'setDetailPanelHeight' | 'canMoveRow' | 'moveRow' | 'pinRow' | 'toggleSelection' | 'setSelection' | 'selectAll' | 'isRowSelectable' | 'clearSelection' | 'updateRows' | 'refreshData' | 'getDataSourceState'> {
+  const { set, resolveMove, pipelineRef, bump, optionsRef, leafIdsOf, ctrlRef, treeRef, resultRef, rowIdOf } = c
+  /** a row `isRowSelectable` accepts; anything it cannot look at (a group, a row not loaded) is allowed */
+  const selectable = (id: RowId) => {
+    const test = optionsRef.current.isRowSelectable
+    if (!test) return true
+    const row = resultRef.current?.getRow(id)
+    return row === undefined || test({ id, row })
+  }
   return {
     toggleDetailPanel(id, open) {
       set((s) => {
@@ -35,15 +43,27 @@ export function rowsApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'toggleDetailPane
         return { pinnedRows: { top, bottom } }
       })
     },
+    isRowSelectable: (id) => selectable(id),
     toggleSelection(id, selected) {
-      const ids = leafIdsOf(id)
+      const ids = leafIdsOf(id).filter(selectable)
+      if (ids.length === 0) return
       set((s) => {
         const current = new Set(s.selection)
         const all = ids.every((x) => current.has(x))
         const on = selected ?? !all
+        if (on && optionsRef.current.multipleRowSelection === false) return { selection: [ids[0]!] }
         for (const x of ids) on ? current.add(x) : current.delete(x)
         return { selection: [...current] }
       })
+    },
+    setSelection(ids) {
+      const ok = ids.filter(selectable)
+      set({ selection: optionsRef.current.multipleRowSelection === false ? ok.slice(0, 1) : ok })
+    },
+    selectAll() {
+      const res = pipelineRef.current && resultRef.current
+      if (!res || optionsRef.current.multipleRowSelection === false) return
+      set({ selection: res.getVisibleDataRows().map(rowIdOf).filter(selectable) })
     },
     clearSelection: () => set({ selection: [] }),
     updateRows(changes) {

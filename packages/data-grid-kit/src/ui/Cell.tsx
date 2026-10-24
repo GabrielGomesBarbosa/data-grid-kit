@@ -21,6 +21,7 @@ export interface CellProps<R> {
   hasHierarchy: boolean
   checkbox: boolean
   selected: boolean | 'indeterminate'
+  selectable: boolean
   focused: boolean
   editing: CellRef | null
   onToggleExpand: (id: RenderRow['id']) => void
@@ -159,6 +160,7 @@ function HierarchyControls<R>({ p, isGroupRow }: { p: CellProps<R>; isGroupRow: 
           className="gk-checkbox"
           tabIndex={-1}
           aria-label={t.rowSelect}
+          disabled={!p.selectable}
           checked={p.selected === true}
           ref={(el) => {
             if (el) el.indeterminate = p.selected === 'indeterminate'

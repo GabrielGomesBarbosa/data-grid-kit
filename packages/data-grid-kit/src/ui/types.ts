@@ -15,6 +15,11 @@ export interface GridProps<R = any> extends Omit<GridOptions<R>, 'columns'>, Gri
   columns: UIColumnDef<R>[]
   height?: number | string
   checkboxSelection?: boolean
+  /**
+   * Select rows by clicking them: a click selects only that row (a click on the only selected row unselects it), Ctrl/Cmd+click adds or
+   * removes one, Shift+click selects the range from the last click. Ignored with `cellSelection`, which uses those clicks. Default false.
+   */
+  rowSelectionOnClick?: boolean
   /** toolbar with columns panel, filter panel, export and quick filter */
   toolbar?: boolean
   /**

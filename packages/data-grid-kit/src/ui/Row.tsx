@@ -22,6 +22,8 @@ export interface RowProps<R> {
   hasHierarchy: boolean
   checkbox: boolean
   selected: boolean | 'indeterminate'
+  /** `isRowSelectable` allows it (the checkbox is disabled otherwise) */
+  selectable: boolean
   /** only set on the row that holds the focus / editor, so other rows keep stable props */
   focusedField: string | undefined
   editing: CellRef | null
@@ -106,6 +108,7 @@ function RowInner<R>(p: RowProps<R>) {
         hasHierarchy={p.hasHierarchy}
         checkbox={p.checkbox}
         selected={p.selected}
+        selectable={p.selectable}
         focused={p.focusedField === col.field}
         editing={p.editing && p.editing.field === col.field ? p.editing : null}
         onToggleExpand={p.onToggleExpand}

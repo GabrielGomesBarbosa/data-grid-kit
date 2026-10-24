@@ -62,6 +62,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
   const {
     height = 400,
     checkboxSelection = false,
+    rowSelectionOnClick = false,
     toolbar = false,
     pivotPanelMode = 'docked',
     columnControls = true,
@@ -158,12 +159,14 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
   const totalWidth = layout.leftWidth + layout.centerWidth + layout.rightWidth
   const colPos = useRefMemo(() => new Map(layout.all.map((c, i) => [c.field, i])), [layout])
 
+  const isSelectable = grid.options.isRowSelectable
+  const canSelect = (r: RenderRow<R>) => !isSelectable || r.row === undefined || isSelectable({ id: r.id, row: r.row })
   const toggleSelect = useCallback((id: RenderRow['id']) => api.toggleSelection(id), [api])
   const hasDetail = (r: RenderRow<R>) =>
     !!renderDetailPanel && detailPanelToggle && r.row !== undefined && (grid.options.isDetailPanelAvailable?.(r.row) ?? true)
 
   /* ---- interactions: each hook gets what the grid computed above and returns what the others need ---- */
-  const ctx = { cellSelection, api, state, grid, layout, fillHandle, scrollerRef, gridRef, hasHierarchy, hierarchyField, hasDetail, checkboxSelection, rows, clipboard, setPanel, setMenu, menu, columns, csvFileName } as GridCtx<R>
+  const ctx = { cellSelection, api, state, grid, layout, fillHandle, scrollerRef, gridRef, hasHierarchy, hierarchyField, hasDetail, checkboxSelection, rowSelectionOnClick, rows, clipboard, setPanel, setMenu, menu, columns, csvFileName } as GridCtx<R>
   Object.assign(ctx, useCellSelection(ctx))
   Object.assign(ctx, useRowDrag(ctx))
   Object.assign(ctx, useKeyboard(ctx))
@@ -234,6 +237,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
         rowClassName: props.getRowClassName?.({ id: r.id, row: r.row, renderRow: r, index: i }),
         hasHierarchy,
         selected: grid.isSelected(r),
+        selectable: canSelect(r),
         focusedField: here ? focused!.field : undefined,
         editing: here && state.editingCell?.rowId === r.id ? state.editingCell : null,
         pinSide: undefined,
@@ -281,6 +285,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
       rowClassName: props.getRowClassName?.({ id: r.id, row: r.row, renderRow: r, index: i }),
       hasHierarchy: false,
       selected: grid.isSelected(r),
+      selectable: canSelect(r),
       focusedField: undefined,
       editing: null,
       pinSide: side,
@@ -333,7 +338,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
           role: 'grid',
           'aria-rowcount': rows.length + detailSlots.length + hdr - 1 + pinnedTop.length + pinnedBottom.length + (footer ? 1 : 0),
           'aria-colcount': layout.all.length,
-          'aria-multiselectable': checkboxSelection,
+          'aria-multiselectable': (checkboxSelection || rowSelectionOnClick) && grid.options.multipleRowSelection !== false,
           'aria-busy': grid.server?.loading || undefined,
           'aria-activedescendant': activeId,
           tabIndex: 0,
