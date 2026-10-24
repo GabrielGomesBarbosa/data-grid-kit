@@ -9,6 +9,8 @@ server-side data, Excel export) that you can restyle and rearrange to fit your o
 **Goal:** be to data tables what MUI Base is to MUI: behaviour, accessibility and performance already solved, with *no imposed look*, so that teams building a
 design system do not have to write a grid from scratch.
 
+**Docs and live demos: https://gabrielgomesbarbosa.github.io/data-grid-kit/**
+
 > Work in progress (0.x). Not published to npm yet. The roadmap is in the [issues](https://github.com/GabrielGomesBarbosa/data-grid-kit/issues) and the project board.
 
 ## What is in this repository
