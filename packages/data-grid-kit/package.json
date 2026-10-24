@@ -1,6 +1,6 @@
 {
   "name": "data-grid-kit",
-  "version": "0.7.2",
+  "version": "0.8.0",
   "description": "Headless-first React data grid: hooks + store core, unstyled-friendly UI",
   "license": "MIT",
   "author": "Gabriel Gomes Barbosa",
