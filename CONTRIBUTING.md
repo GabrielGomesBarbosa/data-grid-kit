@@ -41,3 +41,13 @@ It is fine to study how other grids solve a problem and to arrive at similar des
 ## Reporting bugs
 
 Use the bug report template: a minimal reproduction (a few columns and rows) is the fastest way to a fix.
+
+## Releases and changelog
+
+Versioning uses [changesets](https://github.com/changesets/changesets). A change that users can notice (feature, fix, breaking change) adds a changeset:
+
+```bash
+npm run changeset      # pick data-grid-kit, the bump (patch / minor / major while 0.x: minor for new features and breaking changes) and a summary
+```
+
+Maintainers run `npm run version-packages` (updates `packages/data-grid-kit/CHANGELOG.md` and the version), tag the commit and create a GitHub release. The apps are private and never versioned or published.
