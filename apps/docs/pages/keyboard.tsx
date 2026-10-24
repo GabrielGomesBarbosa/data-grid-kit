@@ -12,7 +12,8 @@ export const page: PageDef = {
         Focus lives on the grid element and points at the active cell with <code>aria-activedescendant</code>, so it survives
         virtualization (a cell scrolled out of the DOM doesn't drop the focus). Rows, headers and cells carry <code>row</code>,{' '}
         <code>columnheader</code> and <code>gridcell</code> roles, plus <code>aria-rowcount</code>/<code>aria-colcount</code> for the full
-        size even though only the visible window is rendered.
+        size even though only the visible window is rendered. Give the column (or two) that names a row <code>rowHeader: true</code> and its cells get the <code>rowheader</code> role. Tab
+        already walks the cells of the grid and leaves it at the ends.
       </p>
       <div className="table-wrap">
         <table className="props">

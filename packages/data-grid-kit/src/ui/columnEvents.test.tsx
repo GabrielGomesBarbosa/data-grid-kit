@@ -80,3 +80,12 @@ describe('column events', () => {
     expect(onColumnOrderChange).not.toHaveBeenCalled()
   })
 })
+
+describe('rowHeader', () => {
+  it('the cells of a rowHeader column are row headers for a screen reader; the others stay grid cells', () => {
+    const cols: UIColumnDef<(typeof rows)[number]>[] = [{ field: 'a', headerName: 'A', width: 100, rowHeader: true }, { field: 'b', headerName: 'B', width: 100 }]
+    render(<Grid rows={rows} columns={cols} />)
+    expect(document.querySelector('.gk-row[data-rowindex="0"] [data-field="a"]')!.getAttribute('role')).toBe('rowheader')
+    expect(document.querySelector('.gk-row[data-rowindex="0"] [data-field="b"]')!.getAttribute('role')).toBe('gridcell')
+  })
+})

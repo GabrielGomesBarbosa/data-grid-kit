@@ -117,7 +117,7 @@ export function Cell<R>(p: CellProps<R>) {
   return (
     <div
       id={p.id}
-      role="gridcell"
+      role={col.rowHeader ? 'rowheader' : 'gridcell'}
       aria-colindex={p.colIndex + 1}
       aria-selected={p.focused || undefined}
       className={cx('gk-cell', dataClass, p.className)}
