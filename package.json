@@ -13,7 +13,7 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "bench": "turbo run bench --filter=data-grid-kit",
-    "check": "turbo run typecheck test build --output-logs=errors-only && npm run lint --silent",
+    "check": "turbo run typecheck test build --output-logs=errors-only && npm run lint --silent && npm run lint:package -w data-grid-kit --silent",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "turbo run build --filter=data-grid-kit && changeset publish",

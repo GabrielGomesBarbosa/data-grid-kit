@@ -2,7 +2,9 @@ import { defineConfig } from 'tsup'
 
 export default defineConfig({
   entry: { index: 'src/index.ts', core: 'src/core/index.ts' },
-  format: ['esm'],
+  format: ['esm', 'cjs'],
+  // one copy of the shared code in both formats (classes and instanceof checks must agree between the entries)
+  splitting: true,
   dts: true,
   clean: true,
   external: ['react', 'react-dom'],
