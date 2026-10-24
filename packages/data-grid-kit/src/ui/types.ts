@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import { type ColumnDef, type GridApi, type GridOptions, type RenderRow, type RowId } from '../core'
+import { type AutosizeOptions, type ColumnDef, type GridApi, type GridOptions, type RenderRow, type RowId } from '../core'
 import { type EditCellParams } from './Editors'
 import type { GridSlotProps, GridSlots } from './slotTypes'
 import type { CellEventParams, GridEventProps } from './useGridEvents'
@@ -20,6 +20,10 @@ export interface GridProps<R = any> extends Omit<GridOptions<R>, 'columns'>, Gri
    * removes one, Shift+click selects the range from the last click. Ignored with `cellSelection`, which uses those clicks. Default false.
    */
   rowSelectionOnClick?: boolean
+  /** fit the columns to their content once, right after the grid first shows its rows (see `autosizeOptions`, `api.autosizeColumns`) */
+  autosizeOnMount?: boolean
+  /** what `autosizeOnMount` and a double click on a column's divider do: see `AutosizeOptions` */
+  autosizeOptions?: AutosizeOptions
   /** toolbar with columns panel, filter panel, export and quick filter */
   toolbar?: boolean
   /**

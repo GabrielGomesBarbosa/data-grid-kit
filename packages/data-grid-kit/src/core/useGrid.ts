@@ -24,7 +24,7 @@ import { type ColumnDef, type GridOptions, type GridState, type RenderRow, type 
 /** height assumed for an 'auto' detail panel until its content has been measured */
 export const DETAIL_ESTIMATE = 160
 
-export type { ApplyResult, GridApi, GridInstance, PivotInfo, ServerInfo } from './gridTypes'
+export type { ApplyResult, AutosizeOptions, ColumnMeasurer, GridApi, GridInstance, PivotInfo, ServerInfo } from './gridTypes'
 
 const EMPTY_ROWS: never[] = []
 

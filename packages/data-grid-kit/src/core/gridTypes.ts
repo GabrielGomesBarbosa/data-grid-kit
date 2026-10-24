@@ -20,6 +20,22 @@ export interface ApplyResult {
   rejected: number
 }
 
+/** What `autosizeColumns` measures and how. */
+export interface AutosizeOptions {
+  /** the fields to fit (default: every visible column) */
+  columns?: string[]
+  /** count the header title (default true) */
+  includeHeaders?: boolean
+  /** let unusually wide values count too (default false: the widest ordinary value wins) */
+  includeOutliers?: boolean
+  /** how far past the middle half of the widths a value must be to be an outlier (default 1.5) */
+  outliersFactor?: number
+  /** after fitting, share a spare edge of the grid among the fitted columns (default false) */
+  expand?: boolean
+}
+/** Measures the natural width of columns in whatever markup draws them: the built-in `Grid` registers one. */
+export type ColumnMeasurer = (fields: string[], options: { includeHeaders: boolean; includeOutliers: boolean; outliersFactor: number }) => Record<string, number>
+
 export interface GridApi<R = any> {
   store: Store<GridState>
   setSortModel(model: SortItem[]): void
@@ -30,6 +46,13 @@ export interface GridApi<R = any> {
   setPage(page: number): void
   setPageSize(size: number): void
   pinColumn(field: string, side: PinSide | null): void
+  /**
+   * Fit columns to what they show (the header and the cells that are rendered: rows scrolled out of view are not measured), within each
+   * column's `minWidth` / `maxWidth`. Returns the widths it set. Does nothing without a renderer that measures (the `Grid` does).
+   */
+  autosizeColumns(options?: AutosizeOptions): Record<string, number>
+  /** register how columns are measured (the built-in `Grid` does it for you; `null` removes it) */
+  setColumnMeasurer(measure: ColumnMeasurer | null): void
   setColumnWidth(field: string, width: number): void
   setColumnVisibility(field: string, visible: boolean): void
   /** replace the visibility of every column at once (`{}` goes back to each column's own `hidden`); every column may be hidden */

@@ -12,6 +12,8 @@ export interface HeaderProps<R> {
   controls: boolean
   reorder: boolean
   onOpenMenu: (field: string, anchor: DOMRect) => void
+  /** a double click on a column's divider: fit it to its content */
+  onAutosize: (field: string) => void
   onDragIntent: (field: string, e: ReactPointerEvent<HTMLElement>) => void
   justDragged: MutableRefObject<boolean>
   totalWidth: number
@@ -40,6 +42,7 @@ export function Header<R>(p: HeaderProps<R>) {
       grid={grid}
       controls={p.controls}
       onOpenMenu={p.onOpenMenu}
+      onAutosize={p.onAutosize}
       onDragIntent={p.reorder && c.reorderable !== false ? p.onDragIntent : undefined}
       suppressClick={() => p.justDragged.current}
       {...slotProps.headerCell}

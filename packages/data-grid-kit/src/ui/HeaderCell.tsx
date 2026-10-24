@@ -14,6 +14,7 @@ export interface HeaderCellProps<R> {
   grid: GridInstance<R>
   controls: boolean
   onOpenMenu: (field: string, anchor: DOMRect) => void
+  onAutosize: (field: string) => void
   /** undefined when reordering is off for this column */
   onDragIntent: ((field: string, e: ReactPointerEvent<HTMLElement>) => void) | undefined
   suppressClick: () => boolean
@@ -28,6 +29,7 @@ export function HeaderCell<R>({
   grid,
   controls,
   onOpenMenu,
+  onAutosize,
   onDragIntent,
   suppressClick,
   className,
@@ -108,6 +110,10 @@ export function HeaderCell<R>({
           aria-orientation="vertical"
           data-side={side === 'right' ? 'left' : 'right'}
           onPointerDown={startResize}
+          onDoubleClick={(e) => {
+            e.stopPropagation()
+            onAutosize(col.field)
+          }}
         />
       )}
     </div>

@@ -18,6 +18,7 @@ import { useKeyboard } from './useKeyboard'
 import { usePanels } from './usePanels'
 import { useRowDrag } from './useRowDrag'
 import { useGridEvents } from './useGridEvents'
+import { useAutosize } from './useAutosize'
 
 const NO_SLOT_PROPS: GridSlotProps = {}
 
@@ -78,6 +79,8 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
     csvFileName = 'export.csv',
     xlsxFileName = 'export.xlsx',
     onReady,
+    autosizeOnMount = false,
+    autosizeOptions,
     onRowClick,
     onRowDoubleClick,
     onCellClick,
@@ -114,6 +117,15 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
   const gridRef = useRef(grid)
   gridRef.current = grid
   useAutoRowHeights(!!props.getRowHeight, scrollerRef, gridRef)
+  useAutosize(api, scrollerRef, gridRef)
+  const autosizeRef = useRef(autosizeOptions)
+  autosizeRef.current = autosizeOptions
+  useEffect(() => {
+    if (!autosizeOnMount) return
+    // after the first rows are on screen: two frames later the viewport is known and the rows are drawn
+    let frame = requestAnimationFrame(() => (frame = requestAnimationFrame(() => api.autosizeColumns(autosizeRef.current))))
+    return () => cancelAnimationFrame(frame)
+  }, [api, autosizeOnMount])
 
   const [menu, setMenu] = useState<{ field: string; anchor: DOMRect } | null>(null)
   const [panel, setPanel] = useState<PanelState | null>(null)
@@ -365,7 +377,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
         },
         extra,
       ),
-    header: { grid, colPos, controls: columnControls, reorder: columnReorder, onOpenMenu: openMenu, onDragIntent: startColumnDrag, justDragged, totalWidth },
+    header: { grid, colPos, onAutosize: (field: string) => api.autosizeColumns({ ...autosizeRef.current, columns: [field] }), controls: columnControls, reorder: columnReorder, onOpenMenu: openMenu, onDragIntent: startColumnDrag, justDragged, totalWidth },
     bodyRows,
     detailItems,
     pinnedTop: pinnedTopBlock,
