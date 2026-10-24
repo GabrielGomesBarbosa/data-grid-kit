@@ -8,7 +8,7 @@ import type { XlsxExportOptions } from './xlsxExport'
 import type { DataSourceError, DataSourceSnapshot } from './dataSource'
 import type { GridLocaleText } from './localeText'
 import type { Store } from './store'
-import type { CellRef, ColumnDef, FilterModel, GridOptions, GridState, PinSide, PivotModel, RenderRow, RowId, SortItem } from './types'
+import type { CellRef, ColumnDef, Density, FilterModel, GridOptions, GridState, PinSide, PivotModel, RenderRow, RowId, SortItem } from './types'
 
 /** What a bulk cell change (paste, fill, delete) did. */
 export interface ApplyResult {
@@ -53,6 +53,8 @@ export interface GridApi<R = any> {
   autosizeColumns(options?: AutosizeOptions): Record<string, number>
   /** register how columns are measured (the built-in `Grid` does it for you; `null` removes it) */
   setColumnMeasurer(measure: ColumnMeasurer | null): void
+  /** how tight the rows are (scales `rowHeight` and `headerHeight`; rows sized by `getRowHeight` keep their own height) */
+  setDensity(density: Density): void
   setColumnWidth(field: string, width: number): void
   setColumnVisibility(field: string, visible: boolean): void
   /** replace the visibility of every column at once (`{}` goes back to each column's own `hidden`); every column may be hidden */

@@ -3,7 +3,7 @@ import { useBase, type BaseButtonProps } from './base'
 import { useIcons } from './icons'
 import { cx } from './cx'
 import { useLocaleText } from './localeContext'
-import { operatorNeedsValue } from '../core'
+import { activeFilterCount } from '../core'
 import type { PanelKind, ToolbarProps } from './Toolbar'
 
 /* ------------------------------------------------------------------ context */
@@ -84,7 +84,7 @@ export function FilterButton({ label: labelProp, children, ...rest }: PartProps)
   const panel = usePanelButton('filters')
   const label = labelProp ?? grid.text.toolbarFilters
   // a row nothing has been typed into yet filters nothing, so it is not counted
-  const active = grid.state.filterModel.items.filter((f) => !operatorNeedsValue(f.operator) || (f.value !== undefined && f.value !== null && f.value !== '')).length
+  const active = activeFilterCount(grid.state.filterModel)
   return (
     <ToolbarButton label={active ? `${label}, ${grid.text.toolbarFiltersActive(active)}` : label} aria-haspopup="dialog" {...panel} {...rest}>
       {children ?? <icons.filter />}
@@ -106,6 +106,18 @@ export function PivotButton({ label, children, ...rest }: PartProps) {
   return (
     <ToolbarButton label={label ?? grid.text.toolbarPivot} aria-haspopup="dialog" data-active={grid.state.pivotMode ? '' : undefined} {...panel} {...rest}>
       {children ?? <icons.pivot />}
+    </ToolbarButton>
+  )
+}
+
+/** Opens a menu to choose how tight the rows are (compact, standard, comfortable). */
+export function DensityButton({ label, children, ...rest }: PartProps) {
+  const { grid } = useToolbar()
+  const icons = useIcons()
+  const panel = usePanelButton('density')
+  return (
+    <ToolbarButton label={label ?? grid.text.toolbarDensity} aria-haspopup="menu" {...panel} {...rest}>
+      {children ?? <icons.density />}
     </ToolbarButton>
   )
 }

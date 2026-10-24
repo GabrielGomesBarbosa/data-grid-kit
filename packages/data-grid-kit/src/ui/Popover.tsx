@@ -123,13 +123,13 @@ export function Popover({ anchor, onClose, children, label, role = 'dialog', ali
     if (!pos || focused.current) return
     focused.current = true
     const el = ref.current
-    const first = el?.querySelector<HTMLElement>('[data-autofocus]') ?? el?.querySelector<HTMLElement>('[role="menuitem"], input, select, button')
+    const first = el?.querySelector<HTMLElement>('[data-autofocus]') ?? el?.querySelector<HTMLElement>('[role="menuitem"], [role="menuitemradio"], input, select, button')
     first?.focus({ preventScroll: true })
   }, [pos])
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (role !== 'menu' || (e.key !== 'ArrowDown' && e.key !== 'ArrowUp')) return
-    const items = [...(ref.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not(:disabled)') ?? [])]
+    const items = [...(ref.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not(:disabled), [role="menuitemradio"]:not(:disabled)') ?? [])]
     if (!items.length) return
     const i = items.indexOf(document.activeElement as HTMLElement)
     const next = e.key === 'ArrowDown' ? (i + 1) % items.length : (i - 1 + items.length) % items.length

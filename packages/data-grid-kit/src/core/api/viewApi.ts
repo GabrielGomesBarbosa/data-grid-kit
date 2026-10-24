@@ -2,7 +2,7 @@ import { neighborInGroup, planColumnMove } from '../reorder'
 import { reset, type ApiContext } from './context'
 import type { GridApi } from '../gridTypes'
 
-export function viewApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'setSortModel' | 'toggleSort' | 'setFilterModel' | 'setQuickFilter' | 'setPage' | 'setPageSize' | 'pinColumn' | 'setColumnWidth' | 'setColumnVisibility' | 'setColumnVisibilityModel' | 'moveColumn' | 'reorderColumn' | 'moveColumnBy' | 'setRowGroupingModel' | 'toggleExpanded' | 'expandAll' | 'collapseAll' | 'setAggregation' | 'setAggregationModel' | 'setPivotMode' | 'setPivotModel' | 'setScroll' | 'setViewport'> {
+export function viewApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'setSortModel' | 'toggleSort' | 'setFilterModel' | 'setQuickFilter' | 'setPage' | 'setPageSize' | 'pinColumn' | 'setColumnWidth' | 'setDensity' | 'setColumnVisibility' | 'setColumnVisibilityModel' | 'moveColumn' | 'reorderColumn' | 'moveColumnBy' | 'setRowGroupingModel' | 'toggleExpanded' | 'expandAll' | 'collapseAll' | 'setAggregation' | 'setAggregationModel' | 'setPivotMode' | 'setPivotModel' | 'setScroll' | 'setViewport'> {
   const { set, store, layoutRef, optionsRef, apiRef } = c
   return {
     setSortModel: (sortModel) => set({ sortModel, paginationModel: reset(store) }),
@@ -29,6 +29,7 @@ export function viewApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'setSortModel' | 
         return { pinnedColumns: { left, right } }
       })
     },
+    setDensity: (density) => set({ density }),
     setColumnWidth: (field, width) => set((s) => ({ columnWidths: { ...s.columnWidths, [field]: width } })),
     setColumnVisibility: (field, visible) =>
       set((s) => ({ columnVisibility: { ...s.columnVisibility, [field]: visible } })),

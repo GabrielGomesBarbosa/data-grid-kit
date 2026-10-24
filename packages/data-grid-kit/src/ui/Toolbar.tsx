@@ -1,10 +1,10 @@
 import { type CSSProperties, type ReactNode } from 'react'
-import { ColumnsButton, ExportButton, FilterButton, PivotButton, QuickFilter, Toolbar, ToolbarContext, ToolbarSeparator, ToolbarTitle } from './toolbarParts'
+import { ColumnsButton, DensityButton, ExportButton, FilterButton, PivotButton, QuickFilter, Toolbar, ToolbarContext, ToolbarSeparator, ToolbarTitle } from './toolbarParts'
 import { type CsvOptions, type GridInstance } from '../core'
 
 /* ----------------------------------------------------------------- toolbar */
 
-export type PanelKind = 'filters' | 'columns' | 'export' | 'pivot'
+export type PanelKind = 'filters' | 'columns' | 'export' | 'pivot' | 'density'
 export interface PanelState {
   kind: PanelKind
   anchor: DOMRect
@@ -27,6 +27,8 @@ export interface ToolbarProps<R> {
   panel: PanelState | null
   onPanel: (kind: PanelKind, anchor: DOMRect) => void
   onExport: (options: CsvOptions & { selectedOnly?: boolean }) => void
+  /** the default toolbar shows the density button */
+  densitySelector?: boolean
   /** shown at the start of the default toolbar (`slotProps.toolbar.title`) */
   title?: ReactNode
   className?: string
@@ -47,6 +49,7 @@ export function DefaultToolbar<R>(props: ToolbarProps<R>) {
         <ColumnsButton />
         <FilterButton />
         <PivotButton />
+        {props.densitySelector && <DensityButton />}
         <ToolbarSeparator />
         <ExportButton />
         <ToolbarSeparator />

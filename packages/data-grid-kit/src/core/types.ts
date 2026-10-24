@@ -142,7 +142,11 @@ export interface PivotModel {
 
 export const EMPTY_PIVOT: PivotModel = { rows: [], columns: [], values: [] }
 
+/** how tight the rows are: row and header heights are scaled (compact 0.75, comfortable 1.3) */
+export type Density = 'compact' | 'standard' | 'comfortable'
+
 export interface GridState {
+  density: Density
   sortModel: SortItem[]
   filterModel: FilterModel
   paginationModel: PaginationModel

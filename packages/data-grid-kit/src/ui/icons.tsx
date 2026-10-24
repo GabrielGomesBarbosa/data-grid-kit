@@ -34,6 +34,7 @@ export interface GridIcons {
   pivot: ComponentType<IconProps>
   download: ComponentType<IconProps>
   search: ComponentType<IconProps>
+  density: ComponentType<IconProps>
   /** the filter panel's Add filter and Remove all */
   add: ComponentType<IconProps>
   trash: ComponentType<IconProps>
@@ -90,6 +91,7 @@ export const defaultIcons: GridIcons = {
     </>,
   ),
   download: line('download', <path d="M12 4v11M7 11l5 5 5-5M5 20h14" />),
+  density: line('density', <path d="M4 6h16M4 12h16M4 18h16" />),
   add: line('add', <path d="M12 5v14M5 12h14" />),
   trash: line('trash', <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" />),
   search: line(

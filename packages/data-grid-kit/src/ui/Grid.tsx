@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { isFiltering } from '../core'
 import { Header } from './Header'
 import { ColumnDragFeedback, RowDragFeedback } from './DragFeedback'
 import { Popovers } from './Popovers'
@@ -62,7 +63,11 @@ export function Grid<R = any>(props: GridProps<R>) {
                   ))}
               </div>
               {pinnedBottom && pinnedBlock(pinnedBottom)}
-              <slots.noRowsOverlay grid={view.grid} {...slotProps.noRowsOverlay} />
+              {isFiltering(view.grid.state.filterModel) && !view.grid.pivot ? (
+                <slots.noResultsOverlay grid={view.grid} {...slotProps.noResultsOverlay} />
+              ) : (
+                <slots.noRowsOverlay grid={view.grid} {...slotProps.noRowsOverlay} />
+              )}
             </div>
           </div>
           {view.footer && <slots.footer {...view.footer} {...slotProps.footer} />}

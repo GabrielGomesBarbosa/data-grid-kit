@@ -9,6 +9,8 @@ export interface GridLocaleText {
   errorLoadingRows: (message: string) => string
   errorRetry: string
   noRows: string
+  /** the filters leave no row */
+  noResults: string
   noColumns: string
   noColumnsHint: string
   /** pivot mode with no row field yet */
@@ -25,6 +27,10 @@ export interface GridLocaleText {
   toolbarPivot: string
   toolbarExport: string
   toolbarSearch: string
+  toolbarDensity: string
+  densityCompact: string
+  densityStandard: string
+  densityComfortable: string
   quickFilterPlaceholder: string
   quickFilterLabel: string
   quickFilterClear: string
@@ -35,6 +41,9 @@ export interface GridLocaleText {
   footerLoading: string
   footerSelected: (count: number) => string
   footerCellsSelected: (count: number, formatted: string) => string
+  paginationRowsPerPage: string
+  /** the choice that shows every row (`-1` in `pageSizeOptions`) */
+  paginationAll: string
   paginationPrevious: string
   paginationNext: string
 
@@ -175,6 +184,7 @@ export const defaultLocaleText: GridLocaleText = {
   errorLoadingRows: (message) => `Could not load rows: ${message}`,
   errorRetry: 'Try again',
   noRows: 'No rows',
+  noResults: 'No results found.',
   noColumns: 'No columns are visible.',
   noColumnsHint: 'Check the column visibility settings.',
   pivotNeedsRows: 'Add a field as a row in the Pivot panel to fill the table.',
@@ -187,6 +197,10 @@ export const defaultLocaleText: GridLocaleText = {
   toolbarPivot: 'Pivot',
   toolbarExport: 'Export',
   toolbarSearch: 'Search',
+  toolbarDensity: 'Density',
+  densityCompact: 'Compact',
+  densityStandard: 'Standard',
+  densityComfortable: 'Comfortable',
   quickFilterPlaceholder: 'Search…',
   quickFilterLabel: 'Quick filter',
   quickFilterClear: 'Clear search',
@@ -195,6 +209,8 @@ export const defaultLocaleText: GridLocaleText = {
   footerLoading: 'loading…',
   footerSelected: (count) => `${count} selected`,
   footerCellsSelected: (_count, formatted) => `${formatted} cells selected`,
+  paginationRowsPerPage: 'Rows per page',
+  paginationAll: 'All',
   paginationPrevious: 'Previous page',
   paginationNext: 'Next page',
 

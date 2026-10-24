@@ -3,6 +3,7 @@ import { EMPTY_PIVOT, type GridOptions, type GridState } from './types'
 export function defaultState<R>(options: GridOptions<R>): GridState {
   const init = options.initialState ?? {}
   return {
+    density: 'standard',
     sortModel: [],
     filterModel: { items: [] },
     paginationModel: { page: 0, pageSize: 100 },

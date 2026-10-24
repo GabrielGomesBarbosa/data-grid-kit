@@ -49,6 +49,26 @@ export function Popovers<R>(p: PopoversProps<R>) {
           <PivotPanel grid={grid} onClose={p.closePanel} {...slotProps.pivotPanel} />
         </Popover>
       )}
+      {panel?.kind === 'density' && (
+        <Popover anchor={panel.anchor} onClose={p.closePanel} label={t.toolbarDensity} role="menu" {...popoverProps('gk-menu')}>
+          {(['compact', 'standard', 'comfortable'] as const).map((d) => (
+            <Button
+              key={d}
+              type="button"
+              role="menuitemradio"
+              aria-checked={grid.state.density === d}
+              className={item}
+              onClick={() => {
+                grid.api.setDensity(d)
+                p.closePanel()
+              }}
+            >
+              {grid.state.density === d ? '✓ ' : '\u00a0\u00a0'}
+              {d === 'compact' ? t.densityCompact : d === 'comfortable' ? t.densityComfortable : t.densityStandard}
+            </Button>
+          ))}
+        </Popover>
+      )}
       {panel?.kind === 'export' && (
         <Popover anchor={panel.anchor} onClose={p.closePanel} label={t.toolbarExport} role="menu" {...popoverProps('gk-menu')}>
           <Button type="button" role="menuitem" className={item} onClick={() => p.onExportCsv(false)}>

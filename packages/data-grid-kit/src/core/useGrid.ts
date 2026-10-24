@@ -265,8 +265,9 @@ export function useGrid<R = any>(options: GridOptions<R>): GridInstance<R> {
 
   layoutRef.current = layout
 
-  const rowHeight = options.rowHeight ?? DEFAULT_ROW_HEIGHT
-  const headerRowHeight = options.headerHeight ?? DEFAULT_HEADER_HEIGHT
+  const densityFactor = effective.density === 'compact' ? 0.75 : effective.density === 'comfortable' ? 1.3 : 1
+  const rowHeight = Math.round((options.rowHeight ?? DEFAULT_ROW_HEIGHT) * densityFactor)
+  const headerRowHeight = Math.round((options.headerHeight ?? DEFAULT_HEADER_HEIGHT) * densityFactor)
   // header groups (pivot columns) stack rows above the column titles
   const headerDepth = useMemo(() => layout.all.reduce((d, c) => Math.max(d, c.group?.length ?? 0), 0), [layout])
   const headerHeight = headerRowHeight * (1 + headerDepth)

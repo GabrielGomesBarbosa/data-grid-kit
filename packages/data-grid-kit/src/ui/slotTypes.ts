@@ -26,6 +26,8 @@ export interface GridSlots<R = any> extends BaseSlots {
   loadingOverlay: ComponentType<OverlayProps>
   errorOverlay: ComponentType<ErrorOverlayProps>
   noRowsOverlay: ComponentType<NoRowsOverlayProps<R>>
+  /** shown instead of `noRowsOverlay` when filters (the filter panel or the quick filter) leave no row */
+  noResultsOverlay: ComponentType<NoRowsOverlayProps<R>>
   headerCell: ComponentType<HeaderCellProps<R>>
   row: ComponentType<RowProps<R>>
   cell: ComponentType<CellProps<R>>

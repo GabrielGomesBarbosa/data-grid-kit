@@ -2,7 +2,7 @@ import { Cell } from './Cell'
 import { DetailPanel } from './DetailPanel'
 import { Footer } from './Footer'
 import { HeaderCell } from './HeaderCell'
-import { EmptyState, ErrorBanner, LoadingBar } from './Overlays'
+import { EmptyState, ErrorBanner, LoadingBar, NoResultsState } from './Overlays'
 import { ColumnMenu, ColumnsPanel, FilterPanel, PivotPanel } from './panels'
 import { Popover } from './Popover'
 import { Row } from './Row'
@@ -19,6 +19,7 @@ export const defaultSlots: GridSlots = {
   loadingOverlay: LoadingBar,
   errorOverlay: ErrorBanner,
   noRowsOverlay: EmptyState,
+  noResultsOverlay: NoResultsState,
   headerCell: HeaderCell,
   row: Row,
   cell: Cell,

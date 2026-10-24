@@ -1,4 +1,4 @@
-import type { ColumnDef, ColumnType, FilterItem, FilterOperator } from './types'
+import type { ColumnDef, ColumnType, FilterItem, FilterModel, FilterOperator } from './types'
 
 export interface OperatorInfo {
   value: FilterOperator
@@ -47,6 +47,16 @@ export function getFilterOperators(col: Pick<ColumnDef, 'type'>): OperatorInfo[]
 
 export function operatorNeedsValue(operator: FilterOperator): boolean {
   return operator !== 'isEmpty' && operator !== 'isNotEmpty'
+}
+
+/** Filter rows that actually filter: a row nothing was typed into yet does not count. */
+export function activeFilterCount(model: Pick<FilterModel, 'items'>): number {
+  return model.items.filter((f) => !operatorNeedsValue(f.operator) || (f.value !== undefined && f.value !== null && f.value !== '')).length
+}
+
+/** Whether the filter panel or the quick filter is narrowing the rows down. */
+export function isFiltering(model: FilterModel): boolean {
+  return activeFilterCount(model) > 0 || (model.quickFilter?.trim() ?? '') !== ''
 }
 
 /** Parse `yyyy-mm-dd` as a local date (new Date('2020-01-01') would be UTC and shift a day). */

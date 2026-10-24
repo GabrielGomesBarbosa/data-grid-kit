@@ -35,6 +35,16 @@ export function ErrorBanner({ message, onRetry, className, style }: ErrorOverlay
   )
 }
 
+/** What the body shows when the filters leave no row (a different message from "no rows": the data is there). */
+export function NoResultsState<R>({ grid, className, style }: NoRowsOverlayProps<R>) {
+  const { rows, server } = grid
+  return rows.length === 0 && !server?.loading && !server?.error ? (
+    <div className={cx('gk-empty gk-no-results', className)} style={style}>
+      {grid.text.noResults}
+    </div>
+  ) : null
+}
+
 /** What the body shows when there is nothing to show: no columns, a hint in pivot mode, otherwise "No rows". */
 export function EmptyState<R>({ grid, className, style }: NoRowsOverlayProps<R>) {
   const { pivot, state, rows, server, text } = grid

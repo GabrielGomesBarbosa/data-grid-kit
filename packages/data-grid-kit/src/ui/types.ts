@@ -24,6 +24,12 @@ export interface GridProps<R = any> extends Omit<GridOptions<R>, 'columns'>, Gri
   autosizeOnMount?: boolean
   /** what `autosizeOnMount` and a double click on a column's divider do: see `AutosizeOptions` */
   autosizeOptions?: AutosizeOptions
+  /** show the density button (compact / standard / comfortable) in the default toolbar */
+  densitySelector?: boolean
+  /** a "Rows per page" select in the footer with these page sizes (`-1`: every row). Without it the footer has no select. */
+  pageSizeOptions?: number[]
+  /** fit the page size to the grid's height, again whenever the grid is resized or the density changes (use it without `pageSizeOptions`) */
+  autoPageSize?: boolean
   /** toolbar with columns panel, filter panel, export and quick filter */
   toolbar?: boolean
   /**

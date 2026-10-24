@@ -64,6 +64,9 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
     height = 400,
     checkboxSelection = false,
     rowSelectionOnClick = false,
+    densitySelector = false,
+    pageSizeOptions,
+    autoPageSize = false,
     toolbar = false,
     pivotPanelMode = 'docked',
     columnControls = true,
@@ -126,6 +129,16 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
     let frame = requestAnimationFrame(() => (frame = requestAnimationFrame(() => api.autosizeColumns(autosizeRef.current))))
     return () => cancelAnimationFrame(frame)
   }, [api, autosizeOnMount])
+
+  // a page as tall as the body shows: the rows that fit between the header and the footer
+  const fitPage = autoPageSize && props.pagination !== false
+  const viewportHeight = state.viewport.height
+  useEffect(() => {
+    if (!fitPage) return
+    const body = viewportHeight - gridRef.current.headerHeight - gridRef.current.rowHeight // the footer takes about a row
+    const fit = Math.max(1, Math.floor(body / gridRef.current.rowHeight))
+    if (gridRef.current.state.paginationModel.pageSize !== fit) api.setPageSize(fit)
+  }, [fitPage, viewportHeight, api, state.density])
 
   const [menu, setMenu] = useState<{ field: string; anchor: DOMRect } | null>(null)
   const [panel, setPanel] = useState<PanelState | null>(null)
@@ -382,9 +395,9 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
     detailItems,
     pinnedTop: pinnedTopBlock,
     pinnedBottom: pinnedBottomBlock,
-    toolbar: toolbar ? { grid, panel, onPanel: openPanel, onExport: doExport } : null,
+    toolbar: toolbar ? { grid, panel, onPanel: openPanel, onExport: doExport, densitySelector } : null,
     openPanel,
-    footer: paging || grid.server ? { grid, paging, rects } : null,
+    footer: paging || grid.server ? { grid, paging, rects, pageSizeOptions } : null,
     loading: !!grid.server?.loading,
     error: grid.server?.error ? { message: grid.server.error.message, retry: () => api.refreshData() } : null,
     dock: dockedPivot ? { onClose: () => setPanel(null) } : null,
