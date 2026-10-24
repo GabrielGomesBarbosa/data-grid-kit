@@ -1,5 +1,13 @@
 # data-grid-kit
 
+## 0.8.2
+
+### Patch Changes
+
+- 3a78fb0: A column menu no longer hangs in the air when the grid is scrolled sideways: the button moves and the menu cannot follow it without shaking, so the menu closes. Scrolling the page does not close it (the menu moves with the page).
+- 628773c: Popovers stay glued to their button when the page scrolls, without shaking and without closing. They are positioned in page coordinates, so the browser moves them with the scroll and no script runs on the way. They no longer look for the button under the anchor either, which put the column menu of some columns (Price) off its button.
+- 3723d1e: A popover too tall for the room under its button no longer flickers between two sizes (the column menu of a numeric column): it is measured at its natural height every time, and it scrolls inside when capped.
+
 ## 0.8.1
 
 ### Patch Changes
