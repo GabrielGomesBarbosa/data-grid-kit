@@ -3,6 +3,7 @@ import { type AutosizeOptions, type ColumnDef, type FilterItem, type FilterOpera
 import { type EditCellParams } from './Editors'
 import type { GridSlotProps, GridSlots } from './slotTypes'
 import type { CellEventParams, GridEventProps } from './useGridEvents'
+import type { GridAction } from './ActionsCell'
 
 /** A filter operator of a column, with the input it uses for its value (the default is a text box fitted to the column's type). */
 export interface UIFilterOperator<R = any> extends FilterOperatorDef<R> {
@@ -15,6 +16,8 @@ export interface UIColumnDef<R = any> extends Omit<ColumnDef<R>, 'filterOperator
   filterOperators?: UIFilterOperator<R>[]
   renderCell?: (params: { value: unknown; row: R }) => ReactNode
   renderEditCell?: (params: EditCellParams<R>) => ReactNode
+  /** for `type: 'actions'`: the buttons of the row's cell (those with `showInMenu` go in a ⋮ menu). Called for data rows only. */
+  getActions?: (params: { id: RowId; row: R; field: string }) => GridAction[]
   /** what the header shows instead of `headerName` (the name is still the accessible name of the sort button's group and the menu) */
   renderHeader?: (params: { field: string; colDef: UIColumnDef<R> }) => ReactNode
 }

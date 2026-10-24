@@ -1,6 +1,6 @@
 import { optionLabel, optionValue } from './columns'
 import { getCellValue } from './values'
-import { formatDate, type GridLocaleText } from './localeText'
+import { formatDate, formatDateTime, type GridLocaleText } from './localeText'
 import type { XlsxWorkerLike } from './xlsxWorkerClient'
 import type { XlsxColumn, XlsxOptions, XlsxRow, XlsxSheet, XlsxStyle, XlsxValue } from './xlsx'
 import type { ColumnDef, RenderRow, RowId } from './types'
@@ -47,7 +47,7 @@ const textOf = <R>(col: ColumnDef<R>, row: R, value: unknown, locale?: string): 
     const hit = col.valueOptions.find((o) => optionValue(o) === value)
     if (hit !== undefined) return String(optionLabel(hit))
   }
-  if (value instanceof Date) return formatDate(value, locale)
+  if (value instanceof Date) return col.type === 'dateTime' ? formatDateTime(value, locale) : formatDate(value, locale)
   return String(value)
 }
 
@@ -72,7 +72,7 @@ function aggregateCell<R>(col: ColumnDef<R>, value: unknown, formatted: boolean,
       /* a formatter that needs the row can't format an aggregate */
     }
   }
-  return value instanceof Date ? formatDate(value, locale) : String(value)
+  return value instanceof Date ? (col.type === 'dateTime' ? formatDateTime(value, locale) : formatDate(value, locale)) : String(value)
 }
 
 /**
@@ -98,7 +98,7 @@ export function sheetOfGrid<R>(input: {
     header: c.headerName ?? c.field,
     group: c.group,
     width: Math.min(255, Math.max(6, input.widthOf(c.field) / 7.5)), // ~7.5 px per Excel character
-    numFmt: options.numFmts?.[c.field],
+    numFmt: options.numFmts?.[c.field] ?? (c.type === 'dateTime' ? 'yyyy-mm-dd hh:mm' : undefined),
     style: options.columnStyles?.[c.field],
     validationList:
       options.validateSelects && c.type === 'singleSelect' && c.valueOptions ? c.valueOptions.map((o) => String(optionLabel(o))) : undefined,

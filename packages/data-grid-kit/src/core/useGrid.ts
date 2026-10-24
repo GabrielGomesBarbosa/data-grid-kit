@@ -45,7 +45,17 @@ const rangesStable = (a: [Range, Range, Range], b: [Range, Range, Range]) =>
  * needs. Scroll position lives in the store, but components only re-render when the visible
  * row/column window actually changes.
  */
-export function useGrid<R = any>(options: GridOptions<R>): GridInstance<R> {
+/** Columns of type `actions` hold buttons, not data: they cannot be sorted, filtered, edited, grouped or aggregated. */
+function withActionColumns<R>(options: GridOptions<R>, columns: ColumnDef<R>[]): GridOptions<R> {
+  return { ...options, columns }
+}
+
+export function useGrid<R = any>(rawOptions: GridOptions<R>): GridInstance<R> {
+  const actionColumns = useMemo(
+    () => (rawOptions.columns.some((c) => c.type === 'actions') ? rawOptions.columns.map((c) => (c.type === 'actions' ? { ...c, sortable: false, filterable: false, groupable: false, aggregable: false, editable: false } : c)) : rawOptions.columns),
+    [rawOptions.columns],
+  )
+  const options = actionColumns === rawOptions.columns ? rawOptions : withActionColumns(rawOptions, actionColumns)
   const optionsRef = useRef(options)
   optionsRef.current = options
 

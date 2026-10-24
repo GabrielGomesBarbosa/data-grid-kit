@@ -1,4 +1,4 @@
-import { formatDateInput, getColumnType, optionLabel, optionValue, parseDateInput } from './columns'
+import { formatDateInput, formatDateTimeInput, getColumnType, optionLabel, optionValue, parseDateInput, parseDateTimeInput } from './columns'
 import { getCellValue } from './values'
 import type { ColumnDef } from './types'
 
@@ -54,7 +54,10 @@ export function parseTsv(text: string): string[][] {
 export function cellToText<R>(col: ColumnDef<R>, row: R): string {
   const value = getCellValue(col, row)
   if (value == null) return ''
-  if (value instanceof Date) return getColumnType(col) === 'date' ? formatDateInput(value) : value.toISOString()
+  if (value instanceof Date) {
+    const type = getColumnType(col)
+    return type === 'date' ? formatDateInput(value) : type === 'dateTime' ? formatDateTimeInput(value) : value.toISOString()
+  }
   return String(value)
 }
 
@@ -79,6 +82,11 @@ export function parseCellText<R>(col: ColumnDef<R>, text: string, row: R): Parse
     case 'date': {
       if (t === '') return { ok: true, value: null }
       const d = parseDateInput(t) ?? new Date(t)
+      return Number.isNaN(d.getTime()) ? { ok: false } : { ok: true, value: d }
+    }
+    case 'dateTime': {
+      if (t === '') return { ok: true, value: null }
+      const d = parseDateTimeInput(t) ?? new Date(t)
       return Number.isNaN(d.getTime()) ? { ok: false } : { ok: true, value: d }
     }
     case 'boolean': {

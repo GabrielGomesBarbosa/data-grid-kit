@@ -94,6 +94,8 @@ export const columnProps: PropRow[] = [
   { name: 'flex', type: 'number', description: 'Share the width the other columns leave free, in proportion (flex: 2 gets twice the share of flex: 1), within minWidth and maxWidth. Overrides width; a column the user resizes becomes fixed. With no room it keeps minWidth (default 100) and the grid scrolls.' },
   { name: 'maxWidth', type: 'number', description: 'The widest the column can be, also when resized.' },
   { name: 'filterOperators', type: 'FilterOperatorDef[]', description: "Operators the filter panel offers for this column instead of the built-in ones. Each: { value, label, needsValue?, getApplyFilterFn?(item, col) => (value, row) => boolean | null, renderInput?({ item, onChange, focusProps }) }. Spread getFilterOperators(col) to extend the built-in list." },
+  { name: "type: 'dateTime'", type: 'Date', description: 'A date with its time: shown with both in the grid locale, edited and filtered with a date-time input, copied as yyyy-mm-ddThh:mm, exported to Excel as yyyy-mm-dd hh:mm.' },
+  { name: "type: 'actions'", type: 'column', description: "A column of buttons: give it getActions({ id, row, field }) returning [{ label, icon?, onClick, showInMenu?, disabled?, href? }]. Actions with showInMenu go in a ⋮ menu. Never sorted, filtered, edited, grouped, aggregated or exported." },
   { name: 'headerAlign', type: "'left' | 'right' | 'center'", description: "Alignment of the header's content (default: the same as align)." },
   { name: 'description', type: 'string', description: "A tooltip on the header, for when the name says too little." },
   { name: 'headerClassName', type: 'string', description: "Class names for the column's header cell." },

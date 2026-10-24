@@ -15,7 +15,7 @@ const title = (c: ColumnDef) => c.headerName ?? c.field
  * getter, so they can be rows, columns or values like any other.
  */
 export function defaultPivotDerived<R>(col: ColumnDef<R>, text?: Pick<GridLocaleText, 'pivotYear' | 'pivotQuarter' | 'pivotQuarterValue'>): ColumnDef<R>[] | undefined {
-  if (col.type !== 'date') return undefined
+  if (col.type !== 'date' && col.type !== 'dateTime') return undefined
   const date = (row: R) => {
     const v = col.valueGetter ? col.valueGetter(row) : (row as Record<string, unknown>)[col.field]
     const d = v instanceof Date ? v : v == null || v === '' ? null : new Date(v as string | number)

@@ -4,6 +4,7 @@ import { useIcons } from './icons'
 import { type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { aggregationLabel, defaultAlign, formatAggregateValue, formatCellValue, formatDate, formatNumber, getCellValue, type CellRef, type CustomAggregation, type RenderRow } from '../core'
 import { useLocaleText } from './localeContext'
+import { ActionsCell } from './ActionsCell'
 import { CellEditor, type EditMove } from './Editors'
 import { type GridProps, type UIColumnDef } from './types'
 
@@ -88,6 +89,8 @@ export function Cell<R>(p: CellProps<R>) {
     )
   } else if (isGroupRow) {
     if (p.isHierarchy) content = <GroupLabel row={row} />
+  } else if (col.type === 'actions') {
+    content = row.row !== undefined && col.getActions ? <ActionsCell actions={col.getActions({ id: row.id, row: row.row, field: col.field })} /> : null
   } else if (row.row !== undefined) {
     const value = getCellValue(col, row.row)
     content = col.renderCell

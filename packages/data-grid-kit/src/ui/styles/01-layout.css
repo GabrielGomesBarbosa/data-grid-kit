@@ -289,3 +289,32 @@
   opacity: 0.4;
   cursor: default;
 }
+
+.gk-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.gk-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--gk-text-muted);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+.gk-action:hover:not(:disabled) {
+  background: var(--gk-bg-header);
+  color: var(--gk-text);
+}
+.gk-action:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

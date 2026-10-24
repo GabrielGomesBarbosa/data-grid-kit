@@ -1,5 +1,5 @@
 import { getCellValue } from './pipeline'
-import { getColumnType } from './columns'
+import { formatDateTimeInput, getColumnType } from './columns'
 import type { ColumnDef } from './types'
 
 export interface CsvOptions {
@@ -22,7 +22,12 @@ function cellText<R>(col: ColumnDef<R>, row: R, opts: CsvOptions): { text: strin
   const value = getCellValue(col, row)
   if (opts.formatted && col.valueFormatter) return { text: col.valueFormatter(value, row), numeric: false }
   if (value == null) return { text: '', numeric: false }
-  if (value instanceof Date) return { text: value.toISOString().slice(0, getColumnType(col) === 'date' ? 10 : 19), numeric: false }
+  if (value instanceof Date) {
+    const type = getColumnType(col)
+    // a date-time is written as it is on screen (local time), with seconds: `2024-03-07T18:45:00`
+    if (type === 'dateTime') return { text: `${formatDateTimeInput(value)}:${String(value.getSeconds()).padStart(2, '0')}`, numeric: false }
+    return { text: value.toISOString().slice(0, type === 'date' ? 10 : 19), numeric: false }
+  }
   if (typeof value === 'number' || typeof value === 'boolean') return { text: String(value), numeric: true }
   return { text: String(value), numeric: false }
 }

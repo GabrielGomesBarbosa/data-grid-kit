@@ -3,11 +3,13 @@ import { useLocaleText } from './localeContext'
 import { useRef, type ReactNode } from 'react'
 import {
   formatDateInput,
+  formatDateTimeInput,
   getCellValue,
   getColumnType,
   optionLabel,
   optionValue,
   parseDateInput,
+  parseDateTimeInput,
   type ColumnDef,
 } from '../core'
 
@@ -49,7 +51,7 @@ function InputEditor({
   onCommit,
   onCancel,
 }: {
-  type: 'string' | 'number' | 'date' | 'boolean' | 'singleSelect'
+  type: 'string' | 'number' | 'date' | 'dateTime' | 'boolean' | 'singleSelect' | 'actions'
   value: unknown
   seed?: string
   onCommit: EditorProps<unknown>['onCommit']
@@ -66,7 +68,9 @@ function InputEditor({
       ? seed
       : type === 'date' && value instanceof Date
         ? formatDateInput(value)
-        : value == null
+        : type === 'dateTime' && value instanceof Date
+          ? formatDateTimeInput(value)
+          : value == null
           ? ''
           : String(value)
 
@@ -78,6 +82,7 @@ function InputEditor({
       return Number.isNaN(n) ? value : n
     }
     if (type === 'date') return text === '' ? null : (parseDateInput(text) ?? value)
+    if (type === 'dateTime') return text === '' ? null : (parseDateTimeInput(text) ?? value)
     return text
   }
 
@@ -100,7 +105,7 @@ function InputEditor({
         }
       }}
       className="gk-editor"
-      type={type === 'number' ? 'number' : type === 'date' ? 'date' : 'text'}
+      type={type === 'number' ? 'number' : type === 'date' ? 'date' : type === 'dateTime' ? 'datetime-local' : 'text'}
       defaultValue={initial}
       aria-label={t.editCell}
       onKeyDown={(e) => {

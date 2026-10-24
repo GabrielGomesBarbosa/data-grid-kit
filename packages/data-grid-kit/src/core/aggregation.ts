@@ -1,5 +1,5 @@
 import { compareValues, isNil } from './values'
-import { formatDate, formatNumber, type GridLocaleText } from './localeText'
+import { formatDate, formatDateTime, formatNumber, type GridLocaleText } from './localeText'
 import type { ColumnDef, ColumnType, CustomAggregation } from './types'
 
 export type BuiltinAggregation = 'sum' | 'avg' | 'min' | 'max' | 'count' | 'size'
@@ -13,8 +13,8 @@ interface BuiltinInfo {
 export const BUILTIN_AGGREGATIONS: Record<BuiltinAggregation, BuiltinInfo> = {
   sum: { label: 'sum', types: ['number'] },
   avg: { label: 'avg', types: ['number'] },
-  min: { label: 'min', types: ['number', 'date'] },
-  max: { label: 'max', types: ['number', 'date'] },
+  min: { label: 'min', types: ['number', 'date', 'dateTime'] },
+  max: { label: 'max', types: ['number', 'date', 'dateTime'] },
   count: { label: 'count', types: null }, // non-empty values
   size: { label: 'size', types: null }, // rows
 }
@@ -142,7 +142,7 @@ export function formatAggregateValue(col: ColumnDef, name: string, value: unknow
       /* a formatter that needs the row cannot format an aggregate: fall through */
     }
   }
-  if (value instanceof Date) return formatDate(value, locale)
+  if (value instanceof Date) return col.type === 'dateTime' ? formatDateTime(value, locale) : formatDate(value, locale)
   if (typeof value === 'number') return formatNumber(value, locale, { maximumFractionDigits: 2 })
   return String(value)
 }

@@ -17,7 +17,7 @@ export function exportApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'getXlsx' | 'ex
       if (!result || !layout) throw new Error('The grid is not ready')
       const o = optionsRef.current
       const sheet = sheetOfGrid({
-        columns: layout.all,
+        columns: layout.all.filter((c) => c.type !== 'actions'),
         rows: result.getExportRows(),
         totals: o.aggregationFooter === false ? undefined : result.getTotals(),
         widthOf: layout.width,
@@ -71,7 +71,7 @@ export function exportApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'getXlsx' | 'ex
         const chosen = new Set(store.getState().selection)
         rows = rows.filter((r) => chosen.has(rowIdOf(r)))
       }
-      return toCsv(layout.all, rows, options)
+      return toCsv(layout.all.filter((c) => c.type !== 'actions'), rows, options)
     },
   }
 }

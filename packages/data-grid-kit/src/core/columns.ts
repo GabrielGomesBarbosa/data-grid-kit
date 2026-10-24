@@ -43,6 +43,7 @@ export function getFilterOperators(col: Pick<ColumnDef, 'type' | 'filterOperator
   switch (getColumnType(col)) {
     case 'number':
     case 'date':
+    case 'dateTime':
       return ORDERED
     case 'boolean':
       return EQUALITY
@@ -81,6 +82,20 @@ export function parseDateInput(text: string): Date | null {
   return Number.isNaN(d.getTime()) ? null : d
 }
 
+/** Parse `yyyy-mm-ddThh:mm` (what a date-time input gives; a space works too, seconds are optional) as a local date and time. */
+export function parseDateTimeInput(text: string): Date | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?$/.exec(text.trim())
+  if (!m) return null
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4] ?? 0), Number(m[5] ?? 0), Number(m[6] ?? 0))
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
+/** `yyyy-mm-ddThh:mm` in local time: what a date-time input takes. */
+export function formatDateTimeInput(date: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${formatDateInput(date)}T${p(date.getHours())}:${p(date.getMinutes())}`
+}
+
 export function formatDateInput(date: Date): string {
   const p = (n: number) => String(n).padStart(2, '0')
   return `${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())}`
@@ -96,6 +111,8 @@ export function coerceFilterValue(col: Pick<ColumnDef, 'type'>, value: unknown):
     }
     case 'date':
       return value instanceof Date ? value : (parseDateInput(String(value)) ?? undefined)
+    case 'dateTime':
+      return value instanceof Date ? value : (parseDateTimeInput(String(value)) ?? undefined)
     default:
       return value
   }

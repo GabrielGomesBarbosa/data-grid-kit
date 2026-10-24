@@ -41,6 +41,7 @@ export const ptBR: GridLocalization = {
     rowDragHandle: 'Arraste para mover esta linha (ou Alt+Shift+↑ / ↓)',
     fillHandle: 'Arraste para preencher',
     rowSelect: 'Selecionar linha',
+    actionsMore: 'Mais ações',
     detailExpand: 'Expandir detalhes',
     detailCollapse: 'Recolher detalhes',
     treeExpand: 'Expandir',

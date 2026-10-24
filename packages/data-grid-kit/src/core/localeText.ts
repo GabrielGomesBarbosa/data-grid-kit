@@ -51,6 +51,8 @@ export interface GridLocaleText {
   rowDragHandle: string
   fillHandle: string
   rowSelect: string
+  /** the ⋮ button of an actions column, when some actions are in its menu */
+  actionsMore: string
   detailExpand: string
   detailCollapse: string
   treeExpand: string
@@ -224,6 +226,7 @@ export const defaultLocaleText: GridLocaleText = {
   rowDragHandle: 'Drag to move this row (or Alt+Shift+↑ / ↓)',
   fillHandle: 'Drag to fill',
   rowSelect: 'Select row',
+  actionsMore: 'More actions',
   detailExpand: 'Expand details',
   detailCollapse: 'Collapse details',
   treeExpand: 'Expand',
@@ -374,6 +377,15 @@ export function formatNumber(n: number, locale?: string, options?: Intl.NumberFo
   let f = numberFormats.get(key)
   if (!f) numberFormats.set(key, (f = new Intl.NumberFormat(locale, options)))
   return f.format(n)
+}
+
+const dateTimeFormats = new Map<string | undefined, Intl.DateTimeFormat>()
+/** A date with its time (`short` date and time styles of the locale), through a formatter that is made once per locale. */
+export function formatDateTime(date: Date, locale?: string): string {
+  if (Number.isNaN(date.getTime())) return 'Invalid Date'
+  let f = dateTimeFormats.get(locale)
+  if (!f) dateTimeFormats.set(locale, (f = new Intl.DateTimeFormat(locale, { dateStyle: 'short', timeStyle: 'short' })))
+  return f.format(date)
 }
 
 /** `date.toLocaleDateString(locale)`, through a formatter that is made once per locale. */

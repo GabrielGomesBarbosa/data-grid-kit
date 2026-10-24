@@ -62,7 +62,7 @@ function ValueInput({ col, item, onChange, first }: { col: UIColumnDef; item: Fi
   return (
     <Input
       aria-label={t.filterValue}
-      type={type === 'number' ? 'number' : type === 'date' ? 'date' : 'text'}
+      type={type === 'number' ? 'number' : type === 'date' ? 'date' : type === 'dateTime' ? 'datetime-local' : 'text'}
       placeholder={t.filterValue}
       value={value}
       onChange={(e) => onChange(e.target.value)}

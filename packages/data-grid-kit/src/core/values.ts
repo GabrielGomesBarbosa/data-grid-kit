@@ -1,4 +1,4 @@
-import { formatDate } from './localeText'
+import { formatDate, formatDateTime } from './localeText'
 import type { ColumnDef } from './types'
 
 /* ------------------------------------------------------------------ values */
@@ -11,7 +11,7 @@ export function formatCellValue<R>(col: ColumnDef<R>, row: R, locale?: string): 
   const value = getCellValue(col, row)
   if (col.valueFormatter) return col.valueFormatter(value, row)
   if (value == null) return ''
-  if (value instanceof Date) return formatDate(value, locale)
+  if (value instanceof Date) return col.type === 'dateTime' ? formatDateTime(value, locale) : formatDate(value, locale)
   return String(value)
 }
 

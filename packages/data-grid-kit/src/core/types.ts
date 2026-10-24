@@ -62,7 +62,11 @@ export interface PinnedColumns {
 import type { CellRange } from './range'
 import type { DataSource, DataSourceCache, DataSourceError } from './dataSource'
 
-export type ColumnType = 'string' | 'number' | 'boolean' | 'date' | 'singleSelect'
+/**
+ * `dateTime`: a `Date` with its time (shown with date and time, edited with a date-time input).
+ * `actions`: no data, a column of buttons (see `getActions` on `UIColumnDef`): not sorted, filtered, edited, grouped, aggregated or exported.
+ */
+export type ColumnType = 'string' | 'number' | 'boolean' | 'date' | 'dateTime' | 'singleSelect' | 'actions'
 
 export interface CellRef {
   rowId: RowId
