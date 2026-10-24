@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useId, useMemo, useRef, useState, type ComponentType, type FunctionComponent } from 'react'
 import { useGrid, type GridOptions, type RenderRow } from '../core'
 import { useIsomorphicLayoutEffect } from '../core/isomorphic'
 import type { GridCtx } from './ctx'
 import { defaultSlots } from './defaultSlots'
 import type { BodyRow, DetailItem, GridView, PinnedBlock } from './gridView'
 import { mergeProps } from './mergeProps'
+import { rowPropsEqual } from './Row'
 import type { GridSlotProps, GridSlots } from './slotTypes'
 import type { PanelState } from './Toolbar'
 import type { GridProps } from './types'
@@ -16,6 +17,14 @@ import { usePanels } from './usePanels'
 import { useRowDrag } from './useRowDrag'
 
 const NO_SLOT_PROPS: GridSlotProps = {}
+
+/** a custom `row` slot, memoised once with the grid's own comparison (the same component object gives the same wrapper) */
+const memoRows = new WeakMap<object, ComponentType<any>>()
+function memoRow(component: ComponentType<any>): ComponentType<any> {
+  let wrapped = memoRows.get(component)
+  if (!wrapped) memoRows.set(component, (wrapped = memo(component as FunctionComponent<any>, rowPropsEqual as (a: any, b: any) => boolean)))
+  return wrapped
+}
 
 /** height of a detail panel when `renderDetailPanel` is given without `detailPanelHeight` */
 const DETAIL_DEFAULT = 200
@@ -57,7 +66,12 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
     ...options
   } = props
   const slotsValue = useMemo(
-    () => ({ slots: { ...defaultSlots, ...userSlots, icons: { ...defaultSlots.icons, ...userSlots?.icons } } as GridSlots<R>, slotProps }),
+    () => {
+      const slots = { ...defaultSlots, ...userSlots, icons: { ...defaultSlots.icons, ...userSlots?.icons } } as GridSlots<R>
+      // the speed of the grid must not depend on how a replacement row was written
+      if (userSlots?.row) slots.row = memoRow(userSlots.row)
+      return { slots, slotProps }
+    },
     [userSlots, slotProps],
   )
   const grid = useGrid<R>({

@@ -162,7 +162,12 @@ function RowInner<R>(p: RowProps<R>) {
   )
 }
 
-export const Row = memo(RowInner, (a, b) => {
+/**
+ * Rows re-render only when something they show changed: every prop by identity, and the row's displayed parts (the row
+ * object and its group / aggregate data) by value. The grid applies this to a `row` slot too, so a custom row component
+ * is skipped exactly like the built-in one. Exported for those who draw rows themselves from `useGridView`.
+ */
+export function rowPropsEqual(a: RowProps<any>, b: RowProps<any>): boolean {
   const keys = Object.keys(a) as (keyof RowProps<any>)[]
   for (const k of keys) {
     if (k === 'row') continue
@@ -179,4 +184,6 @@ export const Row = memo(RowInner, (a, b) => {
     x.childCount === y.childCount &&
     x.aggregates === y.aggregates
   )
-}) as typeof RowInner
+}
+
+export const Row = memo(RowInner, rowPropsEqual) as typeof RowInner

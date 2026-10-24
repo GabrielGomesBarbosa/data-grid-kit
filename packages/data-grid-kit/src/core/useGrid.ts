@@ -275,7 +275,7 @@ export function useGrid<R = any>(options: GridOptions<R>): GridInstance<R> {
   )
 
   // Only the *window* is a render dependency: scrolling inside a window costs nothing.
-  const [rowRange, colRange, detailRange] = useStore(
+  const [rowRange, colWindow, detailRange] = useStore(
     store,
     (s): [Range, Range, Range] => {
       const buffer = options.rowBufferPx ?? rowHeight * 8
@@ -289,6 +289,8 @@ export function useGrid<R = any>(options: GridOptions<R>): GridInstance<R> {
     },
     rangesStable,
   )
+  // a row-window change must not hand every row a new column range object (rows compare it by identity)
+  const colRange = useMemo(() => colWindow, [colWindow.start, colWindow.end]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const reorderAllowed =
     !!options.rowReordering &&
