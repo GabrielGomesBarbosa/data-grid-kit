@@ -1,16 +1,14 @@
 import { useBase } from '../base'
 import { useIcons } from '../icons'
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { useState } from 'react'
 import { addPivotValue, aggregationLabel, availableAggregations, isBuiltinAggregation, moveValueEntry, movePivotField, removePivotValue, setPivotHidden, setValueFunc, type ColumnDef, type GridInstance, type PivotEntry, type PivotModel, type PivotSection } from '../../core'
-import { pointerDrag } from '../pointerDrag'
+import { usePivotDrag } from './usePivotDrag'
 import { title } from './shared'
 import { cx } from '../cx'
 import type { PanelProps } from './types'
 
 /* ------------------------------------------------------------- pivot panel */
 
-/** `beforeIndex` is the position among the value entries (a field can be a value more than once) */
-type Target = { section: PivotSection | 'fields'; before: string | null; beforeIndex: number | null }
 
 /**
  * Choose what the pivot table is made of: row groups, column values and the aggregated values. Fields move by dragging
@@ -38,55 +36,7 @@ export function PivotPanel<R>({ grid, className, onClose }: PanelProps<R>) {
     api.setPivotModel((m) => movePivotField(m, field, to, before, defaultFunc))
   const update = (fn: (m: PivotModel) => PivotModel) => api.setPivotModel(fn)
 
-  /* ---- dragging a field by its grip ---- */
-  const [drag, setDrag] = useState<{ field: string; entry?: number; x: number; y: number; over: Target | null } | null>(null)
-  const cancel = useRef<(() => void) | null>(null)
-  useEffect(() => () => cancel.current?.(), [])
-
-  const targetAt = (x: number, y: number, field: string): Target | null => {
-    const el = document.elementFromPoint(x, y)
-    const list = el?.closest<HTMLElement>('[data-pivot-section]')
-    if (!list) return null
-    const section = list.dataset.pivotSection as PivotSection | 'fields'
-    if (section === 'values' && !canValue(field)) return null
-    const at = (li: HTMLElement | null): Pick<Target, 'before' | 'beforeIndex'> =>
-      li?.dataset.pivotField ? { before: li.dataset.pivotField, beforeIndex: li.dataset.pivotIndex === undefined ? null : Number(li.dataset.pivotIndex) } : { before: null, beforeIndex: null }
-    if (section === 'fields') return { section, ...at(null) }
-    const item = el!.closest<HTMLElement>('[data-pivot-field]')
-    if (!item || !list.contains(item)) return { section, ...at(null) }
-    const r = item.getBoundingClientRect()
-    if (y < r.top + r.height / 2) return { section, ...at(item) }
-    return { section, ...at(item.nextElementSibling as HTMLElement | null) }
-  }
-
-  const startDrag = (field: string, e: ReactPointerEvent<HTMLElement>, entry?: number) => {
-    if (e.button !== 0) return
-    e.preventDefault()
-    let over: Target | null = null
-    const stop = pointerDrag(
-      { x: e.clientX, y: e.clientY },
-      {
-        threshold: 4,
-        cancelOnEscape: true,
-        onMove: (x, y) => {
-          over = targetAt(x, y, field)
-          setDrag({ field, entry, x, y, over })
-        },
-        onFinish: () => {
-          cancel.current = null
-          setDrag(null)
-        },
-        onEnd: (outcome) => {
-          if (outcome !== 'dropped' || !over) return
-          // a value entry moves, or leaves, on its own: the field's other functions stay
-          if (entry !== undefined && over.section === 'values') update((m) => moveValueEntry(m, entry, over!.beforeIndex))
-          else if (entry !== undefined && over.section === 'fields') update((m) => removePivotValue(m, entry))
-          else place(field, over.section === 'fields' ? null : over.section, over.before)
-        },
-      },
-    )
-    cancel.current = stop
-  }
+  const { drag, startDrag, overOf, dropMark } = usePivotDrag({ canValue, place, update })
 
   const grip = (field: string, entry?: number) => (
     <span
@@ -108,14 +58,6 @@ export function PivotPanel<R>({ grid, className, onClose }: PanelProps<R>) {
       onChange={(e) => update((m) => setPivotHidden(m, entry, !e.target.checked))}
     />
   )
-  const overOf = (section: PivotSection | 'fields') => (drag?.over?.section === section ? drag.over : null)
-  const dropMark = (section: PivotSection, field: string, index?: number) => {
-    const o = overOf(section)
-    if (!o || o.before !== field) return undefined
-    if (index !== undefined && drag!.entry !== undefined) return o.beforeIndex === index && drag!.entry !== index ? 'before' : undefined
-    return drag!.field !== field ? 'before' : undefined
-  }
-
   const arrows = (list: string[], field: string, section: PivotSection) => {
     const i = list.indexOf(field)
     return (
