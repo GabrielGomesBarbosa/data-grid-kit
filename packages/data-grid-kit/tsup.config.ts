@@ -6,4 +6,6 @@ export default defineConfig({
   dts: true,
   clean: true,
   external: ['react', 'react-dom'],
+  // the entries use hooks: mark them as Client Component modules so a Server Component can import them directly
+  banner: { js: "'use client';" },
 })

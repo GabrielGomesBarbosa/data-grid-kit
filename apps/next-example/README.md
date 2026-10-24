@@ -15,5 +15,5 @@ npm run dev -w next-example # http://localhost:5500 (the library must be built)
 ```
 
 Notes
-- The grid uses state and effects, so import it from a file with `"use client"` (see `components/TeamGrid.tsx`).
+- The package entries are marked `'use client'`, so a Server Component can import `Grid` directly (`app/direct/page.tsx`); props must be serializable (plain rows and columns, no functions). A file that passes functions (cell renderers, `onReady`) needs `"use client"` itself (`components/TeamGrid.tsx`).
 - Import the stylesheet once, in the root layout: `import 'data-grid-kit/styles.css'`.
