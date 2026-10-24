@@ -140,6 +140,26 @@ export function Grid<R = any>(props: GridProps<R>) {
   const detailStateOf = (r: RenderRow<R>): 'open' | 'closed' | undefined =>
     hasDetail(r) ? (detailOpen.has(r.id) ? 'open' : 'closed') : undefined
   const canReorderRows = grid.reorderAllowed
+  // what every row gets, pinned or not
+  const rowShared = {
+    gridId,
+    layout,
+    colPos,
+    colRange,
+    rowHeight,
+    totalWidth,
+    hierarchyField,
+    checkbox: checkboxSelection,
+    onToggleExpand: toggleExpand,
+    onToggleSelect: toggleSelect,
+    onCommit: finishEdit,
+    onCancel: cancelEdit,
+    rowPinning: canPinRows,
+    onPinRow: api.pinRow,
+    aggNames,
+    aggCustom,
+    onToggleDetail: api.toggleDetailPanel,
+  }
   const body: ReactNode[] = []
   for (let i = rowRange.start; i < rowRange.end; i++) {
     const r = rows[i]
@@ -164,37 +184,21 @@ export function Grid<R = any>(props: GridProps<R>) {
     const here = focused?.rowId === r.id
     body.push(
       <Row<R>
+        {...rowShared}
         key={r.id}
         row={r}
         index={i}
-        gridId={gridId}
-        layout={layout}
-        colPos={colPos}
-        colRange={colRange}
-        rowHeight={rowHeight}
-        totalWidth={totalWidth}
-        hierarchyField={hierarchyField}
         hasHierarchy={hasHierarchy}
-        checkbox={checkboxSelection}
         selected={grid.isSelected(r)}
         focusedField={here ? focused!.field : undefined}
         editing={here && state.editingCell?.rowId === r.id ? state.editingCell : null}
-        onToggleExpand={toggleExpand}
-        onToggleSelect={toggleSelect}
-        onCommit={finishEdit}
-        onCancel={cancelEdit}
         pinSide={undefined}
-        rowPinning={canPinRows}
-        onPinRow={api.pinRow}
         ariaRow={hdr + pinnedTop.length + i + geometry.slotsBefore(i)}
-        aggNames={aggNames}
-        aggCustom={aggCustom}
         rangeKey={rangeKeyFor(i)}
         fillCol={fillColFor(i)}
         onFillStart={onFillStart}
         top={geometry.topOf(i)}
         detailState={detailStateOf(r)}
-        onToggleDetail={api.toggleDetailPanel}
         canReorder={canReorderRows && r.row !== undefined}
         onRowDragStart={onRowDragStart}
         dragging={rowDrag?.id === r.id}
@@ -229,37 +233,21 @@ export function Grid<R = any>(props: GridProps<R>) {
   const pinnedRowsView = (list: RenderRow<R>[], side: 'top' | 'bottom', firstAria: number) =>
     list.map((r, i) => (
       <Row<R>
+        {...rowShared}
         key={r.id}
         row={r}
         index={i}
-        gridId={gridId}
-        layout={layout}
-        colPos={colPos}
-        colRange={colRange}
-        rowHeight={rowHeight}
-        totalWidth={totalWidth}
-        hierarchyField={hierarchyField}
         hasHierarchy={false}
-        checkbox={checkboxSelection}
         selected={grid.isSelected(r)}
         focusedField={undefined}
         editing={null}
-        onToggleExpand={toggleExpand}
-        onToggleSelect={toggleSelect}
-        onCommit={finishEdit}
-        onCancel={cancelEdit}
         pinSide={side}
-        rowPinning={canPinRows}
-        onPinRow={api.pinRow}
         ariaRow={firstAria + i}
-        aggNames={aggNames}
-        aggCustom={aggCustom}
         rangeKey=""
         fillCol={-1}
         onFillStart={undefined}
         top={0}
         detailState={undefined}
-        onToggleDetail={api.toggleDetailPanel}
         canReorder={false}
         onRowDragStart={undefined}
         dragging={false}

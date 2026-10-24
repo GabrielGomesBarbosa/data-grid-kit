@@ -18,6 +18,7 @@ design system do not have to write a grid from scratch.
 | Path | What it is |
 |---|---|
 | [`packages/data-grid-kit`](packages/data-grid-kit) | The library: what gets built and published to npm. Its README is the npm page. |
+| `packages/sample-data` | Deterministic fake data shared by the docs and the examples (private, not published). |
 | [`apps/docs`](apps/docs) | Documentation site: introduction, live demos with source, feature status, API tables, benchmarks. |
 | [`apps/react-example`](apps/react-example) | A Vite + React app using the library like a consumer would. |
 | [`apps/next-example`](apps/next-example) | A Next.js (App Router) app: server-side rendering, server-side data through a Route Handler. |

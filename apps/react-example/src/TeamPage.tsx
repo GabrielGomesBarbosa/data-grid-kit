@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { Grid, type GridApi, type PivotModel, type UIColumnDef } from 'data-grid-kit'
-import { COUNTRIES, ROLES, TEAMS, makeEmployees, type Employee } from './data'
+import { COUNTRIES, ROLES, TEAMS, makeEmployees, type Employee } from '@data-grid-kit/sample-data'
 
 const money = (v: unknown) => `$${Number(v).toLocaleString()}`
 

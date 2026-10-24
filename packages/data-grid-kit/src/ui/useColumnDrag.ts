@@ -1,6 +1,7 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { planColumnMove, type DropPlacement } from '../core'
 import type { GridCtx, DropTarget } from './ctx'
+import { pointerDrag } from './pointerDrag'
 
 export function useColumnDrag<R>(c: GridCtx<R>) {
   const { gridRef, scrollerRef, api } = c
@@ -27,68 +28,49 @@ export function useColumnDrag<R>(c: GridCtx<R>) {
   }
 
   const startColumnDrag = (field: string, e: ReactPointerEvent<HTMLElement>) => {
-    const startX = e.clientX
-    const startY = e.clientY
-    let dragging = false
-    let x = startX
     let target: DropTarget | null = null
-    let raf = 0
-
-    const publish = (y: number) => {
+    let x = e.clientX
+    let y = e.clientY
+    const publish = () => {
       target = dropTargetAt(x, field)
       setDrag({ field, x, y, target })
     }
-    const autoScroll = () => {
-      const el = scrollerRef.current
-      const g = gridRef.current
-      if (el && dragging && !g.layout.pinnedSide.has(field)) {
-        const r = el.getBoundingClientRect()
-        const left = r.left + g.layout.leftWidth
-        const right = r.right - g.layout.rightWidth
-        const edge = 48
-        if (x < left + edge) el.scrollLeft -= 14
-        else if (x > right - edge) el.scrollLeft += 14
-      }
-      raf = requestAnimationFrame(autoScroll)
-    }
-    const cleanup = () => {
-      window.removeEventListener('pointermove', move)
-      window.removeEventListener('pointerup', up)
-      window.removeEventListener('keydown', key, true)
-      cancelAnimationFrame(raf)
-      document.body.classList.remove('gk-col-dragging')
-      setDrag(null)
-    }
-    const move = (ev: PointerEvent) => {
-      x = ev.clientX
-      if (!dragging) {
-        if (Math.hypot(ev.clientX - startX, ev.clientY - startY) < 5) return
-        dragging = true
-        document.body.classList.add('gk-col-dragging')
-        raf = requestAnimationFrame(autoScroll)
-      }
-      publish(ev.clientY)
-    }
-    const up = () => {
-      const drop = target
-      const wasDragging = dragging
-      cleanup()
-      if (!wasDragging) return
-      // the click that follows pointerup belongs to the drag, not to the sort button
-      justDragged.current = true
-      setTimeout(() => (justDragged.current = false), 0)
-      if (drop) api.reorderColumn(field, drop.field, drop.placement)
-    }
-    const key = (ev: KeyboardEvent) => {
-      if (ev.key !== 'Escape') return
-      ev.stopPropagation()
-      target = null
-      dragging = false
-      cleanup()
-    }
-    window.addEventListener('pointermove', move)
-    window.addEventListener('pointerup', up)
-    window.addEventListener('keydown', key, true)
+    pointerDrag(
+      { x, y },
+      {
+        threshold: 5,
+        cancelOnEscape: true,
+        onStart: () => document.body.classList.add('gk-col-dragging'),
+        onMove: (mx, my) => {
+          x = mx
+          y = my
+          publish()
+        },
+        onFrame: (fx) => {
+          x = fx
+          const el = scrollerRef.current
+          const g = gridRef.current
+          if (!el || g.layout.pinnedSide.has(field)) return
+          const r = el.getBoundingClientRect()
+          const left = r.left + g.layout.leftWidth
+          const right = r.right - g.layout.rightWidth
+          const edge = 48
+          if (fx < left + edge) el.scrollLeft -= 14
+          else if (fx > right - edge) el.scrollLeft += 14
+        },
+        onFinish: () => {
+          document.body.classList.remove('gk-col-dragging')
+          setDrag(null)
+        },
+        onEnd: (outcome) => {
+          if (outcome !== 'dropped') return
+          // the click that follows pointerup belongs to the drag, not to the sort button
+          justDragged.current = true
+          setTimeout(() => (justDragged.current = false), 0)
+          if (target) api.reorderColumn(field, target.field, target.placement)
+        },
+      },
+    )
   }
 
   return { startColumnDrag, justDragged, drag }

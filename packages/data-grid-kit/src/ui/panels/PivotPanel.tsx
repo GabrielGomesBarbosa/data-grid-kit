@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { aggregationLabel, availableAggregations, isBuiltinAggregation, movePivotField, type ColumnDef, type GridInstance, type PivotModel, type PivotSection } from '../../core'
+import { pointerDrag } from '../pointerDrag'
 import { title } from './shared'
 
 /* ------------------------------------------------------------- pivot panel */
@@ -50,40 +51,26 @@ export function PivotPanel<R>({ grid }: { grid: GridInstance<R> }) {
   const startDrag = (field: string, e: ReactPointerEvent<HTMLElement>) => {
     if (e.button !== 0) return
     e.preventDefault()
-    const sx = e.clientX
-    const sy = e.clientY
-    let active = false
     let over: Target | null = null
-    const move = (ev: PointerEvent) => {
-      if (!active && Math.hypot(ev.clientX - sx, ev.clientY - sy) < 4) return
-      active = true
-      over = targetAt(ev.clientX, ev.clientY, field)
-      setDrag({ field, x: ev.clientX, y: ev.clientY, over })
-    }
-    const end = () => {
-      window.removeEventListener('pointermove', move)
-      window.removeEventListener('pointerup', up)
-      window.removeEventListener('pointercancel', abort)
-      window.removeEventListener('keydown', key, true)
-      cancel.current = null
-      setDrag(null)
-    }
-    const up = () => {
-      const drop = active ? over : null
-      end()
-      if (drop) place(field, drop.section === 'fields' ? null : drop.section, drop.before)
-    }
-    const abort = () => end()
-    const key = (ev: KeyboardEvent) => {
-      if (ev.key !== 'Escape') return
-      ev.stopPropagation() // cancel the drag, not the panel
-      end()
-    }
-    window.addEventListener('pointermove', move)
-    window.addEventListener('pointerup', up)
-    window.addEventListener('pointercancel', abort)
-    window.addEventListener('keydown', key, true)
-    cancel.current = end
+    const stop = pointerDrag(
+      { x: e.clientX, y: e.clientY },
+      {
+        threshold: 4,
+        cancelOnEscape: true,
+        onMove: (x, y) => {
+          over = targetAt(x, y, field)
+          setDrag({ field, x, y, over })
+        },
+        onFinish: () => {
+          cancel.current = null
+          setDrag(null)
+        },
+        onEnd: (outcome) => {
+          if (outcome === 'dropped' && over) place(field, over.section === 'fields' ? null : over.section, over.before)
+        },
+      },
+    )
+    cancel.current = stop
   }
 
   const grip = (field: string) => (

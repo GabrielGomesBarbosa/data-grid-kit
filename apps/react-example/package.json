@@ -12,7 +12,8 @@
   "dependencies": {
     "data-grid-kit": "*",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "@data-grid-kit/sample-data": "*"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
