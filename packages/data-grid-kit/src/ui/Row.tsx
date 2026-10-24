@@ -49,6 +49,8 @@ export interface RowProps<R> {
   canReorder: boolean
   onRowDragStart: ((id: RenderRow['id'], e: ReactPointerEvent<HTMLElement>) => void) | undefined
   dragging: boolean
+  /** the row is sized by its content (`getRowHeight` returned 'auto'): its cells keep their natural height */
+  auto?: boolean
   /** added to the row's class names and style (`slotProps.row`) */
   className?: string
   style?: CSSProperties
@@ -130,7 +132,7 @@ function RowInner<R>(p: RowProps<R>) {
     const col = layout.center[i] as UIColumnDef<R> | undefined
     if (!col) continue
     centerCells.push(
-      cell(col, { position: 'absolute', left: layout.centerOffsets[i], width: layout.width(col.field), top: 0, bottom: 0 }),
+      cell(col, { position: 'absolute', left: layout.centerOffsets[i], width: layout.width(col.field), top: 0, ...(p.auto ? null : { bottom: 0 }) }),
     )
   }
   const pinned = (cols: ColumnDef<R>[]) =>
@@ -145,6 +147,7 @@ function RowInner<R>(p: RowProps<R>) {
       data-group={row.type === 'group' && row.row === undefined ? '' : undefined}
       data-footer={row.type === 'footer' ? '' : undefined}
       data-detail-open={p.detailState === 'open' ? '' : undefined}
+      data-auto={p.auto ? '' : undefined}
       data-dragging={p.dragging ? '' : undefined}
       data-selected={p.selected === true ? '' : undefined}
       data-odd={p.index % 2 ? '' : undefined}

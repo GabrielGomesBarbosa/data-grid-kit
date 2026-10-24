@@ -136,6 +136,8 @@ export interface GridInstance<R = any> {
   api: GridApi<R>
   options: GridOptions<R>
   rowHeight: number
+  /** for renderers that size rows by their content: tell the grid what `'auto'` rows measured (row positions follow) */
+  reportRowHeights: (heights: ReadonlyMap<RowId, number>) => void
   /** the whole header: `headerRowHeight` for the titles plus one row per level of column groups */
   headerHeight: number
   headerRowHeight: number

@@ -21,7 +21,7 @@ export function useKeyboard<R>(c: GridCtx<R>) {
           const top = g.geometry.topOf(rowIndex)
           const bodyHeight = el.clientHeight - g.headerHeight
           if (top < el.scrollTop) el.scrollTop = top
-          else if (top + g.rowHeight > el.scrollTop + bodyHeight) el.scrollTop = top + g.rowHeight - bodyHeight
+          else if (top + g.geometry.heightOf(rowIndex) > el.scrollTop + bodyHeight) el.scrollTop = top + g.geometry.heightOf(rowIndex) - bodyHeight
         }
         return
       }
@@ -32,7 +32,7 @@ export function useKeyboard<R>(c: GridCtx<R>) {
         rowIndex,
         { top: el.scrollTop, left: el.scrollLeft },
         { width: el.clientWidth, height: el.clientHeight },
-        g.rowHeight,
+        g.geometry.heightOf(rowIndex),
         g.headerHeight,
         (g.pinnedTop.length + g.pinnedBottom.length + (g.footer ? 1 : 0)) * g.rowHeight,
         g.geometry.topOf(rowIndex),

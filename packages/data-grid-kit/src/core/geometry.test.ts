@@ -99,3 +99,67 @@ describe('row geometry with panels', () => {
     }
   })
 })
+
+describe('rows with heights of their own', () => {
+  // rows: 30, 50, 20, 40
+  const heights = [30, 50, 20, 40]
+  const g = createRowGeometry(36, 4, [], heights)
+
+  it('positions are the sums of the heights above', () => {
+    expect([0, 1, 2, 3].map(g.topOf)).toEqual([0, 30, 80, 100])
+    expect([0, 1, 2, 3].map(g.heightOf)).toEqual(heights)
+    expect(g.totalHeight).toBe(140)
+  })
+
+  it('finds the row at a y, on and between the edges, clamped at the ends', () => {
+    expect(g.indexAt(0)).toBe(0)
+    expect(g.indexAt(29.9)).toBe(0)
+    expect(g.indexAt(30)).toBe(1)
+    expect(g.indexAt(79)).toBe(1)
+    expect(g.indexAt(80)).toBe(2)
+    expect(g.indexAt(139)).toBe(3)
+    expect(g.indexAt(9999)).toBe(3)
+    expect(g.indexAt(-5)).toBe(0)
+  })
+
+  it('windows the rows that touch the span', () => {
+    expect(g.window(35, 85)).toEqual({ start: 1, end: 3, slotStart: 0, slotEnd: 0 })
+  })
+
+  it('without heights, heightOf is the fixed height', () => {
+    expect(createRowGeometry(36, 4).heightOf(2)).toBe(36)
+  })
+
+  it('combines with detail panels: a panel sits right under its own, taller or shorter, row', () => {
+    const both = createRowGeometry(36, 4, [{ index: 1, height: 100 }], heights)
+    expect(both.topOf(1)).toBe(30)
+    expect(both.slotTop(0)).toBe(80) // under row 1 (30 + 50)
+    expect(both.topOf(2)).toBe(180) // row 2 starts under the panel
+    expect(both.topOf(3)).toBe(200)
+    expect(both.totalHeight).toBe(240)
+    expect(both.indexAt(100)).toBe(1) // inside the panel: still row 1's band
+    expect(both.indexAt(180)).toBe(2)
+    expect(both.window(90, 170)).toEqual({ start: 1, end: 2, slotStart: 0, slotEnd: 1 })
+  })
+
+  it('agrees with a brute-force scan for random heights and panels', () => {
+    let seed = 7
+    const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32
+    for (let round = 0; round < 40; round++) {
+      const n = 1 + Math.floor(rnd() * 60)
+      const hs = Array.from({ length: n }, () => 10 + Math.floor(rnd() * 90))
+      const slots = Array.from({ length: n }, (_, i) => i)
+        .filter(() => rnd() < 0.2)
+        .map((index) => ({ index, height: 20 + Math.floor(rnd() * 100) }))
+      const geo = createRowGeometry(36, n, slots, hs)
+      let y = 0
+      for (let i = 0; i < n; i++) {
+        expect(geo.topOf(i)).toBe(y)
+        const band = hs[i]! + (slots.find((s) => s.index === i)?.height ?? 0)
+        for (const at of [y, y + band - 1]) expect(geo.indexAt(at)).toBe(i)
+        y += band
+      }
+      expect(geo.totalHeight).toBe(y)
+    }
+  })
+})

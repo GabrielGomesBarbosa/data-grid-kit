@@ -7,12 +7,13 @@ import type { GridApi, GridInstance, PivotInfo, ServerInfo } from './gridTypes'
 import { createStore, useStore, type Store } from './store'
 import { DEFAULT_HEADER_HEIGHT, DEFAULT_ROW_HEIGHT, computeColumnLayout, computeColumnRange, rangeEqual, type ColumnLayout, type Range } from './layout'
 
-import { createRowGeometry, type DetailSlot } from './geometry'
+import { createRowGeometry, rowHeightsOf, type DetailSlot } from './geometry'
 
 import { createPipeline, type PipelineResult } from './pipeline'
 import { DataSourceController } from './dataSource'
 import { buildServerResult } from './serverResult'
 
+import { useMeasuredHeights } from './useMeasuredHeights'
 import { visiblePivot } from './pivotModel'
 import { PIVOT_ROWS_FIELD, buildPivotColumns, pivotAggSortOf, pivotInputOf, pivotSortOf, withDerivedColumns } from './pivot'
 import { type ColumnDef, type GridOptions, type GridState, type RenderRow, type RowId } from './types'
@@ -271,10 +272,18 @@ export function useGrid<R = any>(options: GridOptions<R>): GridInstance<R> {
     return out
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [detailEnabled, result, effective.detailHeights, options.detailPanelHeight, options.isDetailPanelAvailable])
-  const geometry = useMemo(
-    () => createRowGeometry(rowHeight, result.rows.length, detailSlots as DetailSlot[]),
-    [rowHeight, result.rows.length, detailSlots],
+  const { measured, version: measuredVersion, report: reportRowHeights } = useMeasuredHeights()
+  const rowHeights = useMemo(
+    () => (options.getRowHeight ? rowHeightsOf(result.rows, rowHeight, options.getRowHeight, options.getEstimatedRowHeight, measured) : undefined),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [result.rows, rowHeight, options.getRowHeight, options.getEstimatedRowHeight, measuredVersion],
   )
+  const geometry = useMemo(
+    () => createRowGeometry(rowHeight, result.rows.length, detailSlots as DetailSlot[], rowHeights?.heights),
+    [rowHeight, result.rows.length, detailSlots, rowHeights],
+  )
+  // a row sized by its content is as tall as its tallest cell, so every column has to be rendered (as MUI does)
+  const allColumns = !!rowHeights?.hasAuto && !options.virtualizeColumnsWithAutoRowHeight
 
   // Only the *window* is a render dependency: scrolling inside a window costs nothing.
   const [rowRange, colWindow, detailRange] = useStore(
@@ -285,7 +294,7 @@ export function useGrid<R = any>(options: GridOptions<R>): GridInstance<R> {
       const w = geometry.window(s.scroll.top - buffer, s.scroll.top + visible + buffer)
       return [
         { start: w.start, end: w.end },
-        computeColumnRange(layout, s.scroll.left, s.viewport.width, options.columnBufferPx ?? 200),
+        allColumns ? { start: 0, end: layout.center.length } : computeColumnRange(layout, s.scroll.left, s.viewport.width, options.columnBufferPx ?? 200),
         { start: w.slotStart, end: w.slotEnd },
       ]
     },
@@ -329,7 +338,7 @@ export function useGrid<R = any>(options: GridOptions<R>): GridInstance<R> {
     [selectionSet, result],
   )
 
-  return { api, options, rowHeight, headerHeight, headerRowHeight, headerDepth, pivot: pivotInfo, layout, result, rows: result.rows, rowRange, colRange, geometry, detailSlots, detailRange, reorderAllowed, server, footer, pinnedTop, pinnedBottom, state: effective, isSelected }
+  return { api, options, rowHeight, headerHeight, headerRowHeight, headerDepth, pivot: pivotInfo, layout, result, rows: result.rows, rowRange, colRange, geometry, reportRowHeights, detailSlots, detailRange, reorderAllowed, server, footer, pinnedTop, pinnedBottom, state: effective, isSelected }
 }
 
 export type { ColumnDef }

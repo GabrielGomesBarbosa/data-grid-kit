@@ -1,0 +1,14 @@
+/* Rows sized by their content (getRowHeight returns 'auto'): cells keep the height of their content and wrap. */
+.gk-row[data-auto] .gk-cell {
+  align-self: flex-start;
+  align-items: flex-start;
+  height: auto;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.gk-row[data-auto] .gk-cell-text {
+  overflow: visible;
+  text-overflow: clip;
+}

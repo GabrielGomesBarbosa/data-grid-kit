@@ -101,6 +101,13 @@ export interface ColumnDef<R = any> {
   sortComparator?: (a: unknown, b: unknown) => number
 }
 
+export interface RowHeightParams<R> {
+  id: RowId
+  /** the row's data (`undefined` for a row that is not loaded yet, or a group that has none) */
+  row: R | undefined
+  depth: number
+}
+
 /** What a pivot table is built from: rows are grouped, columns are spread out, values are aggregated. */
 export interface PivotModel {
   /** fields that become the row groups, outermost first */
@@ -199,6 +206,19 @@ export interface GridOptions<R = any> {
   /** enables tree data: path of keys from root to this row */
   getTreeDataPath?: (row: R) => string[]
   rowHeight?: number
+  /**
+   * Height of one row. A number (px) sets it; `null` or `undefined` gives `rowHeight`; `'auto'` sizes the row to its
+   * content (measured once it is on screen, see `getEstimatedRowHeight`). It runs for every row of the current list
+   * when `rows` or the function changes, so keep its identity stable (`useCallback`). Pinned rows use `rowHeight`.
+   */
+  getRowHeight?: (params: RowHeightParams<R>) => number | null | undefined | 'auto'
+  /** the height assumed for a `'auto'` row until it has been measured (default: `rowHeight`) */
+  getEstimatedRowHeight?: number
+  /**
+   * With `'auto'` rows every column is rendered (a row is as tall as its tallest cell, which must exist to be measured).
+   * Set this to virtualize columns anyway: heights then can change while scrolling sideways. Default false.
+   */
+  virtualizeColumnsWithAutoRowHeight?: boolean
   headerHeight?: number
   /** px rendered outside the viewport */
   rowBufferPx?: number

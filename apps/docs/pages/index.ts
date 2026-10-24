@@ -11,6 +11,7 @@ import { page as editingPage } from './editing'
 import { page as keyboardPage } from './keyboard'
 import { page as exportPage } from './export'
 import { page as virtualizationPage } from './virtualization'
+import { page as rowHeightPage } from './rowHeight'
 import { page as pinningPage } from './pinning'
 import { page as columnReorderPage } from './columnReorder'
 import { page as rowPinningPage } from './rowPinning'
@@ -46,6 +47,7 @@ export const pages: PageDef[] = [
   keyboardPage,
   exportPage,
   virtualizationPage,
+  rowHeightPage,
   pinningPage,
   columnReorderPage,
   rowPinningPage,

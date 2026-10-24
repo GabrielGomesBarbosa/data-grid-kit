@@ -6,7 +6,7 @@ export const STRUCTURE = new Set([
   'display', 'flex', 'flex-direction', 'flex-wrap', 'align-items', 'justify-content',
   'overflow', 'overflow-x', 'overflow-y', 'width', 'height', 'min-width', 'min-height', 'max-width', 'max-height',
   'box-sizing', 'contain', 'transform', 'pointer-events', 'touch-action', 'user-select', 'white-space', 'text-overflow',
-  'clip-path', 'clip', 'content', 'grid-template-columns',
+  'clip-path', 'clip', 'content', 'grid-template-columns', 'align-self', 'overflow-wrap',
 ])
 
 /** a copy of the tree that keeps only the declarations `keep` accepts (and the rules and at-rules that still have some) */

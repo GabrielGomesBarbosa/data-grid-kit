@@ -10,6 +10,7 @@ import { rowPropsEqual } from './Row'
 import type { GridSlotProps, GridSlots } from './slotTypes'
 import type { PanelState } from './Toolbar'
 import type { GridProps } from './types'
+import { useAutoRowHeights } from './useAutoRowHeights'
 import { useCellSelection } from './useCellSelection'
 import { useClipboard } from './useClipboard'
 import { useColumnDrag } from './useColumnDrag'
@@ -101,6 +102,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
 
   const gridRef = useRef(grid)
   gridRef.current = grid
+  useAutoRowHeights(!!props.getRowHeight, scrollerRef, gridRef)
 
   const [menu, setMenu] = useState<{ field: string; anchor: DOMRect } | null>(null)
   const [panel, setPanel] = useState<PanelState | null>(null)
@@ -203,7 +205,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
     if (!r) {
       // server data that hasn't arrived: a placeholder row (client-side grids never have gaps)
       if (grid.server && i < rows.length) {
-        bodyRows.push({ type: 'skeleton', key: `sk-${i}`, props: { index: i, top: geometry.topOf(i), rowHeight, totalWidth, layout, colRange, ariaRow } })
+        bodyRows.push({ type: 'skeleton', key: `sk-${i}`, props: { index: i, top: geometry.topOf(i), rowHeight: geometry.heightOf(i), totalWidth, layout, colRange, ariaRow } })
       }
       continue
     }
@@ -213,6 +215,8 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
       key: r.id,
       props: {
         ...rowShared,
+        rowHeight: geometry.heightOf(i),
+        auto: props.getRowHeight?.({ id: r.id, row: r.row, depth: r.depth }) === 'auto',
         row: r,
         index: i,
         hasHierarchy,
