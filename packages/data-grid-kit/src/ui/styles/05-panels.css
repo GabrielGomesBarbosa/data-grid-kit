@@ -96,3 +96,10 @@
   align-items: center;
   cursor: pointer;
 }
+
+/* narrow screens: the filter row wraps instead of running off the window */
+@media (max-width: 560px) {
+  .gk-filter-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}

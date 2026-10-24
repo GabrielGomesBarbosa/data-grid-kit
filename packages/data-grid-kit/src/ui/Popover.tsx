@@ -22,16 +22,28 @@ export function Popover({ anchor, onClose, children, label, role = 'dialog', ali
   const ref = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
 
+  // Placed under the anchor and kept inside the window. The size can change while it is open (the filter panel grows
+  // with each filter), and so can the window, so this runs again for both.
   useIsomorphicLayoutEffect(() => {
     const el = ref.current
     if (!el) return
-    const w = el.offsetWidth
-    const h = el.offsetHeight
-    let left = align === 'end' ? anchor.right - w : anchor.left
-    let top = anchor.bottom + 4
-    left = Math.max(8, Math.min(left, window.innerWidth - w - 8))
-    if (top + h > window.innerHeight - 8) top = Math.max(8, anchor.top - h - 4)
-    setPos({ top, left })
+    const place = () => {
+      const w = el.offsetWidth
+      const h = el.offsetHeight
+      let left = align === 'end' ? anchor.right - w : anchor.left
+      let top = anchor.bottom + 4
+      left = Math.max(8, Math.min(left, window.innerWidth - w - 8))
+      if (top + h > window.innerHeight - 8) top = Math.max(8, anchor.top - h - 4)
+      setPos((p) => (p && p.top === top && p.left === left ? p : { top, left }))
+    }
+    place()
+    const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(place)
+    observer?.observe(el)
+    window.addEventListener('resize', place)
+    return () => {
+      observer?.disconnect()
+      window.removeEventListener('resize', place)
+    }
   }, [anchor, align])
 
   useEffect(() => {
