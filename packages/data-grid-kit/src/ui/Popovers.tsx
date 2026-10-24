@@ -35,7 +35,7 @@ export function Popovers<R>(p: PopoversProps<R>) {
       )}
       {panel?.kind === 'filters' && (
         <Popover anchor={panel.anchor} onClose={p.closePanel} label="Filters" {...popoverProps()}>
-          <FilterPanel grid={grid} {...slotProps.filterPanel} />
+          <FilterPanel grid={grid} onClose={p.closePanel} {...slotProps.filterPanel} />
         </Popover>
       )}
       {panel?.kind === 'columns' && (

@@ -86,6 +86,7 @@
   border-radius: 50%;
   background: transparent;
   color: var(--gk-text-muted);
+  cursor: pointer;
 }
 .gk-panel .gk-icon-btn:hover {
   background: var(--gk-bg-header);
@@ -199,4 +200,5 @@
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  cursor: pointer;
 }

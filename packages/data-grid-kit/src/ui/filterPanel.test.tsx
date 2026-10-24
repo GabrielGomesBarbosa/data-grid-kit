@@ -60,7 +60,14 @@ describe('the filter panel opens ready to use', () => {
     expect(shown(container)).toBe(3)
     expect(screen.getByRole('button', { name: 'Filters' })).toBeTruthy() // no "n active"
     expect(panel().queryByRole('button', { name: 'Remove all' })).toBeNull()
-    expect((panel().getByRole('button', { name: 'Remove filter' }) as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('the remove button of the ready row is a live button: it closes the panel', () => {
+    open()
+    const remove = panel().getByRole('button', { name: 'Remove filter' }) as HTMLButtonElement
+    expect(remove.disabled).toBe(false)
+    fireEvent.click(remove)
+    expect(screen.queryByRole('dialog')).toBeNull()
   })
 
   it('typing a value makes it a real filter', () => {
@@ -84,12 +91,25 @@ describe('the filter panel opens ready to use', () => {
     expect(panel().getAllByLabelText('Column')).toHaveLength(2)
   })
 
-  it('removing the last real filter puts the ready row back', () => {
+  it('removing the last real filter clears it and closes the panel', () => {
     const { container } = open({ items: [{ field: 'name', operator: 'contains', value: 'ana' }] })
     expect(shown(container)).toBe(1)
     fireEvent.click(panel().getByRole('button', { name: 'Remove filter' }))
     expect(shown(container)).toBe(3)
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('removing one of several filters keeps the panel open with the others', () => {
+    const { container } = open({
+      items: [
+        { field: 'name', operator: 'contains', value: 'a' },
+        { field: 'team', operator: 'contains', value: 'Data' },
+      ],
+    })
+    fireEvent.click(panel().getAllByRole('button', { name: 'Remove filter' })[0]!)
+    expect(screen.getByRole('dialog')).toBeTruthy()
     expect(panel().getAllByLabelText('Column')).toHaveLength(1)
+    expect(shown(container)).toBe(2) // only team = Data is left
   })
 })
 

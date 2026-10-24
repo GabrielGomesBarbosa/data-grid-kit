@@ -57,7 +57,7 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   )
 }
 
-export function FilterPanel<R>({ grid, className }: PanelProps<R>) {
+export function FilterPanel<R>({ grid, className, onClose }: PanelProps<R>) {
   const { Button, Select } = useBase()
   const icons = useIcons()
   const { api, state } = grid
@@ -68,6 +68,14 @@ export function FilterPanel<R>({ grid, className }: PanelProps<R>) {
   const blank = model.items.length === 0 && columns[0] ? [defaultFilterItem(columns[0])] : []
   const items = model.items.length ? model.items : blank
   const setItems = (next: FilterItem[]) => api.setFilterModel({ ...model, items: next })
+
+  // taking away the last row (a filter, or the blank one) is done with the panel: it closes, like a dialog you are finished with
+  const remove = (i: number) => {
+    if (items.length === 1) {
+      if (model.items.length) setItems([])
+      onClose?.()
+    } else setItems(items.filter((_, j) => j !== i))
+  }
 
   const addItem = () => {
     const col = columns[0]
@@ -81,7 +89,7 @@ export function FilterPanel<R>({ grid, className }: PanelProps<R>) {
         const update = (patch: Partial<FilterItem>) => setItems(items.map((x, j) => (j === i ? { ...x, ...patch } : x)))
         return (
           <div className="gk-filter-row" key={i}>
-            <Button type="button" className="gk-icon-btn" aria-label="Remove filter" title="Remove filter" disabled={model.items.length === 0} onClick={() => setItems(items.filter((_, j) => j !== i))}>
+            <Button type="button" className="gk-icon-btn" aria-label="Remove filter" title="Remove filter" onClick={() => remove(i)}>
               <icons.close />
             </Button>
             {i === 1 && items.length > 1 ? (
