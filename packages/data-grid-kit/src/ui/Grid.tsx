@@ -265,7 +265,12 @@ export function Grid<R = any>(props: GridProps<R>) {
 
   return (
     <SlotsProvider value={resolvedSlots}>
-      <div className={`gk-root ${cellSelection ? 'gk-cell-select' : ''} ${className ?? ''}`} style={{ height }}>
+      <div
+          className={`gk-root ${cellSelection ? 'gk-cell-select' : ''} ${className ?? ''}`}
+          style={{ height }}
+          data-loading={grid.server?.loading ? '' : undefined}
+          data-pivot={grid.pivot ? '' : undefined}
+        >
         {toolbar && <slots.toolbar grid={grid} panel={panel} onPanel={openPanel} onExport={doExport} {...slotProps.toolbar} />}
         {grid.server?.loading && <slots.loadingOverlay {...slotProps.loadingOverlay} />}
         {grid.server?.error && <slots.errorOverlay message={grid.server.error.message} onRetry={() => api.refreshData()} {...slotProps.errorOverlay} />}

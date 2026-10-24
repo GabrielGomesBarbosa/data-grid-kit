@@ -40,7 +40,9 @@
       "types": "./dist/core.d.ts",
       "import": "./dist/core.js"
     },
-    "./styles.css": "./dist/styles.css"
+    "./styles.css": "./dist/styles.css",
+    "./structure.css": "./dist/structure.css",
+    "./theme.css": "./dist/theme.css"
   },
   "files": [
     "dist",
@@ -62,6 +64,7 @@
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "jsdom": "^25.0.0",
+    "postcss": "^8.5.31",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tsup": "^8.3.0",

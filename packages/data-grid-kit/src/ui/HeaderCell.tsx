@@ -62,6 +62,8 @@ export function HeaderCell<R>({
       className={cx('gk-header-cell', className)}
       data-align={defaultAlign(col)}
       data-field={col.field}
+      data-sort={sort?.direction}
+      data-pinned={side}
       style={style}
       onPointerDown={(e) => {
         if (!onDragIntent || e.button !== 0 || e.pointerType === 'touch') return
