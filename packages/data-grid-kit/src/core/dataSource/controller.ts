@@ -1,7 +1,8 @@
 import type { FilterModel, RowId, SortItem } from '../types'
-import { DataSourceError, type GetRowsParams, type GetRowsResponse, type DataSource } from './contract'
+import { DataSourceError, type GetRowsParams, type GetRowsResponse, type DataSource, type PageInfo } from './contract'
+import { CursorTrail } from './cursors'
 import { LruCache, type DataSourceCache } from './cache'
-import { isAbort, sameShallow } from './util'
+import { isAbort, sameShallow, takeRun, wantedBlocks } from './util'
 
 export interface DataSourceControllerOptions<R> {
   /** read on every request, so a new `dataSource` prop takes effect without recreating the controller */
@@ -76,6 +77,7 @@ export class DataSourceController<R> {
   /** shown instead of gaps while a new query / refresh is still loading (keepPreviousData, refresh) */
   private previous: Map<number, R[]> | null = null
   private idIndex = new Map<RowId, number>()
+  private trail = new CursorTrail()
   private rowCount = -1
   private hasNextPage = true
   private view: { start: number; end: number } | null = null
@@ -258,6 +260,7 @@ export class DataSourceController<R> {
     this.error = null
     this.previous = keepShown ? (this.blocks.size ? this.blocks : this.previous) : null
     this.blocks = new Map()
+    this.trail.reset()
     // rows still on screen (kept from before) keep their ids findable until they are replaced
     if (!this.previous) this.idIndex = new Map()
     this.rowCount = -1
@@ -268,15 +271,7 @@ export class DataSourceController<R> {
 
   /** the blocks around the view that should exist */
   private wantedWindow(withPrefetch: boolean) {
-    const cs = this.o.chunkSize
-    const v = this.view ?? { start: 0, end: 0 }
-    const pre = withPrefetch ? this.o.prefetchChunks : 0
-    let first = Math.max(0, Math.floor(v.start / cs) - pre)
-    let last = Math.floor(v.end / cs) + pre
-    if (this.rowCount >= 0) last = Math.min(last, Math.max(0, Math.ceil(this.rowCount / cs) - 1))
-    if (this.rowCount === 0) last = -1
-    first = Math.min(first, last + 1)
-    return { first, last }
+    return wantedBlocks(this.view, this.o.chunkSize, withPrefetch ? this.o.prefetchChunks : 0, this.rowCount)
   }
 
   private plan(immediate: boolean) {
@@ -286,7 +281,8 @@ export class DataSourceController<R> {
     for (let c = first; c <= last; c++) wanted.add(c)
 
     // what scrolled away is no longer worth asking for
-    this.queue = this.queue.filter((c) => wanted.has(c))
+    // (cursor pagination: the blocks on the way to a far one are wanted too, up to the last one in view)
+    this.queue = this.queue.filter((c) => wanted.has(c) || (this.trail.active && c <= last))
 
     const center = this.view ? (this.view.start + this.view.end) / 2 / this.o.chunkSize : 0
     const add: number[] = []
@@ -300,7 +296,14 @@ export class DataSourceController<R> {
         installed = true
         continue
       }
-      add.push(c)
+      // cursor pagination: a block can only be asked for once the cursor before it is known, so walk toward it
+      const step = this.trail.canFetch(c) ? c : this.trail.nextToward(c)
+      if (step !== c && (this.blocks.has(step) || this.pending.has(step) || this.queue.includes(step) || add.includes(step))) continue
+      if (step !== c && this.fromCache(step)) {
+        installed = true
+        continue
+      }
+      add.push(step)
     }
     this.queue.push(...add)
     this.queue.sort((a, b) => Math.abs(a - center) - Math.abs(b - center))
@@ -374,24 +377,9 @@ export class DataSourceController<R> {
     if (this.destroyed) return
     // the queue may be stale by now: drop what is no longer around the view
     const { first, last } = this.wantedWindow(true)
-    this.queue = this.queue.filter((c) => c >= first && c <= last && !this.blocks.has(c) && !this.pending.has(c))
+    this.queue = this.queue.filter((c) => (c >= first || this.trail.active) && c <= last && !this.blocks.has(c) && !this.pending.has(c))
     while (this.runs.size < this.o.maxConcurrent && this.queue.length) {
-      const head = this.queue.shift()!
-      const chunks = [head]
-      // join the blocks right next to it into one request
-      for (let grow = true; grow && chunks.length < this.o.maxRunChunks; ) {
-        grow = false
-        const lo = Math.min(...chunks) - 1
-        const hi = Math.max(...chunks) + 1
-        for (const next of [hi, lo]) {
-          const at = this.queue.indexOf(next)
-          if (at >= 0 && chunks.length < this.o.maxRunChunks) {
-            this.queue.splice(at, 1)
-            chunks.push(next)
-            grow = true
-          }
-        }
-      }
+      const chunks = takeRun(this.queue, this.queue.shift()!, this.o.maxRunChunks)
       this.start(chunks.sort((a, b) => a - b), false)
     }
     if (this.runs.size || this.queue.length) this.changed()
@@ -411,6 +399,8 @@ export class DataSourceController<R> {
       filterModel: this.query.filterModel,
       signal: run.controller.signal,
     }
+    const cursor = this.trail.cursorFor(chunks[0]!)
+    if (cursor !== undefined) params.cursor = cursor
     if (this.rowCount >= 0) params.end = Math.min(params.end, Math.max(params.start, this.rowCount - 1))
     const query = { sortModel: this.query.sortModel, filterModel: this.query.filterModel }
     let request: Promise<GetRowsResponse<R>>
@@ -470,6 +460,7 @@ export class DataSourceController<R> {
       this.rowCount = params.start + rows.length
       this.hasNextPage = false
     }
+    if (this.trail.active) this.plan(true) // cursor pagination: with this cursor the next block of the walk can be asked for
     this.afterRun(run.background)
   }
 
@@ -506,13 +497,22 @@ export class DataSourceController<R> {
     return true
   }
 
-  private install(c: number, rows: R[], rowCount: number | undefined, pageInfo: { hasNextPage?: boolean } | undefined, cs: number) {
+  private install(c: number, rows: R[], rowCount: number | undefined, pageInfo: PageInfo | undefined, cs: number) {
     const old = this.blocks.get(c)
     // keep the objects of rows that didn't change, so memoised rows don't re-render after a background refresh
     const next = old ? rows.map((row, i) => (old[i] !== undefined && sameShallow(old[i], row) ? old[i]! : row)) : rows.slice()
     const unchanged = old !== undefined && old.length === next.length && next.every((row, i) => row === old[i])
     this.blocks.set(c, next)
     next.forEach((row, i) => this.idIndex.set(this.o.getRowId(row), c * cs + i))
+    const cursor = pageInfo?.nextCursor
+    if (cursor === null) {
+      // the last page of a cursor-paginated source: the data ends right here
+      if ((rowCount === undefined || rowCount < 0) && this.rowCount < 0) this.rowCount = c * cs + next.length
+      this.hasNextPage = false
+      this.dirty = true
+    } else if (cursor !== undefined) {
+      this.trail.set(c, cursor)
+    }
     if (unchanged && rowCount === this.rowCount) return // a background re-read that found nothing new
     if (rowCount !== undefined) this.rowCount = rowCount
     // only meaningful while the row count is unknown; installing blocks out of order must not flip it
@@ -527,7 +527,7 @@ export class DataSourceController<R> {
     this.idIndex = index
   }
 
-  private cacheBlock(c: number, rows: R[], pageInfo: { hasNextPage?: boolean } | undefined) {
+  private cacheBlock(c: number, rows: R[], pageInfo: PageInfo | undefined) {
     if (!this.cache) return
     const cs = this.o.chunkSize
     this.cache.set(

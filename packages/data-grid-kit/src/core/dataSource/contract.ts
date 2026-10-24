@@ -6,16 +6,31 @@ export interface GetRowsParams {
   end: number
   sortModel: SortItem[]
   filterModel: FilterModel
+  /**
+   * Cursor-paginated APIs: the `pageInfo.nextCursor` the server sent with the rows just before `start`
+   * (`undefined` for the first rows). The grid keeps the cursors; the app never has to.
+   */
+  cursor?: unknown
   /** aborted when the answer is no longer wanted (the sort / filter changed, or a refresh). Pass it to `fetch`. */
   signal: AbortSignal
+}
+
+export interface PageInfo {
+  /** `false` marks the end when `rowCount` is unknown */
+  hasNextPage?: boolean
+  /**
+   * For APIs that continue from a cursor instead of an offset: where to continue after the *last* row of this response,
+   * sent back as `cursor` with the request for the following rows. `null` means this was the last page. The grid then
+   * fetches blocks in order, so jumping ahead loads the pages in between (each one is cached).
+   */
+  nextCursor?: unknown
 }
 
 export interface GetRowsResponse<R> {
   rows: R[]
   /** total rows for this sort + filter. Omit it, or send -1, when the server doesn't know (infinite scrolling). */
   rowCount?: number
-  /** `hasNextPage: false` marks the end when `rowCount` is unknown */
-  pageInfo?: { hasNextPage?: boolean }
+  pageInfo?: PageInfo
 }
 
 export interface UpdateRowParams<R> {

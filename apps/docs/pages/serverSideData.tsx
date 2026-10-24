@@ -2,6 +2,7 @@ import ServerPagesDemo from '../demos/ServerPagesDemo'
 import ServerScrollDemo from '../demos/ServerScrollDemo'
 import serverPagesSrc from '../demos/ServerPagesDemo.tsx?raw'
 import serverScrollSrc from '../demos/ServerScrollDemo.tsx?raw'
+import { CodeBlock } from '../components/CodeBlock'
 import { features } from '../api'
 import { type PageDef, demo } from './shared'
 
@@ -28,6 +29,26 @@ export const page: PageDef = {
         scrolling is debounced, so rows you fly past are not requested. If the server can't count, leave out <code>rowCount</code>: return{' '}
         <code>pageInfo: &#123; hasNextPage &#125;</code> and the grid keeps growing as you reach the end (infinite scroll).
       </p>
+      <h2>Cursor-based APIs</h2>
+      <p>
+        Some APIs (GraphQL connections, many feeds) cannot jump to row 5,000: they give a cursor with each page and want it back to get the next one. Return it as{' '}
+        <code>pageInfo.nextCursor</code> and the grid sends it as <code>params.cursor</code> with the request for the rows after it; <code>null</code> marks the last page.
+        The grid keeps the cursors, so the app does not have to (with MUI the app tracks the cursor of every page itself).
+      </p>
+      <CodeBlock
+        code={`const dataSource = {
+  async getRows({ cursor, end, start, sortModel, signal }) {
+    const res = await fetch(\`/api/feed?after=\${cursor ?? ''}&limit=\${end - start + 1}\`, { signal })
+    const { items, next } = await res.json()
+    return { rows: items, pageInfo: { nextCursor: next ?? null } }
+  },
+}`}
+      />
+      <p>
+        Blocks are fetched in order from then on: scrolling or paging <em>ahead</em> loads the pages in between, one request each carrying the previous cursor, and every
+        page is cached. A new sort or filter starts again from the first page. Sources that answer with a total (<code>rowCount</code>) and no cursor are not affected.
+      </p>
+
       <h2>Cache and freshness</h2>
       <ul>
         <li>Responses are cached per block, keyed by sort and filter, with a least-recently-used limit and a time-to-live (<code>dataSourceCache</code>; pass <code>false</code> to disable or your own object to share it).</li>
