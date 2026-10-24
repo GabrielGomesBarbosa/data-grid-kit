@@ -23,7 +23,7 @@ export function Popover({ anchor, onClose, children, label, role = 'dialog', ali
   // the latest onClose without making the effect below start over each time the parent renders (live data re-renders often)
   const closeRef = useRef(onClose)
   closeRef.current = onClose
-  const [pos, setPos] = useState<{ top: number; left: number; maxHeight?: number } | null>(null)
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
 
   // Placed under the button it was opened from, kept inside the window, and written in page coordinates with
   // `position: absolute`: the browser itself moves it with the page, so it stays glued to the button through any scroll with
@@ -41,6 +41,9 @@ export function Popover({ anchor, onClose, children, label, role = 'dialog', ali
     const place = () => {
       const a = anchor
       const w = el.offsetWidth
+      // its natural height: measured without the cap this function put on it last time (measuring the capped height flips
+      // the decision back and forth, and the popover flickers between two sizes)
+      el.style.maxHeight = ''
       const h = el.offsetHeight
       const room = window.innerWidth - 8
       let left = align === 'end' ? a.right - w : a.left
@@ -62,7 +65,9 @@ export function Popover({ anchor, onClose, children, label, role = 'dialog', ali
       // from the window to the page, as the page was when the anchor was measured (later renders must not use today's scroll)
       const x = left - origin.current!.x
       const y = top - origin.current!.y
-      setPos((p) => (p && p.top === y && p.left === x && p.maxHeight === maxHeight ? p : { top: y, left: x, maxHeight }))
+      // written to the element, not through React: a render does not know about it and must not undo it
+      el.style.maxHeight = maxHeight === undefined ? '' : `${maxHeight}px`
+      setPos((p) => (p && p.top === y && p.left === x ? p : { top: y, left: x }))
     }
     place()
     const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(place)
@@ -121,7 +126,7 @@ export function Popover({ anchor, onClose, children, label, role = 'dialog', ali
       role={role}
       aria-label={label}
       className={`gk-popover ${className ?? ''}`}
-      style={{ top: pos?.top ?? 0, left: pos?.left ?? 0, maxHeight: pos?.maxHeight, visibility: pos ? 'visible' : 'hidden' }}
+      style={{ top: pos?.top ?? 0, left: pos?.left ?? 0, visibility: pos ? 'visible' : 'hidden' }}
       onKeyDown={onKeyDown}
     >
       {children}

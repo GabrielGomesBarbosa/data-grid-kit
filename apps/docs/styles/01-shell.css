@@ -15,7 +15,7 @@
 .skip:focus {
   left: 8px;
   top: 8px;
-  z-index: 100;
+  z-index: 1300;
   background: var(--bg);
   padding: 6px 10px;
 }
@@ -23,7 +23,7 @@
   grid-column: 1 / -1;
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: 1100; /* above the grid's popovers (1000): they scroll under it like the rest of the page */
   display: flex;
   align-items: center;
   gap: 12px;
