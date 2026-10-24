@@ -1,5 +1,20 @@
 # data-grid-kit
 
+## 0.5.0
+
+### Minor Changes
+
+- 7bd095f: Cursor-based pagination in `dataSource`: a response can carry `pageInfo.nextCursor` (`null` on the last page) and the grid sends it back as `params.cursor` with the request for the rows after it. The grid keeps the cursors and fetches blocks in order (a jump ahead walks the pages in between, each cached); a new sort or filter starts over.
+- b1b35f8: Pivot: click a value or total column header to order the groups of every level by that aggregate (empty values last; paging and exports follow); `hidden` on column and value entries and `hiddenRows` keep a field in the pivot model without using it, with a checkbox for each in the panel; a field can be a value more than once with different functions (`+` in the panel). New core helpers: `setPivotHidden`, `addPivotValue`, `removePivotValue`, `moveValueEntry`, `setValueFunc`, `visiblePivot`, `pivotAggSortOf`.
+- 80809fb: Variable row height: `getRowHeight({ id, row, depth })` returns a number, `null` / `undefined` for `rowHeight`, or `'auto'` to size the row to its content (measured on screen, with `getEstimatedRowHeight` until then). Positions come from a prefix sum with binary search, so virtualization stays fast, and detail panels sit under their own row. When a row above the visible ones is measured, the scroll position moves by the same amount so nothing jumps. As in MUI, columns are not virtualized while there are `'auto'` rows (`virtualizeColumnsWithAutoRowHeight` turns it back on). `useGrid` returns `reportRowHeights` for custom renderers.
+- e7f7016: Tree data, row grouping and aggregation on the server. A data source with `getChildrenCount(row)` and `getGroupKey(row)` is a tree loaded level by level: `getRows` gets `groupKeys` (the path to the parent) when a row is expanded, plus `groupFields` (the row grouping model) and `aggregationModel`; rows with children show `getAggregatedValue(row, field)`. Each open level has its own blocks, errors and retries; all share one cache keyed by level, so reopening a row sends nothing. Needs `pagination={false}`; pivoting stays client-side.
+- c16747b: Excel export: `headerStyle` and `columnStyles` (bold, italic, text colour, fill, alignment, wrap), `validateSelects` (a drop-down for `singleSelect` columns), `extraSheets` (more worksheets in the same file) and, in `data-grid-kit/core`, `buildXlsxWorkbook(sheets)` plus explicit formula cells (`{ formula, value }`). Text that starts with `=` is still text. The worker export carries the extra sheets too.
+- 1a4849f: Excel export in a web worker: `getXlsx` / `exportXlsx` accept `worker: () => new Worker(...)`. The package ships a ready worker, `data-grid-kit/xlsx-worker` (self-contained, about 10 KB, no React), and `setupXlsxWorker()` in `data-grid-kit/core` for your own worker file. Rows are sent in batches so the page stays responsive; abort, progress and errors work as without a worker.
+
+### Patch Changes
+
+- cab8f57: Fast scrollbar drags no longer paint an empty region first: when a scroll leaves the rendered rows, the new window is committed inside the scroll event (`flushSync`) instead of on the next animation frame. Scrolls that stay inside the window are still batched to one store write per frame.
+
 ## 0.4.0
 
 ### Minor Changes
