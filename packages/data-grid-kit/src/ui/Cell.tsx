@@ -1,3 +1,6 @@
+import { useBase } from './base'
+import { cx } from './cx'
+import { useIcons } from './icons'
 import { type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { aggregationLabel, defaultAlign, formatAggregateValue, formatCellValue, getCellValue, type CellRef, type CustomAggregation, type RenderRow } from '../core'
 import { CellEditor, type EditMove } from './Editors'
@@ -42,6 +45,8 @@ export interface CellProps<R> {
   /** show the grip that starts a row drag */
   reorderHandle: boolean
   onRowDragStart: ((id: RenderRow['id'], e: ReactPointerEvent<HTMLElement>) => void) | undefined
+  /** added to the cell's class names (`slotProps.cell`) */
+  className?: string
 }
 
 const edgeVars = (prefix: string, edges: string | undefined): CSSProperties | undefined =>
@@ -97,7 +102,7 @@ export function Cell<R>(p: CellProps<R>) {
       role="gridcell"
       aria-colindex={p.colIndex + 1}
       aria-selected={p.focused || undefined}
-      className="gk-cell"
+      className={cx('gk-cell', p.className)}
       data-align={align}
       data-field={col.field}
       data-focused={p.focused ? '' : undefined}
@@ -111,18 +116,32 @@ export function Cell<R>(p: CellProps<R>) {
         paddingLeft: p.isHierarchy && p.hasHierarchy ? 8 + row.depth * INDENT : undefined,
       }}
     >
-      {p.isHierarchy && p.reorderHandle && (
+      {p.isHierarchy && <HierarchyControls p={p} isGroupRow={isGroupRow} />}
+      {p.editing ? content : <span className="gk-cell-text">{content}</span>}
+      {p.fillHandle && <div className="gk-fill-handle" title="Drag to fill" aria-hidden="true" onPointerDown={p.onFillStart} />}
+    </div>
+  )
+}
+
+/** What leads the first cell of a row: drag grip, selection checkbox, detail and expand toggles, pin buttons. */
+function HierarchyControls<R>({ p, isGroupRow }: { p: CellProps<R>; isGroupRow: boolean }) {
+  const { Button, Checkbox } = useBase()
+  const icons = useIcons()
+  const { row } = p
+  return (
+    <>
+      {p.reorderHandle && (
         <span
           className="gk-row-handle"
           aria-hidden="true"
           title="Drag to move this row (or Alt+Shift+↑ / ↓)"
           onPointerDown={(e) => p.onRowDragStart?.(row.id, e)}
         >
-          ⋮⋮
+          <icons.dragHandle />
         </span>
       )}
-      {p.isHierarchy && p.checkbox && (
-        <input
+      {p.checkbox && (
+        <Checkbox
           type="checkbox"
           className="gk-checkbox"
           tabIndex={-1}
@@ -134,8 +153,8 @@ export function Cell<R>(p: CellProps<R>) {
           onChange={() => p.onToggleSelect(row.id)}
         />
       )}
-      {p.isHierarchy && p.detailState && (
-        <button
+      {p.detailState && (
+        <Button
           type="button"
           tabIndex={-1}
           className="gk-detail-toggle"
@@ -144,13 +163,12 @@ export function Cell<R>(p: CellProps<R>) {
           aria-label={p.detailState === 'open' ? 'Collapse details' : 'Expand details'}
           onClick={() => p.onToggleDetail(row.id)}
         >
-          ›
-        </button>
+          <icons.detailToggle />
+        </Button>
       )}
-      {p.isHierarchy &&
-        p.hasHierarchy &&
+      {p.hasHierarchy &&
         (row.expandable ? (
-          <button
+          <Button
             type="button"
             tabIndex={-1}
             className="gk-toggle"
@@ -158,32 +176,30 @@ export function Cell<R>(p: CellProps<R>) {
             aria-expanded={row.expanded}
             onClick={() => p.onToggleExpand(row.id)}
           >
-            {row.expanded ? '▾' : '▸'}
-          </button>
+            {row.expanded ? <icons.collapse /> : <icons.expand />}
+          </Button>
         ) : (
           <span className="gk-toggle-spacer" />
         ))}
-      {p.isHierarchy && p.rowPinning && !isGroupRow && (
+      {p.rowPinning && !isGroupRow && (
         <span className="gk-rowpin">
           {p.pinSide ? (
-            <button type="button" tabIndex={-1} aria-label="Unpin row" title="Unpin row" onClick={() => p.onPinRow(row.id, null)}>
-              ✕
-            </button>
+            <Button type="button" tabIndex={-1} aria-label="Unpin row" title="Unpin row" onClick={() => p.onPinRow(row.id, null)}>
+              <icons.close />
+            </Button>
           ) : (
             <>
-              <button type="button" tabIndex={-1} aria-label="Pin row to top" title="Pin to top" onClick={() => p.onPinRow(row.id, 'top')}>
-                ▲
-              </button>
-              <button type="button" tabIndex={-1} aria-label="Pin row to bottom" title="Pin to bottom" onClick={() => p.onPinRow(row.id, 'bottom')}>
-                ▼
-              </button>
+              <Button type="button" tabIndex={-1} aria-label="Pin row to top" title="Pin to top" onClick={() => p.onPinRow(row.id, 'top')}>
+                <icons.pinTop />
+              </Button>
+              <Button type="button" tabIndex={-1} aria-label="Pin row to bottom" title="Pin to bottom" onClick={() => p.onPinRow(row.id, 'bottom')}>
+                <icons.pinBottom />
+              </Button>
             </>
           )}
         </span>
       )}
-      {p.editing ? content : <span className="gk-cell-text">{content}</span>}
-      {p.fillHandle && <div className="gk-fill-handle" title="Drag to fill" aria-hidden="true" onPointerDown={p.onFillStart} />}
-    </div>
+    </>
   )
 }
 

@@ -1,4 +1,5 @@
 import type { ColumnLayout } from '../core/layout'
+import { cx } from './cx'
 import { renderSections } from './sections'
 import { memo, type CSSProperties, type ReactNode } from 'react'
 import { type ColumnDef, type Range } from '../core'
@@ -12,6 +13,19 @@ const barWidth = (row: number, col: number) => 35 + (((row * 31 + col * 17) * 26
  * A row whose data has not arrived (server-side data). It mirrors the real row's three column groups so the
  * pinned columns and the horizontal scroll stay where they will be.
  */
+export interface SkeletonRowProps {
+  index: number
+  top: number
+  rowHeight: number
+  totalWidth: number
+  layout: ColumnLayout<any>
+  colRange: Range
+  ariaRow: number
+  /** added to the row's class names and style (`slotProps.skeletonRow`) */
+  className?: string
+  style?: CSSProperties
+}
+
 export const SkeletonRow = memo(function SkeletonRow({
   index,
   top,
@@ -20,15 +34,9 @@ export const SkeletonRow = memo(function SkeletonRow({
   layout,
   colRange,
   ariaRow,
-}: {
-  index: number
-  top: number
-  rowHeight: number
-  totalWidth: number
-  layout: ColumnLayout<any>
-  colRange: Range
-  ariaRow: number
-}) {
+  className,
+  style: extraStyle,
+}: SkeletonRowProps) {
   const bar = (field: string, style: CSSProperties, pos: number) => (
     <div key={field} role="gridcell" className="gk-cell" aria-busy="true" style={style}>
       <span className="gk-skel-bar" style={{ width: `${barWidth(index, pos)}%` }} />
@@ -48,9 +56,9 @@ export const SkeletonRow = memo(function SkeletonRow({
       role="row"
       aria-rowindex={ariaRow}
       aria-busy="true"
-      className="gk-row gk-skeleton"
+      className={cx('gk-row gk-skeleton', className)}
       data-odd={index % 2 ? '' : undefined}
-      style={{ height: rowHeight, width: totalWidth, transform: `translateY(${top}px)` }}
+      style={{ height: rowHeight, width: totalWidth, transform: `translateY(${top}px)`, ...extraStyle }}
     >
       {renderSections(layout, pinned(layout.left, 0), center, pinned(layout.right, layout.left.length + layout.center.length))}
     </div>

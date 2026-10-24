@@ -1,3 +1,4 @@
+import { useBase } from './base'
 import { useRef, type ReactNode } from 'react'
 import {
   formatDateInput,
@@ -53,6 +54,7 @@ function InputEditor({
   onCommit: EditorProps<unknown>['onCommit']
   onCancel: () => void
 }) {
+  const { Input } = useBase()
   const ref = useRef<HTMLInputElement | null>(null)
   // a commit/cancel fires at most once; blur after Enter/Escape must not commit again
   const settled = useRef(false)
@@ -85,7 +87,7 @@ function InputEditor({
   }
 
   return (
-    <input
+    <Input
       ref={(el) => {
         ref.current = el
         if (el && document.activeElement !== el) {
@@ -127,8 +129,9 @@ function BooleanEditor({
   onCommit: EditorProps<unknown>['onCommit']
   onCancel: () => void
 }) {
+  const { Checkbox } = useBase()
   return (
-    <input
+    <Checkbox
       autoFocus
       type="checkbox"
       className="gk-checkbox"
@@ -156,9 +159,10 @@ function SelectEditor<R>({
   onCommit: EditorProps<R>['onCommit']
   onCancel: () => void
 }) {
+  const { Select } = useBase()
   const options = col.valueOptions ?? []
   return (
-    <select
+    <Select
       autoFocus
       className="gk-editor"
       aria-label="Edit cell"
@@ -179,6 +183,6 @@ function SelectEditor<R>({
           {optionLabel(o)}
         </option>
       ))}
-    </select>
+    </Select>
   )
 }

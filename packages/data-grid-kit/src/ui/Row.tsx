@@ -4,7 +4,8 @@ import { memo, type CSSProperties, type PointerEvent as ReactPointerEvent, type 
 import { type CellRef, type ColumnDef, type CustomAggregation, type Range, type RenderRow } from '../core'
 import { type EditMove } from './Editors'
 import { type UIColumnDef } from './types'
-import { Cell } from './Cell'
+import { cx } from './cx'
+import { useSlots } from './slotsContext'
 
 /* --------------------------------------------------------------------- row */
 
@@ -48,6 +49,9 @@ export interface RowProps<R> {
   canReorder: boolean
   onRowDragStart: ((id: RenderRow['id'], e: ReactPointerEvent<HTMLElement>) => void) | undefined
   dragging: boolean
+  /** added to the row's class names and style (`slotProps.row`) */
+  className?: string
+  style?: CSSProperties
 }
 
 interface Seg {
@@ -68,6 +72,8 @@ const decodeSegs = (key: string): Seg[] =>
 
 function RowInner<R>(p: RowProps<R>) {
   const { row, layout, colRange, rowHeight } = p
+  const { slots, slotProps } = useSlots<R>()
+  const CellSlot = slots.cell
   const segs = decodeSegs(p.rangeKey)
   const edgesAt = (pos: number): { sel: string | undefined; fill: string | undefined } => {
     let sel: string | undefined
@@ -84,12 +90,11 @@ function RowInner<R>(p: RowProps<R>) {
     const pos = p.colPos.get(col.field) ?? 0
     const edges = edgesAt(pos)
     return (
-      <Cell
+      <CellSlot
         key={col.field}
         id={`${p.gridId}-${p.pinSide ? p.pinSide[0] : 'r'}${p.index}-c${pos}`}
         col={col}
         row={row}
-        style={style}
         colIndex={pos}
         isHierarchy={col.field === p.hierarchyField}
         hasHierarchy={p.hasHierarchy}
@@ -114,6 +119,8 @@ function RowInner<R>(p: RowProps<R>) {
         onToggleDetail={p.onToggleDetail}
         reorderHandle={p.canReorder}
         onRowDragStart={p.onRowDragStart}
+        {...slotProps.cell}
+        style={{ ...style, ...slotProps.cell?.style }}
       />
     )
   }
@@ -134,7 +141,7 @@ function RowInner<R>(p: RowProps<R>) {
       role="row"
       aria-rowindex={p.ariaRow}
       aria-selected={p.selected === true}
-      className="gk-row"
+      className={cx('gk-row', p.className)}
       data-group={row.type === 'group' && row.row === undefined ? '' : undefined}
       data-footer={row.type === 'footer' ? '' : undefined}
       data-detail-open={p.detailState === 'open' ? '' : undefined}
@@ -143,11 +150,12 @@ function RowInner<R>(p: RowProps<R>) {
       data-odd={p.index % 2 ? '' : undefined}
       data-rowindex={p.pinSide ? undefined : p.index}
       data-pinned={p.pinSide}
-      style={
-        p.pinSide
-          ? { height: rowHeight, width: p.totalWidth }
-          : { height: rowHeight, width: p.totalWidth, transform: `translateY(${p.top}px)` }
-      }
+      style={{
+        height: rowHeight,
+        width: p.totalWidth,
+        ...(p.pinSide ? null : { transform: `translateY(${p.top}px)` }),
+        ...p.style,
+      }}
     >
       {renderSections(layout, pinned(layout.left), centerCells, pinned(layout.right))}
     </div>

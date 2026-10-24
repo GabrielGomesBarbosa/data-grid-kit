@@ -1,9 +1,13 @@
+import { useBase } from '../base'
 import { type ColumnDef, type GridInstance } from '../../core'
 import { title } from './shared'
+import { cx } from '../cx'
+import type { PanelProps } from './types'
 
 /* ----------------------------------------------------------- columns panel */
 
-export function ColumnsPanel<R>({ grid }: { grid: GridInstance<R> }) {
+export function ColumnsPanel<R>({ grid, className }: PanelProps<R>) {
+  const { Button, Checkbox } = useBase()
   const { api, state, options } = grid
   const visible = (c: ColumnDef) => state.columnVisibility[c.field] ?? !c.hidden
   const all = options.columns
@@ -11,12 +15,12 @@ export function ColumnsPanel<R>({ grid }: { grid: GridInstance<R> }) {
   // keep at least one column visible so the grid never becomes unreachable
   const shown = all.filter(visible).length
   return (
-    <div className="gk-panel">
+    <div className={cx('gk-panel', className)}>
       <ul className="gk-column-list">
         {all.map((c) => (
           <li key={c.field}>
             <label>
-              <input
+              <Checkbox
                 type="checkbox"
                 checked={visible(c)}
                 disabled={visible(c) && shown === 1}
@@ -28,12 +32,12 @@ export function ColumnsPanel<R>({ grid }: { grid: GridInstance<R> }) {
         ))}
       </ul>
       <div className="gk-panel-actions">
-        <button type="button" onClick={() => setAll(true)}>
+        <Button type="button" onClick={() => setAll(true)}>
           Show all
-        </button>
-        <button type="button" onClick={() => all.slice(1).forEach((c) => api.setColumnVisibility(c.field, false))}>
+        </Button>
+        <Button type="button" onClick={() => all.slice(1).forEach((c) => api.setColumnVisibility(c.field, false))}>
           Hide all
-        </button>
+        </Button>
       </div>
     </div>
   )

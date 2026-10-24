@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react'
 import { type ColumnDef, type GridApi, type GridOptions } from '../core'
 import { type EditCellParams } from './Editors'
+import type { GridSlotProps, GridSlots } from './slotTypes'
 
 export interface UIColumnDef<R = any> extends ColumnDef<R> {
   renderCell?: (params: { value: unknown; row: R }) => ReactNode
@@ -32,6 +33,10 @@ export interface GridProps<R = any> extends Omit<GridOptions<R>, 'columns'> {
   /** drag the corner of the selection to repeat its cells (needs cellSelection). Default true. */
   fillHandle?: boolean
   className?: string
+  /** replace parts of the grid with your own components (see `GridSlots`) */
+  slots?: Partial<GridSlots<R>>
+  /** extra props for the slots, merged over the ones the grid passes: mostly `className` and `style` */
+  slotProps?: GridSlotProps<R>
   csvFileName?: string
   /** file name of the Excel download (default export.xlsx) */
   xlsxFileName?: string

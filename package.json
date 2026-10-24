@@ -13,14 +13,14 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "bench": "turbo run bench --filter=data-grid-kit",
-    "check": "turbo run typecheck test build && npm run lint",
+    "check": "turbo run typecheck test build --output-logs=errors-only && npm run lint --silent",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "turbo run build --filter=data-grid-kit && changeset publish",
     "prepare": "git config core.hooksPath .githooks",
     "docs:deploy": "sh scripts/deploy-docs.sh",
     "lint": "eslint . && npm run dup",
-    "dup": "jscpd --config .jscpd.json"
+    "dup": "jscpd --config .jscpd.json --silent"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.1",

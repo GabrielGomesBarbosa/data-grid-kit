@@ -1,6 +1,6 @@
 import { useMemo, type CSSProperties, type MutableRefObject, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import type { ColumnDef, GridInstance } from '../core'
-import { HeaderCell } from './HeaderCell'
+import { useSlots } from './slotsContext'
 import { headerGroupSpans, type GroupSpan } from './headerGroups'
 import { renderSections } from './sections'
 import type { UIColumnDef } from './types'
@@ -30,17 +30,20 @@ export function Header<R>(p: HeaderProps<R>) {
     [layout, headerDepth],
   )
 
+  const { slots, slotProps } = useSlots<R>()
+  const HeaderCellSlot = slots.headerCell
   const title = (c: ColumnDef<R>, style: CSSProperties) => (
-    <HeaderCell
+    <HeaderCellSlot
       key={c.field}
       col={c as UIColumnDef<R>}
-      style={style}
       colIndex={colPos.get(c.field) ?? 0}
       grid={grid}
       controls={p.controls}
       onOpenMenu={p.onOpenMenu}
       onDragIntent={p.reorder && c.reorderable !== false ? p.onDragIntent : undefined}
       suppressClick={() => p.justDragged.current}
+      {...slotProps.headerCell}
+      style={{ ...style, ...slotProps.headerCell?.style }}
     />
   )
   const pinnedTitles = (cols: ColumnDef<R>[]) => cols.map((c) => title(c, { width: layout.width(c.field), flex: 'none' }))

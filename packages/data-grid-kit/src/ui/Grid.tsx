@@ -3,15 +3,13 @@ import { useGrid, type GridOptions, type RenderRow } from '../core'
 import { useIsomorphicLayoutEffect } from '../core/isomorphic'
 
 import { Header } from './Header'
-import { Footer } from './Footer'
-import { ErrorBanner, EmptyState, LoadingBar } from './Overlays'
+import { defaultSlots } from './defaultSlots'
+import { SlotsProvider } from './slotsContext'
+import type { GridSlotProps, GridSlots } from './slotTypes'
 import { ColumnDragFeedback, RowDragFeedback } from './DragFeedback'
 import { Popovers } from './Popovers'
 import { type UIColumnDef, type GridProps } from './types'
-import { DetailPanel } from './DetailPanel'
-import { SkeletonRow } from './SkeletonRow'
-import { Row } from './Row'
-import { Toolbar, type PanelState } from './Toolbar'
+import type { PanelState } from './Toolbar'
 
 import { useCellSelection } from './useCellSelection'
 import { useRowDrag } from './useRowDrag'
@@ -22,6 +20,8 @@ import { usePanels } from './usePanels'
 import type { GridCtx } from './ctx'
 
 export type { GridProps, UIColumnDef }
+
+const NO_SLOT_PROPS: GridSlotProps = {}
 
 /** height of a detail panel when `renderDetailPanel` is given without `detailPanelHeight` */
 const DETAIL_DEFAULT = 200
@@ -46,8 +46,13 @@ export function Grid<R = any>(props: GridProps<R>) {
     csvFileName = 'export.csv',
     xlsxFileName = 'export.xlsx',
     onReady,
+    slots: userSlots,
+    slotProps = NO_SLOT_PROPS,
     ...options
   } = props
+  const resolvedSlots = useMemo(() => ({ slots: { ...defaultSlots, ...userSlots, icons: { ...defaultSlots.icons, ...userSlots?.icons } } as GridSlots<R>, slotProps }), [userSlots, slotProps])
+  const { slots } = resolvedSlots
+  const { row: RowSlot, skeletonRow: SkeletonRowSlot, detailPanel: DetailPanelSlot } = slots
   const grid = useGrid<R>({
     ...options,
     // giving a renderer is enough to turn the feature on
@@ -167,7 +172,7 @@ export function Grid<R = any>(props: GridProps<R>) {
       // server data that hasn't arrived: a placeholder row (client-side grids never have gaps)
       if (grid.server && i < rows.length) {
         body.push(
-          <SkeletonRow
+          <SkeletonRowSlot
             key={`sk-${i}`}
             index={i}
             top={geometry.topOf(i)}
@@ -176,6 +181,7 @@ export function Grid<R = any>(props: GridProps<R>) {
             layout={layout}
             colRange={colRange}
             ariaRow={hdr + pinnedTop.length + i + geometry.slotsBefore(i)}
+            {...slotProps.skeletonRow}
           />,
         )
       }
@@ -183,7 +189,7 @@ export function Grid<R = any>(props: GridProps<R>) {
     }
     const here = focused?.rowId === r.id
     body.push(
-      <Row<R>
+      <RowSlot
         {...rowShared}
         key={r.id}
         row={r}
@@ -202,6 +208,7 @@ export function Grid<R = any>(props: GridProps<R>) {
         canReorder={canReorderRows && r.row !== undefined}
         onRowDragStart={onRowDragStart}
         dragging={rowDrag?.id === r.id}
+        {...slotProps.row}
       />,
     )
   }
@@ -213,7 +220,7 @@ export function Grid<R = any>(props: GridProps<R>) {
       const row = slot && rows[slot.index]?.row
       if (!slot || row === undefined) continue
       detailNodes.push(
-        <DetailPanel
+        <DetailPanelSlot
           key={`detail-${slot.id}`}
           top={geometry.slotTop(k)}
           height={slot.height}
@@ -223,16 +230,17 @@ export function Grid<R = any>(props: GridProps<R>) {
           ariaRow={hdr + pinnedTop.length + slot.index + k + 1}
           colCount={layout.all.length}
           onMeasure={(h) => api.setDetailPanelHeight(slot.id, h)}
+          {...slotProps.detailPanel}
         >
           {renderDetailPanel({ row })}
-        </DetailPanel>,
+        </DetailPanelSlot>,
       )
     }
   }
 
   const pinnedRowsView = (list: RenderRow<R>[], side: 'top' | 'bottom', firstAria: number) =>
     list.map((r, i) => (
-      <Row<R>
+      <RowSlot
         {...rowShared}
         key={r.id}
         row={r}
@@ -251,98 +259,101 @@ export function Grid<R = any>(props: GridProps<R>) {
         canReorder={false}
         onRowDragStart={undefined}
         dragging={false}
+        {...slotProps.row}
       />
     ))
 
   return (
-    <div className={`gk-root ${cellSelection ? 'gk-cell-select' : ''} ${className ?? ''}`} style={{ height }}>
-      {toolbar && <Toolbar grid={grid} panel={panel} onPanel={openPanel} onExport={doExport} />}
-      {grid.server?.loading && <LoadingBar />}
-      {grid.server?.error && <ErrorBanner message={grid.server.error.message} onRetry={() => api.refreshData()} />}
-      <div
-        ref={scrollerRef}
-        className="gk-scroller"
-        role="grid"
-        aria-rowcount={rows.length + detailSlots.length + hdr - 1 + pinnedTop.length + pinnedBottom.length + (footer ? 1 : 0)}
-        aria-colcount={layout.all.length}
-        aria-multiselectable={checkboxSelection}
-        aria-busy={grid.server?.loading || undefined}
-        aria-activedescendant={activeId}
-        tabIndex={0}
-        onScroll={onScroll}
-        onKeyDown={onKeyDown}
-        onCopy={onCopy}
-        onCut={onCut}
-        onPaste={onPaste}
-      >
-        <div className="gk-content" style={{ width: totalWidth, height: bodyHeight + headerHeight + pinnedHeight }}>
-          <Header
-            grid={grid}
-            colPos={colPos}
-            controls={columnControls}
-            reorder={columnReorder}
-            onOpenMenu={openMenu}
-            onDragIntent={startColumnDrag}
-            justDragged={justDragged}
-            totalWidth={totalWidth}
-          />
-          {pinnedTop.length > 0 && (
+    <SlotsProvider value={resolvedSlots}>
+      <div className={`gk-root ${cellSelection ? 'gk-cell-select' : ''} ${className ?? ''}`} style={{ height }}>
+        {toolbar && <slots.toolbar grid={grid} panel={panel} onPanel={openPanel} onExport={doExport} {...slotProps.toolbar} />}
+        {grid.server?.loading && <slots.loadingOverlay {...slotProps.loadingOverlay} />}
+        {grid.server?.error && <slots.errorOverlay message={grid.server.error.message} onRetry={() => api.refreshData()} {...slotProps.errorOverlay} />}
+        <div
+          ref={scrollerRef}
+          className="gk-scroller"
+          role="grid"
+          aria-rowcount={rows.length + detailSlots.length + hdr - 1 + pinnedTop.length + pinnedBottom.length + (footer ? 1 : 0)}
+          aria-colcount={layout.all.length}
+          aria-multiselectable={checkboxSelection}
+          aria-busy={grid.server?.loading || undefined}
+          aria-activedescendant={activeId}
+          tabIndex={0}
+          onScroll={onScroll}
+          onKeyDown={onKeyDown}
+          onCopy={onCopy}
+          onCut={onCut}
+          onPaste={onPaste}
+        >
+          <div className="gk-content" style={{ width: totalWidth, height: bodyHeight + headerHeight + pinnedHeight }}>
+            <Header
+              grid={grid}
+              colPos={colPos}
+              controls={columnControls}
+              reorder={columnReorder}
+              onOpenMenu={openMenu}
+              onDragIntent={startColumnDrag}
+              justDragged={justDragged}
+              totalWidth={totalWidth}
+            />
+            {pinnedTop.length > 0 && (
+              <div
+                className="gk-pinned-rows gk-pinned-rows-top"
+                role="rowgroup"
+                aria-label="Pinned rows (top)"
+                style={{ top: headerHeight, height: pinnedTop.length * rowHeight, width: totalWidth }}
+              >
+                {pinnedRowsView(pinnedTop, 'top', hdr)}
+              </div>
+            )}
             <div
-              className="gk-pinned-rows gk-pinned-rows-top"
+              className="gk-body"
               role="rowgroup"
-              aria-label="Pinned rows (top)"
-              style={{ top: headerHeight, height: pinnedTop.length * rowHeight, width: totalWidth }}
+              style={{ height: bodyHeight, ['--gk-row-h' as string]: `${rowHeight}px` }}
+              onPointerDown={onBodyPointerDown}
+              onClick={onBodyClick}
+              onDoubleClick={onBodyDoubleClick}
             >
-              {pinnedRowsView(pinnedTop, 'top', hdr)}
+              {body}
+              {detailNodes}
             </div>
-          )}
-          <div
-            className="gk-body"
-            role="rowgroup"
-            style={{ height: bodyHeight, ['--gk-row-h' as string]: `${rowHeight}px` }}
-            onPointerDown={onBodyPointerDown}
-            onClick={onBodyClick}
-            onDoubleClick={onBodyDoubleClick}
-          >
-            {body}
-            {detailNodes}
+            {(pinnedBottom.length > 0 || footer) && (
+              <div
+                className="gk-pinned-rows gk-pinned-rows-bottom"
+                role="rowgroup"
+                aria-label={footer ? 'Pinned rows and totals' : 'Pinned rows (bottom)'}
+                style={{ height: (pinnedBottom.length + (footer ? 1 : 0)) * rowHeight, width: totalWidth }}
+              >
+                {pinnedRowsView(pinnedBottom, 'bottom', hdr + pinnedTop.length + rows.length + detailSlots.length)}
+                {footer && pinnedRowsView([footer], 'bottom', hdr + pinnedTop.length + rows.length + detailSlots.length + pinnedBottom.length)}
+              </div>
+            )}
+            <slots.noRowsOverlay grid={grid} {...slotProps.noRowsOverlay} />
           </div>
-          {(pinnedBottom.length > 0 || footer) && (
-            <div
-              className="gk-pinned-rows gk-pinned-rows-bottom"
-              role="rowgroup"
-              aria-label={footer ? 'Pinned rows and totals' : 'Pinned rows (bottom)'}
-              style={{ height: (pinnedBottom.length + (footer ? 1 : 0)) * rowHeight, width: totalWidth }}
-            >
-              {pinnedRowsView(pinnedBottom, 'bottom', hdr + pinnedTop.length + rows.length + detailSlots.length)}
-              {footer && pinnedRowsView([footer], 'bottom', hdr + pinnedTop.length + rows.length + detailSlots.length + pinnedBottom.length)}
-            </div>
-          )}
-          <EmptyState grid={grid} />
         </div>
-      </div>
-      {(props.pagination !== false || grid.server) && <Footer grid={grid} paging={props.pagination !== false} rects={rects} />}
+        {(props.pagination !== false || grid.server) && <slots.footer grid={grid} paging={props.pagination !== false} rects={rects} {...slotProps.footer} />}
 
-      {rowDrag && <RowDragFeedback drag={rowDrag} scroller={scrollerRef} />}
-      <div className="gk-sr-only" role="status" aria-live="polite">
-        {announcement}
+        {rowDrag && <RowDragFeedback drag={rowDrag} scroller={scrollerRef} />}
+        <div className="gk-sr-only" role="status" aria-live="polite">
+          {announcement}
+        </div>
+        {drag && <ColumnDragFeedback drag={drag} label={columns.find((c) => c.field === drag.field)?.headerName ?? drag.field} />}
+        <Popovers
+          grid={grid}
+          menu={menu}
+          panel={panel}
+          closeMenu={() => setMenu(null)}
+          closePanel={() => setPanel(null)}
+          onFilter={openFilterFor}
+          aggregationMenu={aggregationMenu}
+          onExportCsv={(selectedOnly) => doExport(selectedOnly ? { selectedOnly: true } : {})}
+          onExportXlsx={() => {
+            setPanel(null)
+            void api.exportXlsx({ fileName: xlsxFileName })
+          }}
+        />
       </div>
-      {drag && <ColumnDragFeedback drag={drag} label={columns.find((c) => c.field === drag.field)?.headerName ?? drag.field} />}
-      <Popovers
-        grid={grid}
-        menu={menu}
-        panel={panel}
-        closeMenu={() => setMenu(null)}
-        closePanel={() => setPanel(null)}
-        onFilter={openFilterFor}
-        aggregationMenu={aggregationMenu}
-        onExportCsv={(selectedOnly) => doExport(selectedOnly ? { selectedOnly: true } : {})}
-        onExportXlsx={() => {
-          setPanel(null)
-          void api.exportXlsx({ fileName: xlsxFileName })
-        }}
-      />
-    </div>
+    </SlotsProvider>
   )
 }
 

@@ -1,31 +1,31 @@
+import { useBase } from '../base'
 import { type ReactNode } from 'react'
 import { aggregationLabel, availableAggregations, neighborInGroup, type GridInstance } from '../../core'
 
 /* ------------------------------------------------------------- column menu */
 
 function Item({ children, onClick, disabled }: { children: ReactNode; onClick: () => void; disabled?: boolean }) {
+  const { Button } = useBase()
   return (
-    <button type="button" role="menuitem" className="gk-menu-item" disabled={disabled} onClick={onClick}>
+    <Button type="button" role="menuitem" className="gk-menu-item" disabled={disabled} onClick={onClick}>
       {children}
-    </button>
+    </Button>
   )
 }
 
-export function ColumnMenu<R>({
-  grid,
-  field,
-  onClose,
-  onFilter,
-  aggregation = true,
-}: {
+export interface ColumnMenuProps<R> {
   grid: GridInstance<R>
   field: string
   onClose: () => void
   onFilter: (field: string) => void
+  /** show the Aggregate choices */
   aggregation?: boolean
-}) {
+}
+
+export function ColumnMenu<R>({ grid, field, onClose, onFilter, aggregation = true }: ColumnMenuProps<R>) {
   const { api, state, layout, options } = grid
-  const col = options.columns.find((c) => c.field === field)
+  // the columns on screen, so the generated ones (pivot) have a menu too
+  const col = layout.all.find((c) => c.field === field)
   if (!col) return null
   const sort = state.sortModel.find((s) => s.field === field)
   const side = layout.pinnedSide.get(field)

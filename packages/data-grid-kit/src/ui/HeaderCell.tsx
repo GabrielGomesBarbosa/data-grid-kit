@@ -1,8 +1,25 @@
+import { useBase } from './base'
+import { useIcons } from './icons'
 import { type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { defaultAlign, type GridInstance } from '../core'
+import { cx } from './cx'
 import { type UIColumnDef } from './types'
 
 /* ------------------------------------------------------------------ header */
+
+export interface HeaderCellProps<R> {
+  col: UIColumnDef<R>
+  style: CSSProperties
+  colIndex: number
+  grid: GridInstance<R>
+  controls: boolean
+  onOpenMenu: (field: string, anchor: DOMRect) => void
+  /** undefined when reordering is off for this column */
+  onDragIntent: ((field: string, e: ReactPointerEvent<HTMLElement>) => void) | undefined
+  suppressClick: () => boolean
+  /** added to the cell's class names (`slotProps.headerCell`) */
+  className?: string
+}
 
 export function HeaderCell<R>({
   col,
@@ -13,17 +30,10 @@ export function HeaderCell<R>({
   onOpenMenu,
   onDragIntent,
   suppressClick,
-}: {
-  col: UIColumnDef<R>
-  style: CSSProperties
-  colIndex: number
-  grid: GridInstance<R>
-  controls: boolean
-  onOpenMenu: (field: string, anchor: DOMRect) => void
-  /** undefined when reordering is off for this column */
-  onDragIntent: ((field: string, e: ReactPointerEvent<HTMLElement>) => void) | undefined
-  suppressClick: () => boolean
-}) {
+  className,
+}: HeaderCellProps<R>) {
+  const { Button } = useBase()
+  const icons = useIcons()
   const { api, state, layout } = grid
   const sort = state.sortModel.find((s) => s.field === col.field)
   const side = layout.pinnedSide.get(col.field)
@@ -49,7 +59,7 @@ export function HeaderCell<R>({
       role="columnheader"
       aria-colindex={colIndex + 1}
       aria-sort={sort ? (sort.direction === 'asc' ? 'ascending' : 'descending') : sortable ? 'none' : undefined}
-      className="gk-header-cell"
+      className={cx('gk-header-cell', className)}
       data-align={defaultAlign(col)}
       data-field={col.field}
       style={style}
@@ -59,7 +69,7 @@ export function HeaderCell<R>({
         onDragIntent(col.field, e)
       }}
     >
-      <button
+      <Button
         type="button"
         className="gk-header-title"
         disabled={!sortable}
@@ -69,15 +79,15 @@ export function HeaderCell<R>({
         }}
       >
         <span className="gk-header-label">{col.headerName ?? col.field}</span>
-        {sort && <span className="gk-sort">{sort.direction === 'asc' ? '↑' : '↓'}</span>}
-      </button>
+        {sort && <span className="gk-sort">{sort.direction === 'asc' ? <icons.sortAsc /> : <icons.sortDesc />}</span>}
+      </Button>
       {side && (
         <span className="gk-pin-mark" title={`Pinned ${side}`} aria-hidden="true">
-          {side === 'left' ? '⇤' : '⇥'}
+          {side === 'left' ? <icons.pinLeft /> : <icons.pinRight />}
         </span>
       )}
       {controls && (
-        <button
+        <Button
           type="button"
           className="gk-menu-btn"
           data-gk-anchor
@@ -85,8 +95,8 @@ export function HeaderCell<R>({
           aria-label={`${col.headerName ?? col.field} column menu`}
           onClick={(e) => onOpenMenu(col.field, e.currentTarget.getBoundingClientRect())}
         >
-          ⋮
-        </button>
+          <icons.columnMenu />
+        </Button>
       )}
       {col.resizable !== false && (
         <div

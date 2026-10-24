@@ -1,35 +1,40 @@
+import { useBase } from '../base'
+import { useIcons } from '../icons'
 import { defaultFilterItem, getColumnType, getFilterOperators, operatorNeedsValue, optionLabel, optionValue, type ColumnDef, type FilterItem, type FilterOperator, type GridInstance } from '../../core'
 import { title } from './shared'
+import { cx } from '../cx'
+import type { PanelProps } from './types'
 
 /* ------------------------------------------------------------ filter panel */
 
 function ValueInput({ col, item, onChange }: { col: ColumnDef; item: FilterItem; onChange: (v: string) => void }) {
+  const { Input, Select } = useBase()
   const type = getColumnType(col)
   const value = item.value == null ? '' : String(item.value)
   if (!operatorNeedsValue(item.operator)) return <span className="gk-muted">—</span>
   if (type === 'boolean') {
     return (
-      <select aria-label="Value" value={value} onChange={(e) => onChange(e.target.value)}>
+      <Select aria-label="Value" value={value} onChange={(e) => onChange(e.target.value)}>
         <option value="" />
         <option value="true">true</option>
         <option value="false">false</option>
-      </select>
+      </Select>
     )
   }
   if (type === 'singleSelect') {
     return (
-      <select aria-label="Value" value={value} onChange={(e) => onChange(e.target.value)}>
+      <Select aria-label="Value" value={value} onChange={(e) => onChange(e.target.value)}>
         <option value="" />
         {(col.valueOptions ?? []).map((o) => (
           <option key={String(optionValue(o))} value={String(optionValue(o))}>
             {optionLabel(o)}
           </option>
         ))}
-      </select>
+      </Select>
     )
   }
   return (
-    <input
+    <Input
       aria-label="Value"
       type={type === 'number' ? 'number' : type === 'date' ? 'date' : 'text'}
       placeholder="Value"
@@ -39,7 +44,9 @@ function ValueInput({ col, item, onChange }: { col: ColumnDef; item: FilterItem;
   )
 }
 
-export function FilterPanel<R>({ grid }: { grid: GridInstance<R> }) {
+export function FilterPanel<R>({ grid, className }: PanelProps<R>) {
+  const { Button, Select, Input } = useBase()
+  const icons = useIcons()
   const { api, state } = grid
   const columns = grid.options.columns.filter((c) => c.filterable !== false)
   const model = state.filterModel
@@ -50,7 +57,7 @@ export function FilterPanel<R>({ grid }: { grid: GridInstance<R> }) {
     if (col) setItems([...model.items, defaultFilterItem(col)])
   }
   return (
-    <div className="gk-panel">
+    <div className={cx('gk-panel', className)}>
       {model.items.length === 0 && <p className="gk-muted">No filters. Add one to narrow the rows.</p>}
       {model.items.map((item, i) => {
         const col = columns.find((c) => c.field === item.field) ?? columns[0]!
@@ -60,18 +67,18 @@ export function FilterPanel<R>({ grid }: { grid: GridInstance<R> }) {
         return (
           <div className="gk-filter-row" key={i}>
             {i === 1 && model.items.length > 1 ? (
-              <select
+              <Select
                 aria-label="Logic"
                 value={model.logic ?? 'and'}
                 onChange={(e) => api.setFilterModel({ ...model, logic: e.target.value as 'and' | 'or' })}
               >
                 <option value="and">And</option>
                 <option value="or">Or</option>
-              </select>
+              </Select>
             ) : (
               <span className="gk-filter-logic">{i === 0 ? 'Where' : (model.logic ?? 'and') === 'or' ? 'Or' : 'And'}</span>
             )}
-            <select
+            <Select
               aria-label="Column"
               value={item.field}
               onChange={(e) => {
@@ -84,8 +91,8 @@ export function FilterPanel<R>({ grid }: { grid: GridInstance<R> }) {
                   {title(c)}
                 </option>
               ))}
-            </select>
-            <select
+            </Select>
+            <Select
               aria-label="Operator"
               value={item.operator}
               onChange={(e) => update({ operator: e.target.value as FilterOperator })}
@@ -95,27 +102,27 @@ export function FilterPanel<R>({ grid }: { grid: GridInstance<R> }) {
                   {o.label}
                 </option>
               ))}
-            </select>
+            </Select>
             <ValueInput col={col} item={item} onChange={(value) => update({ value })} />
-            <button
+            <Button
               type="button"
               className="gk-icon-btn"
               aria-label="Remove filter"
               onClick={() => setItems(model.items.filter((_, j) => j !== i))}
             >
-              ✕
-            </button>
+              <icons.close />
+            </Button>
           </div>
         )
       })}
       <div className="gk-panel-actions">
-        <button type="button" onClick={addItem}>
+        <Button type="button" onClick={addItem}>
           + Add filter
-        </button>
+        </Button>
         {model.items.length > 0 && (
-          <button type="button" onClick={() => setItems([])}>
+          <Button type="button" onClick={() => setItems([])}>
             Remove all
-          </button>
+          </Button>
         )}
       </div>
     </div>

@@ -1,7 +1,11 @@
+import { useBase } from '../base'
+import { useIcons } from '../icons'
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { aggregationLabel, availableAggregations, isBuiltinAggregation, movePivotField, type ColumnDef, type GridInstance, type PivotModel, type PivotSection } from '../../core'
 import { pointerDrag } from '../pointerDrag'
 import { title } from './shared'
+import { cx } from '../cx'
+import type { PanelProps } from './types'
 
 /* ------------------------------------------------------------- pivot panel */
 
@@ -11,7 +15,9 @@ type Target = { section: PivotSection | 'fields'; before: string | null }
  * Choose what the pivot table is made of: row groups, column values and the aggregated values. Fields move by dragging
  * their grip between the lists (or by the buttons, which do the same for keyboard users).
  */
-export function PivotPanel<R>({ grid }: { grid: GridInstance<R> }) {
+export function PivotPanel<R>({ grid, className }: PanelProps<R>) {
+  const { Button, Checkbox, Select } = useBase()
+  const icons = useIcons()
   const { api, state, options } = grid
   const model = state.pivotModel
   const fields: ColumnDef[] = (grid.pivot?.sourceColumns ?? options.columns).filter((c) => !c.pivot)
@@ -80,7 +86,7 @@ export function PivotPanel<R>({ grid }: { grid: GridInstance<R> }) {
       title={`Drag ${name(field)} to another list`}
       onPointerDown={(e) => startDrag(field, e)}
     >
-      ⋮⋮
+      <icons.dragHandle />
     </span>
   )
   const overOf = (section: PivotSection | 'fields') => (drag?.over?.section === section ? drag.over : null)
@@ -93,15 +99,15 @@ export function PivotPanel<R>({ grid }: { grid: GridInstance<R> }) {
     const i = list.indexOf(field)
     return (
       <span className="gk-pivot-actions">
-        <button type="button" aria-label={`Move ${name(field)} up`} disabled={i === 0} onClick={() => place(field, section, list[i - 1]!)}>
-          ↑
-        </button>
-        <button type="button" aria-label={`Move ${name(field)} down`} disabled={i === list.length - 1} onClick={() => place(field, section, list[i + 2] ?? null)}>
-          ↓
-        </button>
-        <button type="button" aria-label={`Remove ${name(field)}`} onClick={() => place(field, null)}>
-          ✕
-        </button>
+        <Button type="button" aria-label={`Move ${name(field)} up`} disabled={i === 0} onClick={() => place(field, section, list[i - 1]!)}>
+          <icons.moveUp />
+        </Button>
+        <Button type="button" aria-label={`Move ${name(field)} down`} disabled={i === list.length - 1} onClick={() => place(field, section, list[i + 2] ?? null)}>
+          <icons.moveDown />
+        </Button>
+        <Button type="button" aria-label={`Remove ${name(field)}`} onClick={() => place(field, null)}>
+          <icons.close />
+        </Button>
       </span>
     )
   }
@@ -119,9 +125,9 @@ export function PivotPanel<R>({ grid }: { grid: GridInstance<R> }) {
   const where = (f: string): PivotSection | null => (rowFields.includes(f) ? 'rows' : columnFields.includes(f) ? 'columns' : valueFields.includes(f) ? 'values' : null)
 
   return (
-    <div className="gk-panel gk-pivot" data-dragging={drag ? '' : undefined}>
+    <div className={cx('gk-panel gk-pivot', className)} data-dragging={drag ? '' : undefined}>
       <label className="gk-pivot-mode">
-        <input type="checkbox" checked={state.pivotMode} onChange={(e) => api.setPivotMode(e.target.checked)} /> Pivot mode
+        <Checkbox type="checkbox" checked={state.pivotMode} onChange={(e) => api.setPivotMode(e.target.checked)} /> Pivot mode
       </label>
 
       <h4>Rows</h4>
@@ -143,7 +149,7 @@ export function PivotPanel<R>({ grid }: { grid: GridInstance<R> }) {
           <li key={c.field} data-pivot-field={c.field} data-drop={dropMark('columns', c.field)} data-dragged={drag?.field === c.field ? '' : undefined}>
             {grip(c.field)}
             <span>{name(c.field)}</span>
-            <select
+            <Select
               aria-label={`Sort ${name(c.field)} columns`}
               value={c.sort ?? 'asc'}
               onChange={(e) =>
@@ -152,7 +158,7 @@ export function PivotPanel<R>({ grid }: { grid: GridInstance<R> }) {
             >
               <option value="asc">A → Z</option>
               <option value="desc">Z → A</option>
-            </select>
+            </Select>
             {arrows(columnFields, c.field, 'columns')}
           </li>
         ))}
@@ -168,7 +174,7 @@ export function PivotPanel<R>({ grid }: { grid: GridInstance<R> }) {
             <li key={v.field} data-pivot-field={v.field} data-drop={dropMark('values', v.field)} data-dragged={drag?.field === v.field ? '' : undefined}>
               {grip(v.field)}
               <span>{name(v.field)}</span>
-              <select
+              <Select
                 aria-label={`Function for ${name(v.field)}`}
                 value={v.aggFunc}
                 onChange={(e) => update((m) => ({ ...m, values: m.values.map((x) => (x.field === v.field ? { ...x, aggFunc: e.target.value } : x)) }))}
@@ -178,7 +184,7 @@ export function PivotPanel<R>({ grid }: { grid: GridInstance<R> }) {
                     {aggregationLabel(f)}
                   </option>
                 ))}
-              </select>
+              </Select>
               {arrows(valueFields, v.field, 'values')}
             </li>
           )
@@ -195,7 +201,7 @@ export function PivotPanel<R>({ grid }: { grid: GridInstance<R> }) {
               <span>{title(c)}</span>
               <span className="gk-pivot-actions">
                 {(['rows', 'columns', 'values'] as PivotSection[]).map((sec) => (
-                  <button
+                  <Button
                     key={sec}
                     type="button"
                     disabled={at === sec || (sec === 'values' && !canValue(c.field))}
@@ -203,7 +209,7 @@ export function PivotPanel<R>({ grid }: { grid: GridInstance<R> }) {
                     onClick={() => place(c.field, sec)}
                   >
                     {sec === 'rows' ? 'Row' : sec === 'columns' ? 'Column' : 'Value'}
-                  </button>
+                  </Button>
                 ))}
               </span>
             </li>
@@ -214,7 +220,7 @@ export function PivotPanel<R>({ grid }: { grid: GridInstance<R> }) {
       {drag && (
         <div className="gk-pivot-ghost" style={{ left: drag.x + 10, top: drag.y + 10 }} aria-hidden="true">
           {name(drag.field)}
-          {drag.over ? '' : ' ✕'}
+          {drag.over ? '' : <icons.close />}
         </div>
       )}
     </div>
