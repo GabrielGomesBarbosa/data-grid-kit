@@ -143,7 +143,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
   }, [api])
   useEffect(() => () => cancelAnimationFrame(frame.current), [])
 
-  const hasHierarchy = state.rowGroupingModel.length > 0 || !!props.getTreeDataPath
+  const hasHierarchy = state.rowGroupingModel.length > 0 || !!props.getTreeDataPath || !!grid.server?.tree
   const hierarchyField = layout.all[0]?.field
   const totalWidth = layout.leftWidth + layout.centerWidth + layout.rightWidth
   const colPos = useRefMemo(() => new Map(layout.all.map((c, i) => [c.field, i])), [layout])

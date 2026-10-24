@@ -3,7 +3,7 @@ import type { ApiContext } from './context'
 import type { GridApi } from '../gridTypes'
 
 export function rowsApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'toggleDetailPanel' | 'setDetailPanelExpanded' | 'setDetailPanelHeight' | 'canMoveRow' | 'moveRow' | 'pinRow' | 'toggleSelection' | 'clearSelection' | 'updateRows' | 'refreshData' | 'getDataSourceState'> {
-  const { set, resolveMove, pipelineRef, bump, optionsRef, leafIdsOf, ctrlRef } = c
+  const { set, resolveMove, pipelineRef, bump, optionsRef, leafIdsOf, ctrlRef, treeRef } = c
   return {
     toggleDetailPanel(id, open) {
       set((s) => {
@@ -49,14 +49,15 @@ export function rowsApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'toggleDetailPane
     updateRows(changes) {
       if (optionsRef.current.dataSource) {
         // the server owns which rows exist: only replacing rows that are loaded makes sense
-        ctrlRef.current?.replaceRows([...(changes.update ?? []), ...(changes.insert ?? [])])
+        const rows = [...(changes.update ?? []), ...(changes.insert ?? [])]
+        for (const level of treeRef.current ? treeRef.current.levels.map((l) => l.ctrl) : [ctrlRef.current]) level?.replaceRows(rows)
         bump()
         return
       }
       pipelineRef.current!.patch(changes)
       bump()
     },
-    refreshData: () => ctrlRef.current?.refresh(),
-    getDataSourceState: () => (optionsRef.current.dataSource ? (ctrlRef.current?.snapshot() ?? null) : null),
+    refreshData: () => (treeRef.current ? treeRef.current.refresh() : ctrlRef.current?.refresh()),
+    getDataSourceState: () => (optionsRef.current.dataSource ? ((treeRef.current ?? ctrlRef.current)?.snapshot() ?? null) : null),
   }
 }

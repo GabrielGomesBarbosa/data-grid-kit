@@ -2,6 +2,7 @@ import type { MutableRefObject } from 'react'
 import type { ColumnLayout } from '../layout'
 import type { Store } from '../store'
 import { DataSourceError, type DataSourceController } from '../dataSource'
+import type { ServerTree } from '../serverTree'
 import type { createPipeline, PipelineResult } from '../pipeline'
 import { resolveRange, type CellPoint, type RangeRect } from '../range'
 import type { GridApi } from '../gridTypes'
@@ -21,6 +22,8 @@ export interface ApiRefs<R> {
   resultRef: MutableRefObject<PipelineResult<R> | undefined>
   layoutRef: MutableRefObject<ColumnLayout<R> | undefined>
   ctrlRef: MutableRefObject<DataSourceController<R> | undefined>
+  /** tree data / row grouping on the server: every open level has its own controller */
+  treeRef: MutableRefObject<ServerTree<R> | undefined>
   pipelineRef: MutableRefObject<ReturnType<typeof createPipeline<R>> | undefined>
   pinningActiveRef: MutableRefObject<boolean>
   apiRef: MutableRefObject<GridApi<R> | undefined>
@@ -29,7 +32,7 @@ export interface ApiRefs<R> {
 }
 
 export function createApiContext<R>(refs: ApiRefs<R>) {
-  const { store, optionsRef, resultRef, layoutRef, ctrlRef, pipelineRef, bump } = refs
+  const { store, optionsRef, resultRef, layoutRef, ctrlRef, treeRef, pipelineRef, bump } = refs
   const set = (patch: Partial<GridState> | ((s: GridState) => Partial<GridState>)) => {
     const prev = store.getState()
     store.setState(patch)
@@ -72,7 +75,7 @@ export function createApiContext<R>(refs: ApiRefs<R>) {
   const commitRows = (rows: R[]) => {
     const ctrl = ctrlRef.current
     if (ctrl && optionsRef.current.dataSource) {
-      ctrl.replaceRows(rows)
+      for (const c of treeRef.current ? treeRef.current.levels.map((l) => l.ctrl) : [ctrl]) c.replaceRows(rows)
       // the server may have placed the row elsewhere: re-read what is in view, quietly
       if (optionsRef.current.dataSource.updateRow) ctrl.revalidate()
     } else pipelineRef.current!.patch({ update: rows })

@@ -109,6 +109,8 @@ export interface GridApi<R = any> {
 }
 
 export interface ServerInfo {
+  /** rows form a tree loaded level by level (the source has `getChildrenCount`) */
+  tree: boolean
   /** 'pages' (paginated) or 'lazy' (positions that load as you scroll) */
   mode: 'pages' | 'lazy'
   /** rows in the data set; -1 until the server says */

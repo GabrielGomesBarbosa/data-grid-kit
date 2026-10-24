@@ -1,7 +1,9 @@
 import ServerPagesDemo from '../demos/ServerPagesDemo'
 import ServerScrollDemo from '../demos/ServerScrollDemo'
+import ServerTreeDemo from '../demos/ServerTreeDemo'
 import serverPagesSrc from '../demos/ServerPagesDemo.tsx?raw'
 import serverScrollSrc from '../demos/ServerScrollDemo.tsx?raw'
+import serverTreeSrc from '../demos/ServerTreeDemo.tsx?raw'
 import { CodeBlock } from '../components/CodeBlock'
 import { features } from '../api'
 import { type PageDef, demo } from './shared'
@@ -28,6 +30,31 @@ export const page: PageDef = {
         requested in blocks (<code>dataSourceChunkSize</code>, default 100) as they come into view, a few blocks ahead in the scroll direction. Fast
         scrolling is debounced, so rows you fly past are not requested. If the server can't count, leave out <code>rowCount</code>: return{' '}
         <code>pageInfo: &#123; hasNextPage &#125;</code> and the grid keeps growing as you reach the end (infinite scroll).
+      </p>
+      <h2>Tree data and row grouping</h2>
+      {demo('ServerTreeDemo', ServerTreeDemo, serverTreeSrc)}
+      <p>
+        Give the data source <code>getChildrenCount(row)</code> (0 for a leaf, -1 when it has children but the count is unknown) and <code>getGroupKey(row)</code>, and rows become a tree
+        that is loaded level by level: <code>getRows</code> gets <code>groupKeys</code>, the keys of the path to the parent (<code>[]</code> for the top level), and answers for that level
+        only. A level is requested when its parent is expanded, in blocks like any other rows, and what it returned is cached under its path (collapse and expand again: nothing is sent).
+        Open levels follow the sort and filter; changing them starts again from the top, and the rows that were open are asked for again.
+      </p>
+      <ul>
+        <li>
+          <strong>Row grouping</strong> is the same thing with <code>rowGroupingModel</code>: <code>groupFields</code> (the model) is sent with every request, the level at depth{' '}
+          <em>n</em> is grouped by <code>groupFields[n]</code>, and rows that have children are the group rows.
+        </li>
+        <li>
+          <strong>Aggregation:</strong> <code>aggregationModel</code> is sent along (<code>{'{ salary: \'avg\' }'}</code>) and a row that has children shows <code>getAggregatedValue(row, field)</code>
+          for each of its fields. The grid does not compute anything: the server owns the numbers.
+        </li>
+        <li>
+          Expansion is the usual one (<code>toggleExpanded</code>, <code>expandAllByDefault</code>): rows keep their expanded state across refreshes as long as their ids are stable.
+        </li>
+      </ul>
+      <p>
+        Needs <code>pagination=&#123;false&#125;</code> (one scrolling list). Not covered: pivoting on the server (pivot stays client-side), footer totals, and a pager over a tree.
+        If a level fails to load, <code>onDataSourceError</code> is called and its rows stay as skeletons until it is retried.
       </p>
       <h2>Cursor-based APIs</h2>
       <p>

@@ -4,6 +4,12 @@ import { CursorTrail } from './cursors'
 import { LruCache, type DataSourceCache } from './cache'
 import { isAbort, sameShallow, takeRun, wantedBlocks } from './util'
 
+/** what the server groups and aggregates by (tree data and row grouping on the server) */
+export interface Grouping {
+  groupFields?: string[]
+  aggregationModel?: Record<string, string>
+}
+
 export interface DataSourceControllerOptions<R> {
   /** read on every request, so a new `dataSource` prop takes effect without recreating the controller */
   getSource: () => DataSource<R> | undefined
@@ -28,6 +34,8 @@ export interface DataSourceControllerOptions<R> {
   keepPreviousData?: boolean
   /** re-read the visible rows this often, in the background (0 / undefined = off) */
   revalidateMs?: number
+  /** tree data: the keys of the path to the parent whose children this controller loads (`[]` for the top level) */
+  groupKeys?: string[]
   onError?: (error: DataSourceError) => void
   now?: () => number
 }
@@ -71,7 +79,7 @@ export class DataSourceController<R> {
   private listeners = new Set<() => void>()
   private now: () => number
 
-  private query = { sortModel: [] as SortItem[], filterModel: { items: [] } as FilterModel, key: '' }
+  private query = { sortModel: [] as SortItem[], filterModel: { items: [] } as FilterModel, key: '', grouping: undefined as Grouping | undefined, scope: undefined as string | undefined }
   private epoch = 0
   private blocks = new Map<number, R[]>()
   /** shown instead of gaps while a new query / refresh is still loading (keepPreviousData, refresh) */
@@ -110,6 +118,7 @@ export class DataSourceController<R> {
     this.now = options.now ?? Date.now
     this.cache = options.cache === null ? null : (options.cache ?? new LruCache<R>({ now: this.now }))
     this.query.key = this.queryKey()
+    this.query.scope = this.scopeOf(undefined)
   }
 
   /* ---------------------------------------------------------------- subscribe */
@@ -182,10 +191,11 @@ export class DataSourceController<R> {
   /* ----------------------------------------------------------------- settings */
 
   /** Change what is asked for. A different sort / filter starts over. */
-  setQuery(sortModel: SortItem[], filterModel: FilterModel) {
-    const key = JSON.stringify([filterModel, sortModel])
+  setQuery(sortModel: SortItem[], filterModel: FilterModel, grouping?: Grouping) {
+    grouping = grouping && (grouping.groupFields?.length || Object.keys(grouping.aggregationModel ?? {}).length) ? grouping : undefined
+    const key = JSON.stringify([filterModel, sortModel, grouping ?? null])
     if (key === this.query.key) return
-    this.query = { sortModel, filterModel, key }
+    this.query = { sortModel, filterModel, key, grouping, scope: this.scopeOf(grouping) }
     this.reset(this.o.keepPreviousData === true, true)
   }
 
@@ -246,8 +256,13 @@ export class DataSourceController<R> {
 
   /* ---------------------------------------------------------------- internals */
 
+  /** tree data and grouping: which level, grouping and aggregation the rows belong to (part of every cache key) */
+  private scopeOf(grouping: Grouping | undefined): string | undefined {
+    return this.o.groupKeys || grouping ? JSON.stringify([this.o.groupKeys ?? null, grouping?.groupFields ?? null, grouping?.aggregationModel ?? null]) : undefined
+  }
+
   private queryKey() {
-    return JSON.stringify([this.query.filterModel, this.query.sortModel])
+    return JSON.stringify([this.query.filterModel, this.query.sortModel, this.query.grouping ?? null])
   }
 
   private reset(keepShown: boolean, abort: boolean) {
@@ -316,7 +331,7 @@ export class DataSourceController<R> {
   private fromCache(c: number): boolean {
     if (!this.cache) return false
     const cs = this.o.chunkSize
-    const hit = this.cache.get({ sortModel: this.query.sortModel, filterModel: this.query.filterModel, start: c * cs, end: c * cs + cs - 1 })
+    const hit = this.cache.get({ sortModel: this.query.sortModel, filterModel: this.query.filterModel, scope: this.query.scope, start: c * cs, end: c * cs + cs - 1 })
     if (!hit) return false
     this.install(c, hit.rows, hit.rowCount, hit.pageInfo, cs)
     return true
@@ -399,10 +414,13 @@ export class DataSourceController<R> {
       filterModel: this.query.filterModel,
       signal: run.controller.signal,
     }
+    if (this.o.groupKeys) params.groupKeys = this.o.groupKeys
+    if (this.query.grouping?.groupFields) params.groupFields = this.query.grouping.groupFields
+    if (this.query.grouping?.aggregationModel) params.aggregationModel = this.query.grouping.aggregationModel
     const cursor = this.trail.cursorFor(chunks[0]!)
     if (cursor !== undefined) params.cursor = cursor
     if (this.rowCount >= 0) params.end = Math.min(params.end, Math.max(params.start, this.rowCount - 1))
-    const query = { sortModel: this.query.sortModel, filterModel: this.query.filterModel }
+    const query = { sortModel: this.query.sortModel, filterModel: this.query.filterModel, scope: this.query.scope }
     let request: Promise<GetRowsResponse<R>>
     try {
       request = Promise.resolve(source.getRows(params))
@@ -420,7 +438,7 @@ export class DataSourceController<R> {
     for (const c of run.chunks) if (this.pending.get(c) === run) this.pending.delete(c)
   }
 
-  private onResponse(run: Run, params: GetRowsParams, query: { sortModel: SortItem[]; filterModel: FilterModel }, res: GetRowsResponse<R>) {
+  private onResponse(run: Run, params: GetRowsParams, query: { sortModel: SortItem[]; filterModel: FilterModel; scope?: string }, res: GetRowsResponse<R>) {
     this.finish(run)
     if (this.destroyed) return
     const cs = this.o.chunkSize
@@ -436,7 +454,7 @@ export class DataSourceController<R> {
         const slice = rows.slice(c * cs - params.start, c * cs - params.start + cs)
         if (!slice.length && !ended) continue
         this.cache.set(
-          { sortModel: query.sortModel, filterModel: query.filterModel, start: c * cs, end: c * cs + cs - 1 },
+          { sortModel: query.sortModel, filterModel: query.filterModel, scope: query.scope, start: c * cs, end: c * cs + cs - 1 },
           { rows: slice, rowCount: res.rowCount, pageInfo: ended || c === chunks[chunks.length - 1] ? res.pageInfo : { hasNextPage: true } },
         )
       }
@@ -531,7 +549,7 @@ export class DataSourceController<R> {
     if (!this.cache) return
     const cs = this.o.chunkSize
     this.cache.set(
-      { sortModel: this.query.sortModel, filterModel: this.query.filterModel, start: c * cs, end: c * cs + cs - 1 },
+      { sortModel: this.query.sortModel, filterModel: this.query.filterModel, scope: this.query.scope, start: c * cs, end: c * cs + cs - 1 },
       { rows: rows.slice(), rowCount: this.rowCount >= 0 ? this.rowCount : undefined, pageInfo },
     )
   }

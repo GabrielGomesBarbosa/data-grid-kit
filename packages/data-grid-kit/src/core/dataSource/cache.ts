@@ -6,6 +6,8 @@ export interface DataSourceCacheKey {
   filterModel: FilterModel
   start: number
   end: number
+  /** tree and grouped data: which level (`groupKeys`), grouping and aggregation the rows are for */
+  scope?: string
 }
 
 /** Anything with these three methods works as a cache. Pass `null` as `dataSourceCache` for no caching. */
@@ -15,7 +17,7 @@ export interface DataSourceCache<R = any> {
   clear(): void
 }
 
-export const cacheKeyOf = (k: DataSourceCacheKey) => JSON.stringify([k.filterModel, k.sortModel, k.start, k.end])
+export const cacheKeyOf = (k: DataSourceCacheKey) => JSON.stringify([k.filterModel, k.sortModel, k.start, k.end, k.scope ?? null])
 
 export interface LruCacheOptions {
   /** how long an entry is served, in ms (default 5 minutes) */
