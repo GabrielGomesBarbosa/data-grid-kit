@@ -48,7 +48,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsup && cp src/ui/styles.css dist/styles.css",
+    "build": "tsup && node scripts/build-css.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "bench": "tsx scripts/bench.ts && tsx scripts/xlsx-bench.ts"

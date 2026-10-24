@@ -1,0 +1,131 @@
+/* ---- pivot panel ---- */
+.gk-pivot {
+  min-width: 300px;
+  max-height: min(70vh, 560px);
+  overflow: auto;
+}
+.gk-pivot h4 {
+  margin: 12px 0 4px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--gk-text-muted);
+}
+.gk-pivot-mode {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+.gk-pivot-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.gk-pivot-list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+}
+.gk-pivot-list li > span:first-child {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gk-pivot-list li.gk-muted {
+  color: var(--gk-text-muted);
+}
+.gk-pivot-fields li[data-used] > span:first-child {
+  font-weight: 600;
+}
+.gk-pivot-actions {
+  display: flex;
+  gap: 2px;
+}
+.gk-toolbar button[data-active] {
+  border-color: var(--gk-accent);
+}
+
+.gk-pivot-grip {
+  flex: none;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  color: var(--gk-text-muted);
+  letter-spacing: -2px;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+.gk-pivot-grip:hover {
+  color: var(--gk-text);
+  background: var(--gk-bg-alt);
+}
+.gk-pivot[data-dragging] {
+  cursor: grabbing;
+  user-select: none;
+}
+.gk-pivot[data-dragging] .gk-pivot-grip {
+  cursor: grabbing;
+}
+.gk-pivot-list {
+  min-height: 30px;
+  border-radius: 6px;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+.gk-pivot-list[data-over] {
+  outline-color: var(--gk-accent);
+  background: color-mix(in srgb, var(--gk-accent) 8%, transparent);
+}
+.gk-pivot-list li {
+  position: relative;
+}
+.gk-pivot-list li[data-dragged] {
+  opacity: 0.45;
+}
+/* a line where the field would land */
+.gk-pivot-list li[data-drop='before']::before,
+.gk-pivot-list[data-drop-end]:not([data-pivot-section='fields'])::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--gk-accent);
+  border-radius: 1px;
+  pointer-events: none;
+}
+.gk-pivot-list li[data-drop='before']::before {
+  top: -2px;
+}
+.gk-pivot-list[data-drop-end]:not([data-pivot-section='fields'])::after {
+  position: static;
+  display: block;
+  margin-top: 2px;
+}
+.gk-pivot-hint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--gk-text-muted);
+}
+.gk-pivot-ghost {
+  position: fixed;
+  z-index: 10000;
+  pointer-events: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--gk-accent);
+  color: #fff;
+  font-size: 13px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+/* the panel is a scrolling flex column: its sections keep their height instead of shrinking over each other */
+.gk-pivot > * {
+  flex: none;
+}

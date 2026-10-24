@@ -1,0 +1,63 @@
+/* ---- heading anchors ---- */
+.anchor {
+  margin-left: 8px;
+  font-weight: 400;
+  text-decoration: none;
+  color: var(--muted);
+  opacity: 0;
+}
+h2:hover .anchor,
+h3:hover .anchor,
+.anchor:focus-visible {
+  opacity: 1;
+}
+h2,
+h3 {
+  scroll-margin-top: 72px;
+}
+
+/* ---- on this page ---- */
+.toc {
+  position: sticky;
+  top: 53px;
+  align-self: start;
+  max-height: calc(100vh - 53px);
+  overflow: auto;
+  padding: 28px 16px 24px 8px;
+  font-size: 13px;
+}
+.toc p {
+  margin: 0 0 8px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.toc ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-left: 1px solid var(--border);
+}
+.toc li {
+  margin: 0;
+}
+.toc li[data-level='3'] a {
+  padding-left: 24px;
+}
+.toc a {
+  display: block;
+  padding: 3px 12px;
+  margin-left: -1px;
+  border-left: 2px solid transparent;
+  color: var(--muted);
+  text-decoration: none;
+}
+.toc a:hover {
+  color: var(--text);
+}
+.toc a[aria-current='location'] {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  font-weight: 600;
+}

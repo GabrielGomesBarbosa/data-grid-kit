@@ -1,0 +1,22 @@
+/* ---- aggregation ---- */
+.gk-agg {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.gk-agg-label {
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--gk-text-muted);
+  text-transform: lowercase;
+}
+.gk-row[data-footer] {
+  background: var(--gk-bg-header);
+  font-weight: 600;
+}
+.gk-menu-heading {
+  padding: 4px 10px 2px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gk-text-muted);
+}

@@ -1,0 +1,26 @@
+/* ---- column drag & drop ---- */
+body.gk-col-dragging,
+body.gk-col-dragging * {
+  cursor: grabbing !important;
+  user-select: none !important;
+}
+.gk-drag-ghost {
+  position: fixed;
+  z-index: 1100;
+  pointer-events: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--gk-accent, #2563eb);
+  color: #fff;
+  font: 600 13px/1.4 system-ui, sans-serif;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.3);
+  opacity: 0.92;
+}
+.gk-drop-indicator {
+  position: fixed;
+  z-index: 1099;
+  width: 3px;
+  pointer-events: none;
+  background: var(--gk-accent, #2563eb);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
+}

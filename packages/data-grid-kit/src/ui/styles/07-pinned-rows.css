@@ -1,0 +1,55 @@
+/* ---- pinned rows ---- */
+.gk-pinned-rows {
+  position: sticky;
+  z-index: 2;
+  background: var(--gk-bg);
+}
+.gk-pinned-rows-top {
+  box-shadow: 0 2px 0 var(--gk-border), 0 4px 8px -4px rgba(15, 23, 42, 0.25);
+}
+.gk-pinned-rows-bottom {
+  bottom: 0;
+  box-shadow: 0 -2px 0 var(--gk-border), 0 -4px 8px -4px rgba(15, 23, 42, 0.25);
+}
+.gk-row[data-pinned] {
+  position: relative;
+  transform: none;
+  background: var(--gk-bg-group);
+}
+.gk-rowpin {
+  /* overlaid on the cell so it never shifts the text */
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  gap: 2px;
+  padding: 1px 2px;
+  border-radius: 4px;
+  background: var(--gk-bg-header);
+  box-shadow: 0 0 0 1px var(--gk-border);
+  opacity: 0;
+}
+.gk-row:hover .gk-rowpin,
+.gk-row[data-pinned] .gk-rowpin,
+.gk-rowpin:focus-within {
+  opacity: 1;
+}
+.gk-rowpin button {
+  all: unset;
+  cursor: pointer;
+  padding: 0 3px;
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--gk-text-muted);
+  border-radius: 3px;
+}
+.gk-rowpin button:hover {
+  color: var(--gk-accent);
+  background: var(--gk-border);
+}
+@media (hover: none) {
+  .gk-rowpin {
+    opacity: 1;
+  }
+}

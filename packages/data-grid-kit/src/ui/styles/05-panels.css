@@ -1,0 +1,98 @@
+/* ---- popovers, menus, panels ---- */
+.gk-popover {
+  position: fixed;
+  z-index: 1000;
+  min-width: 160px;
+  max-width: min(640px, calc(100vw - 16px));
+  max-height: 70vh;
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 6px;
+  border: 1px solid var(--gk-border);
+  border-radius: 8px;
+  background: var(--gk-bg);
+  color: var(--gk-text);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+  font: 13px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+.gk-menu {
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+}
+.gk-menu-item {
+  border: 0;
+  border-radius: 4px;
+  text-align: left;
+  padding: 6px 10px;
+  background: transparent;
+  white-space: nowrap;
+}
+.gk-menu-item:hover:not(:disabled),
+.gk-menu-item:focus-visible {
+  background: var(--gk-bg-header);
+}
+.gk-menu-item:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.gk-menu-sep {
+  border: 0;
+  border-top: 1px solid var(--gk-border);
+  margin: 4px 0;
+  width: 100%;
+}
+.gk-panel {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gk-panel select,
+.gk-panel input[type='text'],
+.gk-panel input[type='number'],
+.gk-panel input[type='date'] {
+  font: inherit;
+  color: var(--gk-text);
+  background: var(--gk-bg);
+  border: 1px solid var(--gk-border);
+  border-radius: 6px;
+  padding: 3px 6px;
+  min-width: 0;
+}
+.gk-panel-actions {
+  display: flex;
+  gap: 6px;
+}
+.gk-filter-row {
+  display: grid;
+  grid-template-columns: 60px 130px 120px 150px auto;
+  gap: 6px;
+  align-items: center;
+}
+.gk-filter-logic {
+  color: var(--gk-text-muted);
+  padding-left: 4px;
+}
+.gk-icon-btn {
+  padding: 0 6px !important;
+}
+.gk-muted {
+  color: var(--gk-text-muted);
+  margin: 0;
+}
+.gk-column-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 200px;
+}
+.gk-column-list label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  cursor: pointer;
+}

@@ -1,0 +1,39 @@
+@media (max-width: 1180px) {
+  .shell {
+    grid-template-columns: 260px minmax(0, 1fr);
+  }
+  .toc {
+    display: none;
+  }
+}
+@media (max-width: 860px) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .search-open {
+    min-width: 0;
+    margin-left: 0;
+  }
+  .search-open span,
+  .gh,
+  .version {
+    display: none;
+  }
+  .hero h1 {
+    font-size: 30px;
+  }
+}
+
+.brand {
+  white-space: nowrap;
+}
+@media (max-width: 560px) {
+  .topbar {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 12px;
+  }
+  .search-open {
+    flex: 1;
+  }
+}

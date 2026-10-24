@@ -1,0 +1,259 @@
+.gk-scroller {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  outline: none;
+}
+.gk-scroller:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--gk-accent);
+}
+
+.gk-content {
+  position: relative;
+}
+
+/* Header stays on top while scrolling; pinned groups use native sticky positioning,
+   so there is no scroll-sync code at all. */
+.gk-header {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  background: var(--gk-bg-header);
+  border-bottom: 1px solid var(--gk-border);
+}
+/* the titles, and one row above them per level of column groups */
+.gk-header-row {
+  display: flex;
+  flex: none;
+}
+.gk-header-group {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  /* clip, not hidden: the label is sticky, which a scroll container would defeat */
+  overflow: clip;
+  padding: 0 8px;
+  font-weight: 600;
+  white-space: nowrap;
+  border-right: 1px solid var(--gk-border);
+  border-bottom: 1px solid var(--gk-border);
+}
+.gk-header-group-label {
+  position: sticky;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gk-agg-pivot {
+  font-variant-numeric: tabular-nums;
+}
+
+.gk-body {
+  position: relative;
+  width: 100%;
+  /*
+   * Placeholder rows. The browser scrolls on the compositor thread, so when the scrollbar is dragged
+   * fast it can paint a region before the rows for it have been rendered. Instead of an empty area it
+   * shows these zebra stripes, which real rows (opaque) cover as soon as they exist.
+   */
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent calc(var(--gk-row-h, 36px) - 1px),
+      var(--gk-border) calc(var(--gk-row-h, 36px) - 1px),
+      var(--gk-border) var(--gk-row-h, 36px)
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      var(--gk-bg) 0,
+      var(--gk-bg) var(--gk-row-h, 36px),
+      var(--gk-bg-alt) var(--gk-row-h, 36px),
+      var(--gk-bg-alt) calc(var(--gk-row-h, 36px) * 2)
+    );
+}
+
+.gk-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  background: var(--gk-bg);
+  border-bottom: 1px solid var(--gk-border);
+  contain: layout style;
+}
+.gk-row[data-odd] {
+  background: var(--gk-bg-alt);
+}
+.gk-row[data-group] {
+  background: var(--gk-bg-group);
+}
+.gk-row[data-selected] {
+  background: var(--gk-bg-selected);
+}
+.gk-row:hover {
+  filter: brightness(0.98);
+}
+
+.gk-center {
+  position: relative;
+  flex: none;
+}
+
+.gk-pinned {
+  position: sticky;
+  z-index: 2;
+  display: flex;
+  flex: none;
+  background: inherit;
+}
+.gk-pinned-left {
+  left: 0;
+  box-shadow: var(--gk-pin-shadow);
+  clip-path: inset(0 -12px 0 0);
+}
+.gk-pinned-right {
+  right: 0;
+  box-shadow: var(--gk-pin-shadow);
+  clip-path: inset(0 0 0 -12px);
+}
+.gk-header .gk-pinned {
+  background: var(--gk-bg-header);
+}
+
+.gk-cell,
+.gk-header-cell {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.gk-cell[data-align='right'],
+.gk-header-cell[data-align='right'] {
+  justify-content: flex-end;
+}
+.gk-cell[data-align='center'],
+.gk-header-cell[data-align='center'] {
+  justify-content: center;
+}
+.gk-cell-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gk-count {
+  color: var(--gk-text-muted);
+}
+
+.gk-header-cell {
+  position: relative;
+  font-weight: 600;
+}
+.gk-header-title {
+  all: unset;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.gk-header-title:disabled {
+  cursor: default;
+}
+.gk-header-title:focus-visible,
+.gk-pin:focus-visible,
+.gk-toggle:focus-visible {
+  outline: 2px solid var(--gk-accent);
+  outline-offset: -2px;
+}
+.gk-sort {
+  color: var(--gk-accent);
+}
+.gk-pin {
+  all: unset;
+  cursor: pointer;
+  color: var(--gk-text-muted);
+  padding: 0 2px;
+  opacity: 0.55;
+}
+.gk-pin:hover,
+.gk-pin:not([data-pinned='none']) {
+  opacity: 1;
+  color: var(--gk-accent);
+}
+.gk-resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  touch-action: none;
+}
+.gk-resizer[data-side='right'] {
+  right: 0;
+}
+.gk-resizer[data-side='left'] {
+  left: 0;
+}
+.gk-resizer:hover {
+  background: var(--gk-accent);
+  opacity: 0.4;
+}
+
+.gk-toggle {
+  all: unset;
+  cursor: pointer;
+  width: 16px;
+  text-align: center;
+  color: var(--gk-text-muted);
+  flex: none;
+}
+.gk-toggle-spacer {
+  width: 16px;
+  flex: none;
+}
+.gk-checkbox {
+  margin: 0;
+  flex: none;
+}
+
+.gk-empty {
+  position: absolute;
+  inset: 48px 0 auto 0;
+  text-align: center;
+  color: var(--gk-text-muted);
+}
+
+.gk-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px;
+  border-top: 1px solid var(--gk-border);
+  background: var(--gk-bg-header);
+  color: var(--gk-text-muted);
+}
+.gk-pager {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.gk-pager button {
+  cursor: pointer;
+  border: 1px solid var(--gk-border);
+  background: var(--gk-bg);
+  color: var(--gk-text);
+  border-radius: 4px;
+  padding: 0 8px;
+}
+.gk-pager button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

@@ -1,0 +1,52 @@
+.gk-root,
+.gk-popover {
+  --gk-bg: #ffffff;
+  --gk-bg-alt: #f8fafc;
+  --gk-bg-header: #f1f5f9;
+  --gk-bg-group: #eef2ff;
+  --gk-bg-selected: #dbeafe;
+  --gk-text: #0f172a;
+  --gk-text-muted: #64748b;
+  --gk-border: #e2e8f0;
+  --gk-accent: #2563eb;
+  --gk-pin-shadow: 0 0 8px rgba(15, 23, 42, 0.12);
+
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--gk-border);
+  border-radius: 8px;
+  background: var(--gk-bg);
+  color: var(--gk-text);
+  font: 13px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  overflow: hidden;
+}
+
+/* Follows the system theme. Set data-theme="light" or "dark" on <html> to force one. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .gk-root,
+  :root:not([data-theme='light']) .gk-popover {
+    --gk-bg: #0f172a;
+    --gk-bg-alt: #111c33;
+    --gk-bg-header: #1e293b;
+    --gk-bg-group: #1e2a4a;
+    --gk-bg-selected: #1e3a8a;
+    --gk-text: #e2e8f0;
+    --gk-text-muted: #94a3b8;
+    --gk-border: #334155;
+    --gk-accent: #60a5fa;
+    --gk-pin-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+  }
+}
+:root[data-theme='dark'] .gk-root,
+:root[data-theme='dark'] .gk-popover {
+    --gk-bg: #0f172a;
+    --gk-bg-alt: #111c33;
+    --gk-bg-header: #1e293b;
+    --gk-bg-group: #1e2a4a;
+    --gk-bg-selected: #1e3a8a;
+    --gk-text: #e2e8f0;
+    --gk-text-muted: #94a3b8;
+    --gk-border: #334155;
+    --gk-accent: #60a5fa;
+    --gk-pin-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+}

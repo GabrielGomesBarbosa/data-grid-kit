@@ -1,0 +1,15 @@
+/* The grid's stylesheet, in cascade order. `npm run build` concatenates these into dist/styles.css. */
+@import './00-theme.css';
+@import './01-layout.css';
+@import './02-cells.css';
+@import './03-header.css';
+@import './04-toolbar.css';
+@import './05-panels.css';
+@import './06-drag.css';
+@import './07-pinned-rows.css';
+@import './08-aggregation.css';
+@import './09-selection.css';
+@import './10-detail.css';
+@import './11-reorder.css';
+@import './12-server.css';
+@import './13-pivot.css';

@@ -1,0 +1,55 @@
+/* ---- toolbar ---- */
+.gk-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--gk-border);
+  background: var(--gk-bg);
+}
+.gk-toolbar button,
+.gk-panel button,
+.gk-menu-item {
+  font: inherit;
+  cursor: pointer;
+  color: var(--gk-text);
+  background: var(--gk-bg);
+  border: 1px solid var(--gk-border);
+  border-radius: 6px;
+  padding: 3px 10px;
+}
+.gk-toolbar button:hover,
+.gk-panel button:hover {
+  background: var(--gk-bg-header);
+}
+.gk-toolbar button[aria-expanded='true'] {
+  border-color: var(--gk-accent);
+}
+.gk-toolbar button:focus-visible,
+.gk-panel button:focus-visible,
+.gk-menu-item:focus-visible,
+.gk-search:focus-visible {
+  outline: 2px solid var(--gk-accent);
+  outline-offset: 1px;
+}
+.gk-badge {
+  display: inline-block;
+  margin-left: 6px;
+  min-width: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--gk-accent);
+  color: #fff;
+  font-size: 11px;
+  text-align: center;
+}
+.gk-search {
+  margin-left: auto;
+  font: inherit;
+  color: var(--gk-text);
+  background: var(--gk-bg);
+  border: 1px solid var(--gk-border);
+  border-radius: 6px;
+  padding: 3px 8px;
+  width: 200px;
+}

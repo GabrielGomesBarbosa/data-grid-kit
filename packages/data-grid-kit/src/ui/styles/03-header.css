@@ -1,0 +1,33 @@
+/* ---- header ---- */
+.gk-header-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gk-pin-mark {
+  color: var(--gk-accent);
+  font-weight: 400;
+}
+.gk-menu-btn {
+  all: unset;
+  cursor: pointer;
+  padding: 0 4px;
+  border-radius: 4px;
+  color: var(--gk-text-muted);
+  opacity: 0;
+}
+.gk-header-cell:hover .gk-menu-btn,
+.gk-menu-btn:focus-visible,
+.gk-menu-btn[aria-expanded='true'] {
+  opacity: 1;
+}
+.gk-menu-btn:hover {
+  background: var(--gk-border);
+}
+.gk-menu-btn:focus-visible {
+  outline: 2px solid var(--gk-accent);
+}
+@media (hover: none) {
+  .gk-menu-btn {
+    opacity: 1;
+  }
+}

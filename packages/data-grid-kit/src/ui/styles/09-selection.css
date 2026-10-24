@@ -1,0 +1,32 @@
+/* ---- cell range selection, fill ---- */
+.gk-cell-select .gk-body {
+  user-select: none;
+}
+.gk-cell[data-in-range] {
+  background-image: linear-gradient(color-mix(in srgb, var(--gk-accent) 14%, transparent), color-mix(in srgb, var(--gk-accent) 14%, transparent));
+  box-shadow:
+    inset 0 var(--gk-st, 0px) 0 0 var(--gk-accent),
+    inset 0 calc(var(--gk-sb, 0px) * -1) 0 0 var(--gk-accent),
+    inset var(--gk-sl, 0px) 0 0 0 var(--gk-accent),
+    inset calc(var(--gk-sr, 0px) * -1) 0 0 0 var(--gk-accent);
+}
+.gk-cell[data-fill] {
+  background-image: repeating-linear-gradient(135deg, transparent 0 4px, color-mix(in srgb, var(--gk-text-muted) 25%, transparent) 4px 6px);
+  box-shadow:
+    inset 0 var(--gk-ft, 0px) 0 0 var(--gk-text-muted),
+    inset 0 calc(var(--gk-fb, 0px) * -1) 0 0 var(--gk-text-muted),
+    inset var(--gk-fl, 0px) 0 0 0 var(--gk-text-muted),
+    inset calc(var(--gk-fr, 0px) * -1) 0 0 0 var(--gk-text-muted);
+}
+.gk-fill-handle {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  z-index: 3;
+  width: 8px;
+  height: 8px;
+  background: var(--gk-accent);
+  border: 1px solid var(--gk-bg);
+  cursor: crosshair;
+  touch-action: none;
+}
