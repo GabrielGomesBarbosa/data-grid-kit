@@ -19,6 +19,7 @@ import { usePanels } from './usePanels'
 import { useRowDrag } from './useRowDrag'
 import { useGridEvents } from './useGridEvents'
 import { useAutosize } from './useAutosize'
+import { useScrollApi } from './useScrollApi'
 
 const NO_SLOT_PROPS: GridSlotProps = {}
 
@@ -121,6 +122,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
   gridRef.current = grid
   useAutoRowHeights(!!props.getRowHeight, scrollerRef, gridRef)
   useAutosize(api, scrollerRef, gridRef)
+  useScrollApi(api, scrollerRef, gridRef)
   const autosizeRef = useRef(autosizeOptions)
   autosizeRef.current = autosizeOptions
   useEffect(() => {

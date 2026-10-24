@@ -173,8 +173,7 @@ export default function TimeOffDemo() {
       return next
     })
   const goToday = () => {
-    const scroller = root.current?.querySelector<HTMLElement>('.gk-scroller')
-    if (scroller && isThisMonth) scroller.scrollLeft = Math.max(0, (today.getDate() - 1) * 52 - 120)
+    if (isThisMonth) api.current?.scrollToColumn(`d${today.getDate()}`, 'center')
   }
 
   return (

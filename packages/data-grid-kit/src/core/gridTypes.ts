@@ -20,6 +20,11 @@ export interface ApplyResult {
   rejected: number
 }
 
+/** Where a row or column ends up when it is scrolled to: the nearest edge only if it is not in view, or the start, middle or end of the viewport. */
+export type ScrollAlign = 'nearest' | 'start' | 'center' | 'end'
+/** Scrolls the element of the renderer to a row and / or a column, by position (the built-in `Grid` registers one). */
+export type ScrollHandler = (target: { rowIndex?: number; colIndex?: number; align: ScrollAlign }) => void
+
 /** What `autosizeColumns` measures and how. */
 export interface AutosizeOptions {
   /** the fields to fit (default: every visible column) */
@@ -55,6 +60,17 @@ export interface GridApi<R = any> {
   setColumnMeasurer(measure: ColumnMeasurer | null): void
   /** how tight the rows are (scales `rowHeight` and `headerHeight`; rows sized by `getRowHeight` keep their own height) */
   setDensity(density: Density): void
+  /**
+   * Scroll to a row and / or a column by position: `rowIndex` is among the rows of the current page, `colIndex` among the visible
+   * columns. Takes the header, pinned columns and rows, per-row heights and open detail panels into account. Returns false when
+   * there is nothing to scroll to (or no renderer).
+   */
+  scrollToIndexes(target: { rowIndex?: number; colIndex?: number; align?: ScrollAlign }): boolean
+  scrollToRow(id: RowId, align?: ScrollAlign): boolean
+  scrollToColumn(field: string, align?: ScrollAlign): boolean
+  scrollToCell(id: RowId, field: string, align?: ScrollAlign): boolean
+  /** register how the grid scrolls (the built-in `Grid` does it for you; `null` removes it) */
+  setScrollHandler(handler: ScrollHandler | null): void
   setColumnWidth(field: string, width: number): void
   setColumnVisibility(field: string, visible: boolean): void
   /** replace the visibility of every column at once (`{}` goes back to each column's own `hidden`); every column may be hidden */
