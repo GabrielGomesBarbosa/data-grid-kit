@@ -44,7 +44,6 @@
   text-align: center;
 }
 .gk-search {
-  margin-left: auto;
   font: inherit;
   color: var(--gk-text);
   background: var(--gk-bg);
@@ -52,4 +51,46 @@
   border-radius: 6px;
   padding: 3px 8px;
   width: 200px;
+}
+
+/* the toolbar parts: a title that takes the free space, icon buttons, separators, a quick search that opens */
+.gk-toolbar-title {
+  flex: 1;
+  min-width: 0;
+  padding: 0 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.gk-toolbar .gk-toolbar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 6px;
+  border-color: transparent;
+  background: transparent;
+}
+.gk-toolbar .gk-toolbar-button:hover {
+  background: var(--gk-bg-header);
+}
+.gk-toolbar .gk-toolbar-button[data-active] {
+  color: var(--gk-accent);
+}
+.gk-toolbar-sep {
+  align-self: stretch;
+  width: 1px;
+  margin: 6px 4px;
+  background: var(--gk-border);
+}
+.gk-quick-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.gk-toolbar .gk-badge {
+  margin-left: 0;
 }

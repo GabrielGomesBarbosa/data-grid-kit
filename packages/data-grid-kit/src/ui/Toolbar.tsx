@@ -1,6 +1,5 @@
-import { useBase } from './base'
-import { type CSSProperties, type MouseEvent as ReactMouseEvent } from 'react'
-import { cx } from './cx'
+import { type CSSProperties, type ReactNode } from 'react'
+import { ColumnsButton, ExportButton, FilterButton, PivotButton, QuickFilter, Toolbar, ToolbarContext, ToolbarSeparator, ToolbarTitle } from './toolbarParts'
 import { type CsvOptions, type GridInstance } from '../core'
 
 /* ----------------------------------------------------------------- toolbar */
@@ -28,50 +27,31 @@ export interface ToolbarProps<R> {
   panel: PanelState | null
   onPanel: (kind: PanelKind, anchor: DOMRect) => void
   onExport: (options: CsvOptions & { selectedOnly?: boolean }) => void
+  /** shown at the start of the default toolbar (`slotProps.toolbar.title`) */
+  title?: ReactNode
   className?: string
   style?: CSSProperties
 }
 
-export function Toolbar<R>({ grid, panel, onPanel, onExport, className, style }: ToolbarProps<R>) {
-  const { Button, Input } = useBase()
-  const { api, state } = grid
-  const activeFilters = state.filterModel.items.length
-  const open = (kind: PanelKind) => (e: ReactMouseEvent<HTMLButtonElement>) =>
-    onPanel(kind, e.currentTarget.getBoundingClientRect())
-  void onExport
+/**
+ * The toolbar of a grid with `toolbar`: a title (`slotProps.toolbar.title`), the panel buttons, export and the quick search.
+ * It is made of the exported parts, so a toolbar of your own can use any of them and add its own controls.
+ */
+export function DefaultToolbar<R>(props: ToolbarProps<R>) {
+  const { title, className, style } = props
+  void props.onExport
   return (
-    <div className={cx('gk-toolbar', className)} style={style} role="toolbar" aria-label="Grid toolbar">
-      {!grid.pivot && (
-        <Button type="button" data-gk-anchor aria-haspopup="dialog" aria-expanded={panel?.kind === 'columns'} onClick={open('columns')}>
-          Columns
-        </Button>
-      )}
-      <Button type="button" data-gk-anchor aria-haspopup="dialog" aria-expanded={panel?.kind === 'filters'} onClick={open('filters')}>
-        Filters{activeFilters > 0 && <span className="gk-badge">{activeFilters}</span>}
-      </Button>
-      <Button type="button" data-gk-anchor aria-haspopup="menu" aria-expanded={panel?.kind === 'export'} onClick={open('export')}>
-        Export
-      </Button>
-      {grid.options.pivoting && !grid.options.dataSource && (
-        <Button
-          type="button"
-          data-gk-anchor
-          data-active={state.pivotMode ? '' : undefined}
-          aria-haspopup="dialog"
-          aria-expanded={panel?.kind === 'pivot'}
-          onClick={open('pivot')}
-        >
-          Pivot
-        </Button>
-      )}
-      <Input
-        type="search"
-        className="gk-search"
-        placeholder="Search…"
-        aria-label="Quick filter"
-        value={state.filterModel.quickFilter ?? ''}
-        onChange={(e) => api.setQuickFilter(e.target.value)}
-      />
-    </div>
+    <ToolbarContext.Provider value={props}>
+      <Toolbar className={className} style={style}>
+        <ToolbarTitle>{title}</ToolbarTitle>
+        <ColumnsButton />
+        <FilterButton />
+        <PivotButton />
+        <ToolbarSeparator />
+        <ExportButton />
+        <ToolbarSeparator />
+        <QuickFilter />
+      </Toolbar>
+    </ToolbarContext.Provider>
   )
 }

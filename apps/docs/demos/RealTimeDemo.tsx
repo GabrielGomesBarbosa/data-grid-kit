@@ -1,5 +1,5 @@
-import { memo, useEffect, useRef, useState } from 'react'
-import { Grid, type GridApi, type UIColumnDef } from 'data-grid-kit'
+import { createContext, memo, useContext, useEffect, useRef, useState } from 'react'
+import { ColumnsButton, ExportButton, FilterButton, Grid, PivotButton, QuickFilter, Toolbar, ToolbarButton, ToolbarSeparator, ToolbarTitle, type GridApi, type UIColumnDef } from 'data-grid-kit'
 
 interface Stock {
   id: string
@@ -113,6 +113,48 @@ const columns: UIColumnDef<Stock>[] = [
 
 const rows = makeStocks()
 
+interface Controls {
+  running: boolean
+  setRunning: (v: (r: boolean) => boolean) => void
+  rate: number
+  setRate: (ms: number) => void
+  sent: number
+}
+const ControlsContext = createContext<Controls | null>(null)
+
+/**
+ * A toolbar built from the grid's own parts, with the demo's controls among them: the title, the update rate and a pause
+ * button first, then the standard buttons. Any element can sit in the bar.
+ */
+function MarketToolbar() {
+  const { running, setRunning, rate, setRate, sent } = useContext(ControlsContext)!
+  return (
+    <Toolbar>
+      <ToolbarTitle>Stock Market</ToolbarTitle>
+      <span className="muted" role="status">
+        {sent.toLocaleString()} row updates
+      </span>
+      <select value={rate} onChange={(e) => setRate(Number(e.target.value))} aria-label="Update interval">
+        <option value={100}>100 ms</option>
+        <option value={300}>300 ms</option>
+        <option value={700}>700 ms</option>
+        <option value={1500}>1.5 s</option>
+      </select>
+      <ToolbarButton label={running ? 'Pause updates' : 'Resume updates'} onClick={() => setRunning((r) => !r)}>
+        {running ? '❚❚' : '▶'}
+      </ToolbarButton>
+      <ToolbarSeparator />
+      <ColumnsButton />
+      <FilterButton />
+      <PivotButton />
+      <ToolbarSeparator />
+      <ExportButton />
+      <ToolbarSeparator />
+      <QuickFilter />
+    </Toolbar>
+  )
+}
+
 /** Prices change a few times a second through `api.updateRows`; only the rows that changed render again. */
 export default function RealTimeDemo() {
   const api = useRef<GridApi<Stock>>()
@@ -148,27 +190,19 @@ export default function RealTimeDemo() {
   }, [running, rate])
 
   return (
-    <>
-      <div className="demo-head">
-        <h3>Stock Market</h3>
-        <span className="spacer" />
-        <label className="muted">
-          Update every{' '}
-          <select value={rate} onChange={(e) => setRate(Number(e.target.value))} aria-label="Update interval">
-            <option value={100}>100 ms</option>
-            <option value={300}>300 ms</option>
-            <option value={700}>700 ms</option>
-            <option value={1500}>1.5 s</option>
-          </select>
-        </label>
-        <button type="button" className="demo-chip" aria-pressed={running} onClick={() => setRunning((r) => !r)}>
-          {running ? 'Pause' : 'Resume'}
-        </button>
-        <span className="muted" role="status">
-          {sent.toLocaleString()} row updates
-        </span>
-      </div>
-      <Grid rows={rows} columns={columns} getRowId={(r) => r.id} height={470} rowHeight={52} pagination={false} toolbar onReady={(a) => (api.current = a)} />
-    </>
+    <ControlsContext.Provider value={{ running, setRunning, rate, setRate, sent }}>
+      <Grid
+        rows={rows}
+        columns={columns}
+        getRowId={(r) => r.id}
+        height={500}
+        rowHeight={52}
+        pagination={false}
+        toolbar
+        pivoting
+        slots={{ toolbar: MarketToolbar }}
+        onReady={(a) => (api.current = a)}
+      />
+    </ControlsContext.Provider>
   )
 }

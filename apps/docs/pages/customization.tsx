@@ -30,7 +30,7 @@ export const page: PageDef = {
         <code>skeletonRow</code>, <code>detailPanel</code>, <code>loadingOverlay</code>, <code>errorOverlay</code>, <code>noRowsOverlay</code>,{' '}
         <code>columnMenu</code>, <code>filterPanel</code>, <code>columnsPanel</code>, <code>pivotPanel</code>, <code>popover</code>, the base controls{' '}
         <code>baseButton</code>, <code>baseCheckbox</code>, <code>baseSelect</code>, <code>baseInput</code> (so every button and input matches your design
-        system) and <code>icons</code> (16 symbols, each replaceable).
+        system) and <code>icons</code> (21 symbols, each replaceable, the toolbar's among them).
       </p>
       <CodeBlock
         code={`import { Grid, defaultSlots } from 'data-grid-kit'
@@ -48,6 +48,47 @@ const MyButton = forwardRef((props, ref) => <MyDsButton ref={ref} size="sm" {...
         calls no row or cell; moving the focus calls two rows; updating one row calls that row; scrolling by one row calls only the row that entered.
       </p>
 
+      <h3>The toolbar is made of parts</h3>
+      <p>
+        <code>toolbar</code> turns on a bar with a title (<code>slotProps=&#123;&#123; toolbar: &#123; title: 'Stock Market' &#125; &#125;&#125;</code>), icon buttons for columns, filters, pivot and export, and a quick search that opens from its
+        button. Every piece is exported, so a toolbar of your own can use the ones it wants and add anything else (the real-time demo puts an update rate and a pause button in the same bar):
+      </p>
+      <div className="table-wrap">
+        <table className="props">
+          <thead>
+            <tr><th>Part</th><th>What it is</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>Toolbar</code>, <code>ToolbarTitle</code>, <code>ToolbarSeparator</code></td><td>The bar (<code>role="toolbar"</code>), a title that takes the free space, a divider.</td></tr>
+            <tr><td><code>ToolbarButton</code></td><td>An icon button with an accessible name and tooltip (<code>label</code>); it is your <code>baseButton</code>.</td></tr>
+            <tr><td><code>ColumnsButton</code>, <code>FilterButton</code>, <code>PivotButton</code>, <code>ExportButton</code></td><td>Open the panel or menu next to them. The filter button counts the active filters; the pivot button only exists with <code>pivoting</code>.</td></tr>
+            <tr><td><code>QuickFilter</code></td><td>A search button that opens a box, filters every column, closes with Escape when empty.</td></tr>
+            <tr><td><code>useToolbar()</code></td><td>The grid, the open panel and the actions, for parts you write.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <CodeBlock
+        code={`import { Toolbar, ToolbarTitle, ToolbarButton, FilterButton, QuickFilter, useToolbar } from 'data-grid-kit'
+
+function MyToolbar() {
+  const { grid } = useToolbar()
+  return (
+    <Toolbar>
+      <ToolbarTitle>{grid.result.rows.length} people</ToolbarTitle>
+      <FilterButton />
+      <ToolbarButton label="Reload" onClick={() => grid.api.refreshData()}>↻</ToolbarButton>
+      <QuickFilter placeholder="Find…" />
+    </Toolbar>
+  )
+}
+
+<Grid toolbar slots={{ toolbar: MyToolbar }} />`}
+      />
+      <p>
+        The parts read the grid from a context that the grid provides around <code>slots.toolbar</code>, so they work in any toolbar you write and in anything rendered inside it. They are unstyled-friendly (class names{' '}
+        <code>gk-toolbar</code>, <code>gk-toolbar-button</code>, <code>gk-toolbar-title</code>, <code>gk-quick-filter</code>, and the icons are replaceable through <code>slots.icons</code>). To put a control somewhere else on the page, use the
+        grid's <code>api</code> from <code>onReady</code>; a part outside a grid's toolbar throws and says so.
+      </p>
       <h2>3. Unstyled mode: your look, the grid's structure</h2>
       <p>
         The default stylesheet is split in two. <code>structure.css</code> has only what the grid needs to work (positioning, sticky pinned columns, the

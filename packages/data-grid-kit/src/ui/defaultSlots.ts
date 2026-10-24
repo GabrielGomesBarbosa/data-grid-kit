@@ -10,11 +10,11 @@ import { SkeletonRow } from './SkeletonRow'
 import { BaseButton, BaseCheckbox, BaseInput, BaseSelect } from './base'
 import { defaultIcons } from './icons'
 import type { GridSlots } from './slotTypes'
-import { Toolbar } from './Toolbar'
+import { DefaultToolbar } from './Toolbar'
 
 /** The built-in component of every slot. Also exported, so a slot can wrap the one it replaces. */
 export const defaultSlots: GridSlots = {
-  toolbar: Toolbar,
+  toolbar: DefaultToolbar,
   footer: Footer,
   loadingOverlay: LoadingBar,
   errorOverlay: ErrorBanner,

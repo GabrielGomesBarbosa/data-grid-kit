@@ -2,6 +2,7 @@ import { Header } from './Header'
 import { ColumnDragFeedback, RowDragFeedback } from './DragFeedback'
 import { Popovers } from './Popovers'
 import { SlotsProvider } from './slotsContext'
+import { ToolbarContext } from './toolbarParts'
 import { type UIColumnDef, type GridProps } from './types'
 import { useGridView } from './useGridView'
 
@@ -28,7 +29,11 @@ export function Grid<R = any>(props: GridProps<R>) {
   return (
     <SlotsProvider value={view.slotsValue}>
       <div {...view.getRootProps()}>
-        {view.toolbar && <slots.toolbar {...view.toolbar} {...slotProps.toolbar} />}
+        {view.toolbar && (
+          <ToolbarContext.Provider value={view.toolbar}>
+            <slots.toolbar {...view.toolbar} {...slotProps.toolbar} />
+          </ToolbarContext.Provider>
+        )}
         {view.loading && <slots.loadingOverlay {...slotProps.loadingOverlay} />}
         {view.error && <slots.errorOverlay message={view.error.message} onRetry={view.error.retry} {...slotProps.errorOverlay} />}
         <div {...view.getScrollerProps()}>

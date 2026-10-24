@@ -168,6 +168,8 @@ describe('slots: base controls and icons', () => {
       return <select ref={ref} data-ds="select" {...props} />
     })
     const { container } = grid({ toolbar: true, slots: { baseInput: Input, baseSelect: Select } })
+    expect(container.querySelector('input.gk-search')).toBeNull() // the search is a button until it is opened
+    fireEvent.click(screen.getByRole('button', { name: 'Search' }))
     expect(container.querySelector('input.gk-search[data-ds="input"]')).not.toBeNull()
     fireEvent.click(screen.getByRole('button', { name: /Filters/ }))
     fireEvent.click(screen.getByRole('button', { name: /Add filter/i }))
