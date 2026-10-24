@@ -31,3 +31,23 @@
     opacity: 1;
   }
 }
+
+/* The title is a button, and a host page may style every <button>: say what this one looks like (no box, no fill, not greyed
+   when the column cannot be sorted), so the header looks the same wherever the grid is used. */
+.gk-header-title {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+.gk-header-title:hover:not(:disabled),
+.gk-header-title:active:not(:disabled) {
+  background: transparent;
+}
+.gk-header-title:disabled {
+  opacity: 1;
+  cursor: default;
+}

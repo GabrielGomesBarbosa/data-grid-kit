@@ -56,4 +56,23 @@ describe('structure.css / theme.css', () => {
     const merged = new Set([...selectors(structure), ...selectors(theme)])
     for (const sel of selectors(all)) expect(merged.has(sel), sel).toBe(true)
   })
+
+  // a host page may style every <button> and every element: the header must not pick that up
+  describe('looks that do not depend on the host page', () => {
+    const rule = (selector: string) => {
+      let found: Record<string, string> | undefined
+      postcss.parse(all).walkRules((r) => {
+        if (r.selector === selector) found = Object.fromEntries((r.nodes ?? []).filter((n) => n.type === 'decl').map((d) => [(d as postcss.Declaration).prop, (d as postcss.Declaration).value]))
+      })
+      return found
+    }
+    it('the header title is a plain button: no box, no fill, not faded when it cannot sort', () => {
+      expect(rule('.gk-header-title')).toMatchObject({ border: '0', background: 'transparent', padding: '0' })
+      expect(rule('.gk-header-title:disabled')).toMatchObject({ opacity: '1' })
+      expect(rule('.gk-header-title:hover:not(:disabled),\n.gk-header-title:active:not(:disabled)')).toMatchObject({ background: 'transparent' })
+    })
+    it('the column dividers are always drawn (a line inside the resize handle)', () => {
+      expect(rule('.gk-resizer::after')).toMatchObject({ content: "''", width: '1px' })
+    })
+  })
 })

@@ -203,9 +203,27 @@
 .gk-resizer[data-side='left'] {
   left: 0;
 }
+/* a thin divider that is always there (so the column edges can be found), and a wider soft bar under the pointer */
+.gk-resizer::after {
+  content: '';
+  position: absolute;
+  top: 22%;
+  bottom: 22%;
+  right: 2px;
+  width: 1px;
+  background: color-mix(in srgb, var(--gk-text-muted) 45%, transparent);
+}
+.gk-resizer[data-side='left']::after {
+  right: auto;
+  left: 2px;
+}
 .gk-resizer:hover {
+  background: color-mix(in srgb, var(--gk-accent) 28%, transparent);
+}
+.gk-resizer:hover::after {
+  top: 0;
+  bottom: 0;
   background: var(--gk-accent);
-  opacity: 0.4;
 }
 
 .gk-toggle {
