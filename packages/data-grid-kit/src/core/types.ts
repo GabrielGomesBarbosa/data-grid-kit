@@ -136,6 +136,8 @@ export interface ColumnDef<R = any> {
   reorderable?: boolean
   groupable?: boolean
   hidden?: boolean
+  /** can the user hide it? `false`: the Hide item of its menu and its checkbox in the columns panel are off (default true) */
+  hideable?: boolean
   align?: 'left' | 'right' | 'center'
   /** alignment of the header's content (default: the same as `align`) */
   /** the order a click on this header goes through (see `GridOptions.sortingOrder`) */

@@ -92,7 +92,7 @@ export function ColumnMenu<R>({ grid, field, onClose, onFilter, aggregation = tr
         </>
       )}
       <hr className="gk-menu-sep" />
-      <Item disabled={visibleCount <= 1} onClick={run(() => api.setColumnVisibility(field, false))}>
+      <Item disabled={visibleCount <= 1 || col.hideable === false} onClick={run(() => api.setColumnVisibility(field, false))}>
         {t.menuHide}
       </Item>
     </>

@@ -6,6 +6,7 @@ import type { HeaderCellProps } from './HeaderCell'
 import type { ErrorOverlayProps, NoRowsOverlayProps, OverlayProps } from './Overlays'
 import type { ColumnMenuProps } from './panels/ColumnMenu'
 import type { PanelProps } from './panels/types'
+import type { ColumnsPanelProps } from './panels/ColumnsPanel'
 import type { PopoverProps } from './Popover'
 import type { RowProps } from './Row'
 import type { SkeletonRowProps } from './SkeletonRow'
@@ -35,7 +36,7 @@ export interface GridSlots<R = any> extends BaseSlots {
   detailPanel: ComponentType<DetailPanelProps>
   columnMenu: ComponentType<ColumnMenuProps<R>>
   filterPanel: ComponentType<PanelProps<R>>
-  columnsPanel: ComponentType<PanelProps<R>>
+  columnsPanel: ComponentType<ColumnsPanelProps<R>>
   pivotPanel: ComponentType<PanelProps<R>>
   /** the floating surface that holds the column menu and the panels */
   popover: ComponentType<PopoverProps>
