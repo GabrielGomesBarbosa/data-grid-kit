@@ -44,6 +44,22 @@ export const page: PageDef = {
           <code>event.preventDefault()</code> inside one stops what the grid would do with it.
         </li>
       </ul>
+      <h2>The column menu</h2>
+      <ul>
+        <li>
+          Opened by the ⋮ button, or with <kbd>Ctrl/Cmd+Enter</kbd> on a focused header (Enter sorts, Shift+Enter adds to the sort). <code>columnControls={'{false}'}</code> turns the buttons off
+          for every column, <code>columnMenu: false</code> for one.
+        </li>
+        <li>
+          Through <code>slotProps.columnMenu</code>: <code>hiddenItems</code> leaves groups out (<code>'sort' | 'filter' | 'pin' | 'move' | 'aggregate' | 'hide'</code>), and{' '}
+          <code>itemsBefore</code> / <code>itemsAfter</code> add your own items. They get <code>{'{ field, column, grid, close }'}</code>; draw them with <code>ColumnMenuItem</code> so they look like the others.
+          For more, replace the whole <code>columnMenu</code> slot.
+        </li>
+        <li>
+          <code>hideable: false</code> on a column keeps it visible (its Hide item and its checkbox in the columns panel are off). The columns panel takes{' '}
+          <code>disableShowHideToggle</code>, <code>disableResetButton</code>, <code>getTogglableColumns</code> and <code>toggleAllMode</code> through <code>slotProps.columnsPanel</code>.
+        </li>
+      </ul>
       <h2>Column definition</h2>
       <PropsTable rows={columnProps} />
     </>

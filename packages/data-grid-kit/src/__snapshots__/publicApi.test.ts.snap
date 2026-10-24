@@ -3,6 +3,7 @@
 exports[`public API surface > data-grid-kit exports 1`] = `
 [
   "BUILTIN_AGGREGATIONS",
+  "ColumnMenuItem",
   "ColumnsButton",
   "DEFAULT_COLUMN_WIDTH",
   "DEFAULT_HEADER_HEIGHT",

@@ -114,6 +114,7 @@ export const columnProps: PropRow[] = [
   { name: 'validate', type: '({ value, row, field }) => string | null | void | Promise<…>', description: 'Return a message to refuse the value being edited (shown on the editor; the edit stays open); may be async. Checked while typing and when saving.' },
   { name: 'quickFilter', type: 'boolean | ({ term, value, row }) => boolean', description: 'How the column takes part in the quick filter: false leaves it out; a function decides for a term whether the cell matches (default: its text contains the term).' },
   { name: 'hideable', type: 'boolean', default: 'true', description: 'false: the user cannot hide the column (its checkbox in the columns panel and the Hide item of its menu are off; Show/Hide All skips it).' },
+  { name: 'columnMenu', type: 'boolean', default: 'true', description: "false: no menu button on this column's header. The grid's columnControls={false} turns every one off." },
   { name: 'headerAlign', type: "'left' | 'right' | 'center'", description: "Alignment of the header's content (default: the same as align)." },
   { name: 'description', type: 'string', description: "A tooltip on the header, for when the name says too little." },
   { name: 'headerClassName', type: 'string', description: "Class names for the column's header cell." },

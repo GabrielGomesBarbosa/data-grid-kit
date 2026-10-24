@@ -1,16 +1,29 @@
 import { useBase } from '../base'
 import { type ReactNode } from 'react'
-import { aggregationLabel, availableAggregations, neighborInGroup, type GridInstance } from '../../core'
+import { aggregationLabel, availableAggregations, neighborInGroup, type ColumnDef, type GridInstance } from '../../core'
 
 /* ------------------------------------------------------------- column menu */
 
-function Item({ children, onClick, disabled }: { children: ReactNode; onClick: () => void; disabled?: boolean }) {
+/** One item of the column menu, drawn like the built-in ones (use it in `itemsBefore` / `itemsAfter`). */
+export function ColumnMenuItem({ children, onClick, disabled }: { children: ReactNode; onClick: () => void; disabled?: boolean }) {
   const { Button } = useBase()
   return (
     <Button type="button" role="menuitem" className="gk-menu-item" disabled={disabled} onClick={onClick}>
       {children}
     </Button>
   )
+}
+
+/** The groups of items of the column menu, for `hiddenItems`. */
+export type ColumnMenuGroup = 'sort' | 'filter' | 'pin' | 'move' | 'aggregate' | 'hide'
+
+/** What custom items of the column menu get to work with. */
+export interface ColumnMenuContext<R> {
+  field: string
+  column: ColumnDef<R>
+  grid: GridInstance<R>
+  /** close the menu (after an item did its job) */
+  close: () => void
 }
 
 export interface ColumnMenuProps<R> {
@@ -20,9 +33,14 @@ export interface ColumnMenuProps<R> {
   onFilter: (field: string) => void
   /** show the Aggregate choices */
   aggregation?: boolean
+  /** leave these groups of items out */
+  hiddenItems?: ColumnMenuGroup[]
+  /** your own items, above the built-in ones / below them (use `ColumnMenuItem` so they look the same). The context says which column it is. */
+  itemsBefore?: (context: ColumnMenuContext<R>) => ReactNode
+  itemsAfter?: (context: ColumnMenuContext<R>) => ReactNode
 }
 
-export function ColumnMenu<R>({ grid, field, onClose, onFilter, aggregation = true }: ColumnMenuProps<R>) {
+export function ColumnMenu<R>({ grid, field, onClose, onFilter, aggregation = true, hiddenItems, itemsBefore, itemsAfter }: ColumnMenuProps<R>) {
   const { api, state, layout, options, text: t } = grid
   // the columns on screen, so the generated ones (pivot) have a menu too
   const col = layout.all.find((c) => c.field === field)
@@ -36,65 +54,73 @@ export function ColumnMenu<R>({ grid, field, onClose, onFilter, aggregation = tr
     fn()
     onClose()
   }
+  const shown = (group: ColumnMenuGroup) => !hiddenItems?.includes(group)
+  const context: ColumnMenuContext<R> = { field, column: col, grid, close: onClose }
   return (
     <>
-      {col.sortable !== false && (
+      {itemsBefore?.(context)}
+      {col.sortable !== false && shown('sort') && (
         <>
-          <Item disabled={sort?.direction === 'asc'} onClick={run(() => api.setSortModel([{ field, direction: 'asc' }]))}>
+          <ColumnMenuItem disabled={sort?.direction === 'asc'} onClick={run(() => api.setSortModel([{ field, direction: 'asc' }]))}>
             {t.menuSortAsc}
-          </Item>
-          <Item disabled={sort?.direction === 'desc'} onClick={run(() => api.setSortModel([{ field, direction: 'desc' }]))}>
+          </ColumnMenuItem>
+          <ColumnMenuItem disabled={sort?.direction === 'desc'} onClick={run(() => api.setSortModel([{ field, direction: 'desc' }]))}>
             {t.menuSortDesc}
-          </Item>
+          </ColumnMenuItem>
           {sort && (
-            <Item onClick={run(() => api.setSortModel(state.sortModel.filter((s) => s.field !== field)))}>{t.menuUnsort}</Item>
+            <ColumnMenuItem onClick={run(() => api.setSortModel(state.sortModel.filter((s) => s.field !== field)))}>{t.menuUnsort}</ColumnMenuItem>
           )}
           <hr className="gk-menu-sep" />
         </>
       )}
-      {col.filterable !== false && <Item onClick={() => onFilter(field)}>{t.menuFilter}</Item>}
-      {col.pinnable !== false && (
+      {col.filterable !== false && shown('filter') && <ColumnMenuItem onClick={() => onFilter(field)}>{t.menuFilter}</ColumnMenuItem>}
+      {col.pinnable !== false && shown('pin') && (
         <>
-          <Item disabled={side === 'left'} onClick={run(() => api.pinColumn(field, 'left'))}>
+          <ColumnMenuItem disabled={side === 'left'} onClick={run(() => api.pinColumn(field, 'left'))}>
             {t.menuPinLeft}
-          </Item>
-          <Item disabled={side === 'right'} onClick={run(() => api.pinColumn(field, 'right'))}>
+          </ColumnMenuItem>
+          <ColumnMenuItem disabled={side === 'right'} onClick={run(() => api.pinColumn(field, 'right'))}>
             {t.menuPinRight}
-          </Item>
-          {side && <Item onClick={run(() => api.pinColumn(field, null))}>{t.menuUnpin}</Item>}
+          </ColumnMenuItem>
+          {side && <ColumnMenuItem onClick={run(() => api.pinColumn(field, null))}>{t.menuUnpin}</ColumnMenuItem>}
         </>
       )}
-      {col.reorderable !== false && (
+      {col.reorderable !== false && shown('move') && (
         <>
-          <Item disabled={!neighborInGroup(layout, field, -1)} onClick={run(() => api.moveColumnBy(field, -1))}>
+          <ColumnMenuItem disabled={!neighborInGroup(layout, field, -1)} onClick={run(() => api.moveColumnBy(field, -1))}>
             {t.menuMoveLeft}
-          </Item>
-          <Item disabled={!neighborInGroup(layout, field, 1)} onClick={run(() => api.moveColumnBy(field, 1))}>
+          </ColumnMenuItem>
+          <ColumnMenuItem disabled={!neighborInGroup(layout, field, 1)} onClick={run(() => api.moveColumnBy(field, 1))}>
             {t.menuMoveRight}
-          </Item>
+          </ColumnMenuItem>
         </>
       )}
-      {aggregation && aggChoices.length > 0 && (
+      {aggregation && shown('aggregate') && aggChoices.length > 0 && (
         <>
           <hr className="gk-menu-sep" />
           <div className="gk-menu-heading" role="presentation">
             {t.menuAggregate}
           </div>
-          <Item onClick={run(() => api.setAggregation(field, null))}>
+          <ColumnMenuItem onClick={run(() => api.setAggregation(field, null))}>
             {currentAgg ? '\u00a0\u00a0' : '✓ '}{t.menuAggregateNone}
-          </Item>
+          </ColumnMenuItem>
           {aggChoices.map((name) => (
-            <Item key={name} onClick={run(() => api.setAggregation(field, name))}>
+            <ColumnMenuItem key={name} onClick={run(() => api.setAggregation(field, name))}>
               {currentAgg === name ? '✓ ' : '\u00a0\u00a0'}
               {aggregationLabel(name, options.aggregationFunctions, t)}
-            </Item>
+            </ColumnMenuItem>
           ))}
         </>
       )}
-      <hr className="gk-menu-sep" />
-      <Item disabled={visibleCount <= 1 || col.hideable === false} onClick={run(() => api.setColumnVisibility(field, false))}>
-        {t.menuHide}
-      </Item>
+      {shown('hide') && (
+        <>
+          <hr className="gk-menu-sep" />
+          <ColumnMenuItem disabled={visibleCount <= 1 || col.hideable === false} onClick={run(() => api.setColumnVisibility(field, false))}>
+            {t.menuHide}
+          </ColumnMenuItem>
+        </>
+      )}
+      {itemsAfter?.(context)}
     </>
   )
 }

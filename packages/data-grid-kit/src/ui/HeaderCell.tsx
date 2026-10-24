@@ -82,6 +82,13 @@ export function HeaderCell<R>({
           if (suppressClick() || e.defaultPrevented) return // the end of a column drag, or an `onColumnHeaderClick` that took the click
           api.toggleSort(col.field, e.shiftKey || e.ctrlKey || e.metaKey)
         }}
+        onKeyDown={(e) => {
+          // Ctrl/Cmd+Enter on a header opens its menu (Enter sorts, Shift+Enter adds to the sort)
+          if (e.key !== 'Enter' || !(e.ctrlKey || e.metaKey) || !controls || col.columnMenu === false) return
+          e.preventDefault()
+          const anchor = e.currentTarget.parentElement?.querySelector('.gk-menu-btn') ?? e.currentTarget
+          onOpenMenu(col.field, anchor.getBoundingClientRect())
+        }}
       >
         <span className="gk-header-label">{col.renderHeader ? col.renderHeader({ field: col.field, colDef: col }) : (col.headerName ?? col.field)}</span>
         {sort && <span className="gk-sort">{sort.direction === 'asc' ? <icons.sortAsc /> : <icons.sortDesc />}</span>}
@@ -91,7 +98,7 @@ export function HeaderCell<R>({
           {side === 'left' ? <icons.pinLeft /> : <icons.pinRight />}
         </span>
       )}
-      {controls && (
+      {controls && col.columnMenu !== false && (
         <Button
           type="button"
           className="gk-menu-btn"
