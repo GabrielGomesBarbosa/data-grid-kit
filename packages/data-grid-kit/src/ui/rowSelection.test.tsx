@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { Grid } from './Grid'
 import type { UIColumnDef } from './types'
 import type { GridApi } from '../core'
@@ -82,7 +82,7 @@ describe('row selection by click', () => {
     expect(selected()).toEqual(['1'])
     expect(screen.getAllByLabelText('Select row')[3]).toHaveProperty('disabled', true)
     expect(screen.getAllByLabelText('Select row')[2]).toHaveProperty('disabled', false)
-    api!.selectAll()
+    act(() => api!.selectAll())
     expect(selected()).toEqual(['0', '1', '2', '4', '5'])
     expect(api!.isRowSelectable(4)).toBe(false)
     expect(api!.isRowSelectable(5)).toBe(true)
