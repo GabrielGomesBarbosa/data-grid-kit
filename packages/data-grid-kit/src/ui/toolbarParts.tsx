@@ -2,6 +2,7 @@ import { createContext, forwardRef, useContext, useEffect, useRef, useState, typ
 import { useBase, type BaseButtonProps } from './base'
 import { useIcons } from './icons'
 import { cx } from './cx'
+import { operatorNeedsValue } from '../core'
 import type { PanelKind, ToolbarProps } from './Toolbar'
 
 /* ------------------------------------------------------------------ context */
@@ -79,7 +80,8 @@ export function FilterButton({ label = 'Filters', children, ...rest }: PartProps
   const { grid } = useToolbar()
   const icons = useIcons()
   const panel = usePanelButton('filters')
-  const active = grid.state.filterModel.items.length
+  // a row nothing has been typed into yet filters nothing, so it is not counted
+  const active = grid.state.filterModel.items.filter((f) => !operatorNeedsValue(f.operator) || (f.value !== undefined && f.value !== null && f.value !== '')).length
   return (
     <ToolbarButton label={active ? `${label}, ${active} active` : label} aria-haspopup="dialog" {...panel} {...rest}>
       {children ?? <icons.filter />}

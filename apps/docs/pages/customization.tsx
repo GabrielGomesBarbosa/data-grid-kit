@@ -30,7 +30,7 @@ export const page: PageDef = {
         <code>skeletonRow</code>, <code>detailPanel</code>, <code>loadingOverlay</code>, <code>errorOverlay</code>, <code>noRowsOverlay</code>,{' '}
         <code>columnMenu</code>, <code>filterPanel</code>, <code>columnsPanel</code>, <code>pivotPanel</code>, <code>popover</code>, the base controls{' '}
         <code>baseButton</code>, <code>baseCheckbox</code>, <code>baseSelect</code>, <code>baseInput</code> (so every button and input matches your design
-        system) and <code>icons</code> (21 symbols, each replaceable, the toolbar's among them).
+        system) and <code>icons</code> (23 symbols, each replaceable, the toolbar's among them).
       </p>
       <CodeBlock
         code={`import { Grid, defaultSlots } from 'data-grid-kit'

@@ -22,27 +22,39 @@ export function Popover({ anchor, onClose, children, label, role = 'dialog', ali
   const ref = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
 
-  // Placed under the anchor and kept inside the window. The size can change while it is open (the filter panel grows
-  // with each filter), and so can the window, so this runs again for both.
+  // Placed under its button and kept inside the window. It follows the button when the page or a container scrolls, and
+  // moves again when its own size changes (the filter panel grows with each filter) or the window does.
   useIsomorphicLayoutEffect(() => {
     const el = ref.current
     if (!el) return
+    // the button the popover belongs to, found where the anchor was when it opened (the popover is still hidden: it can't be hit)
+    const button = document.elementFromPoint?.(anchor.left + anchor.width / 2, anchor.top + anchor.height / 2)?.closest('[data-gk-anchor], button') ?? null
     const place = () => {
+      const a = button?.isConnected ? button.getBoundingClientRect() : anchor
       const w = el.offsetWidth
       const h = el.offsetHeight
-      let left = align === 'end' ? anchor.right - w : anchor.left
-      let top = anchor.bottom + 4
-      left = Math.max(8, Math.min(left, window.innerWidth - w - 8))
-      if (top + h > window.innerHeight - 8) top = Math.max(8, anchor.top - h - 4)
+      const room = window.innerWidth - 8
+      let left = align === 'end' ? a.right - w : a.left
+      // does not fit on this side: line the other edge up with the button instead of pushing against the window's edge
+      if (align === 'start' && left + w > room && a.right - w >= 8) left = a.right - w
+      else if (align === 'end' && left < 8 && a.left + w <= room) left = a.left
+      left = Math.max(8, Math.min(left, room - w))
+      let top = a.bottom + 4
+      if (top + h > window.innerHeight - 8) top = Math.max(8, a.top - h - 4)
       setPos((p) => (p && p.top === top && p.left === left ? p : { top, left }))
+    }
+    const onScroll = (e: Event) => {
+      if (!el.contains(e.target as Node)) place() // scrolling inside the popover (a long list) must not move it
     }
     place()
     const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(place)
     observer?.observe(el)
     window.addEventListener('resize', place)
+    window.addEventListener('scroll', onScroll, true)
     return () => {
       observer?.disconnect()
       window.removeEventListener('resize', place)
+      window.removeEventListener('scroll', onScroll, true)
     }
   }, [anchor, align])
 
@@ -66,12 +78,16 @@ export function Popover({ anchor, onClose, children, label, role = 'dialog', ali
     }
   }, [onClose])
 
-  // move focus inside on open
+  // Move the focus inside once it is open. Not before: until it has a position the popover is `visibility: hidden`, and a
+  // browser does not focus what is hidden.
+  const focused = useRef(false)
   useEffect(() => {
+    if (!pos || focused.current) return
+    focused.current = true
     const el = ref.current
-    const first = el?.querySelector<HTMLElement>('[role="menuitem"], input, select, button')
+    const first = el?.querySelector<HTMLElement>('[data-autofocus]') ?? el?.querySelector<HTMLElement>('[role="menuitem"], input, select, button')
     first?.focus({ preventScroll: true })
-  }, [])
+  }, [pos])
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (role !== 'menu' || (e.key !== 'ArrowDown' && e.key !== 'ArrowUp')) return

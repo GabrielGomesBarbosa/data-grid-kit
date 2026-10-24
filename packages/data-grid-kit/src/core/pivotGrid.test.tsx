@@ -61,7 +61,10 @@ afterAll(() => {
   sizes.forEach((k, i) => (saved[i] ? Object.defineProperty(HTMLElement.prototype, k, saved[i]!) : delete (HTMLElement.prototype as any)[k]))
 })
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  delete (document as any).elementFromPoint // some tests stub it
+})
 
 describe('derived columns', () => {
   it('a date column offers its year and quarter, hidden from the table', () => {

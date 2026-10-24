@@ -34,6 +34,9 @@ export interface GridIcons {
   pivot: ComponentType<IconProps>
   download: ComponentType<IconProps>
   search: ComponentType<IconProps>
+  /** the filter panel's Add filter and Remove all */
+  add: ComponentType<IconProps>
+  trash: ComponentType<IconProps>
 }
 
 const glyph = (text: string): ComponentType<IconProps> => {
@@ -65,7 +68,7 @@ export const defaultIcons: GridIcons = {
   dragHandle: glyph('⋮⋮'),
   pinTop: glyph('▲'),
   pinBottom: glyph('▼'),
-  close: glyph('✕'),
+  close: line('close', <path d="M6 6l12 12M18 6L6 18" />),
   previousPage: glyph('‹'),
   nextPage: glyph('›'),
   moveUp: glyph('↑'),
@@ -87,6 +90,8 @@ export const defaultIcons: GridIcons = {
     </>,
   ),
   download: line('download', <path d="M12 4v11M7 11l5 5 5-5M5 20h14" />),
+  add: line('add', <path d="M12 5v14M5 12h14" />),
+  trash: line('trash', <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" />),
   search: line(
     'search',
     <>
