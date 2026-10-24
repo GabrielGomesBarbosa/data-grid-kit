@@ -38,6 +38,16 @@ export function Popover({ anchor, onClose, children, label, role = 'dialog', ali
       const base = el.offsetParent?.getBoundingClientRect()
       origin.current = { anchor, x: base ? base.left : -window.scrollX, y: base ? base.top : -window.scrollY }
     }
+    // The page scrolling moves popover and button together (it is positioned in page coordinates). A scroller inside the page
+    // (the grid, sideways) moves the button alone: the popover would hang in the air, so it closes. The button is found
+    // where the anchor was when it opened (the popover is still hidden: it can't be hit); no button, nothing to watch.
+    const found = document.elementFromPoint?.(anchor.left + anchor.width / 2, anchor.top + anchor.height / 2)?.closest('[data-gk-anchor], button') ?? null
+    const pageRect = (b: Element) => {
+      const r = b.getBoundingClientRect()
+      return { left: r.left + window.scrollX, top: r.top + window.scrollY }
+    }
+    const button = found && Math.abs(found.getBoundingClientRect().left - anchor.left) <= 2 ? found : null
+    const start = button ? pageRect(button) : null
     const place = () => {
       const a = anchor
       const w = el.offsetWidth
@@ -69,13 +79,20 @@ export function Popover({ anchor, onClose, children, label, role = 'dialog', ali
       el.style.maxHeight = maxHeight === undefined ? '' : `${maxHeight}px`
       setPos((p) => (p && p.top === y && p.left === x ? p : { top: y, left: x }))
     }
+    const onScroll = (e: Event) => {
+      if (!button || !start || el.contains(e.target as Node)) return // scrolling inside the popover (a long list) is not the page moving
+      const now = pageRect(button)
+      if (Math.abs(now.left - start.left) > 1 || Math.abs(now.top - start.top) > 1) closeRef.current()
+    }
     place()
+    window.addEventListener('scroll', onScroll, true)
     const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(place)
     observer?.observe(el)
     window.addEventListener('resize', place)
     return () => {
       observer?.disconnect()
       window.removeEventListener('resize', place)
+      window.removeEventListener('scroll', onScroll, true)
     }
   }, [anchor, align])
 

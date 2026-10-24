@@ -86,7 +86,6 @@ describe('Popover and scrolling', () => {
     render(<Popover anchor={rect(100, 140, 40)} onClose={() => closed++} label="p">x</Popover>)
     const style = screen.getByRole('dialog').getAttribute('style')
     act(() => {
-      window.scrollTo?.(0, 300)
       fireEvent.scroll(document)
       fireEvent.scroll(window)
     })
@@ -120,6 +119,32 @@ describe('Popover and scrolling', () => {
     } finally {
       Object.defineProperty(window, 'scrollY', { configurable: true, value: 0 })
     }
+  })
+
+  it('a scroller inside the page that moves the button alone (the grid, sideways) closes it; the page scrolling does not', () => {
+    stage({ current: 200 })
+    const btn = document.createElement('button')
+    let r = rect(100, 140, 40)
+    btn.getBoundingClientRect = () => r
+    document.body.appendChild(btn)
+    ;(document as any).elementFromPoint = () => btn
+    let closed = 0
+    render(<Popover anchor={r} onClose={() => closed++} label="p">x</Popover>)
+    // the page scrolls: the button moves in the window but not in the page
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 100 })
+    r = rect(100, 140, -60)
+    act(() => {
+      fireEvent.scroll(document)
+    })
+    expect(closed).toBe(0)
+    // the grid scrolls sideways: the button moves in the page too
+    r = rect(40, 80, -60)
+    act(() => {
+      fireEvent.scroll(btn.ownerDocument.body)
+    })
+    expect(closed).toBe(1)
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 0 })
+    delete (document as any).elementFromPoint
   })
 
   it('scrolling inside the popover leaves it where it is', () => {
