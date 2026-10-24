@@ -5,12 +5,18 @@ import { makeEmployees, type Employee } from '../data'
 
 const rows = makeEmployees(300)
 
-const columns: UIColumnDef<Employee>[] = [
-  { field: 'name', headerName: 'Name', width: 180 },
-  { field: 'team', headerName: 'Team', width: 120 },
-  { field: 'salary', headerName: 'Salary', type: 'number', width: 110 },
-  { field: 'hired', headerName: 'Hired', type: 'date', width: 120 },
-  { field: 'remote', headerName: 'Remote', type: 'boolean', width: 90 },
+/** the column names are yours: you write them in the language you want (here from a small table, in your app from react-intl or next-intl) */
+const HEADERS = {
+  en: { name: 'Name', team: 'Team', salary: 'Salary', hired: 'Hired', remote: 'Remote' },
+  pt: { name: 'Nome', team: 'Equipe', salary: 'Salário', hired: 'Contratação', remote: 'Remoto' },
+  es: { name: 'Nombre', team: 'Equipo', salary: 'Salario', hired: 'Contratación', remote: 'Remoto' },
+}
+const columnsFor = (h: (typeof HEADERS)['en']): UIColumnDef<Employee>[] => [
+  { field: 'name', headerName: h.name, width: 180 },
+  { field: 'team', headerName: h.team, width: 120 },
+  { field: 'salary', headerName: h.salary, type: 'number', width: 110 },
+  { field: 'hired', headerName: h.hired, type: 'date', width: 120 },
+  { field: 'remote', headerName: h.remote, type: 'boolean', width: 90 },
 ]
 
 /** your own words for a few keys: everything else stays in English */
@@ -33,6 +39,7 @@ const LABELS: Record<Pick, string> = { en: 'English (the default)', pt: 'Portugu
 export default function LocalizationDemo() {
   const [lang, setLang] = useState<Pick>('pt')
   // the same object between renders: a new one re-renders the grid
+  const columns = useMemo(() => columnsFor(HEADERS[lang]), [lang])
   const props = useMemo(() => (lang === 'pt' ? ptBR : lang === 'es' ? { locale: 'es-ES', localeText: spanish } : {}), [lang])
   return (
     <>
@@ -43,7 +50,7 @@ export default function LocalizationDemo() {
           </label>
         ))}
       </p>
-      <p className="muted">Open the column menu, the filters, the columns panel or the export menu, and look at the footer and the dates.</p>
+      <p className="muted">The column names are the ones the app passes (<code>headerName</code>); the grid translates everything else. Open the column menu, the filters, the columns panel or the export menu, and look at the footer and the dates.</p>
       <Grid rows={rows} columns={columns} height={360} pagination={false} toolbar aggregationFooter {...props} initialState={{ aggregationModel: { salary: 'sum' } }} />
     </>
   )
