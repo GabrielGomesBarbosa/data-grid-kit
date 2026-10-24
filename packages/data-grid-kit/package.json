@@ -66,7 +66,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "bench": "tsx scripts/bench.ts && tsx scripts/xlsx-bench.ts",
-    "lint:package": "publint && attw --pack . --exclude-entrypoints ./styles.css ./structure.css ./theme.css"
+    "lint:package": "publint && attw --pack . --exclude-entrypoints ./styles.css ./structure.css ./theme.css",
+    "verify:xlsx": "sh scripts/verify-xlsx.sh"
   },
   "peerDependencies": {
     "react": ">=18"

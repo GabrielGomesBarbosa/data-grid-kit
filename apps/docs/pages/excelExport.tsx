@@ -45,6 +45,12 @@ export const page: PageDef = {
         <li><strong>Pivot tables</strong> export with their column groups as merged header cells and the numbers as numbers.</li>
         <li>Empty values leave the cell empty; <code>NaN</code>, infinities and invalid dates too. Text over Excel's 32,767-character limit is cut.</li>
       </ul>
+      <h2>How it is verified</h2>
+      <p>
+        The writer is unit-tested, and <code>npm run verify:xlsx</code> (in the library package) writes sample workbooks and re-reads them with <code>openpyxl</code>, an
+        independent implementation: merges, outline levels, number formats, dates, text that looks like a formula, and the 32,767-character cut. Opening the files in
+        Microsoft Excel and LibreOffice is still to be done by hand.
+      </p>
       <h2>How it differs from MUI</h2>
       <p>
         MUI loads a forked ExcelJS (a large dependency, imported on demand), builds the whole workbook as objects, one per row and cell, then serialises it,
