@@ -2,17 +2,22 @@ import { neighborInGroup, planColumnMove } from '../reorder'
 import { reset, type ApiContext } from './context'
 import type { GridApi } from '../gridTypes'
 
+const DEFAULT_SORTING_ORDER: ('asc' | 'desc' | null)[] = ['asc', 'desc', null]
+
 export function viewApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'setSortModel' | 'toggleSort' | 'setFilterModel' | 'setQuickFilter' | 'setPage' | 'setPageSize' | 'pinColumn' | 'setColumnWidth' | 'setDensity' | 'setColumnVisibility' | 'setColumnVisibilityModel' | 'moveColumn' | 'reorderColumn' | 'moveColumnBy' | 'setRowGroupingModel' | 'toggleExpanded' | 'expandAll' | 'collapseAll' | 'setAggregation' | 'setAggregationModel' | 'setPivotMode' | 'setPivotModel' | 'setScroll' | 'setViewport'> {
   const { set, store, layoutRef, optionsRef, apiRef } = c
   return {
     setSortModel: (sortModel) => set({ sortModel, paginationModel: reset(store) }),
     toggleSort(field, multi = false) {
+      const o = optionsRef.current
+      const order = o.columns.find((col) => col.field === field)?.sortingOrder ?? o.sortingOrder ?? DEFAULT_SORTING_ORDER
       set((s) => {
         const current = s.sortModel.find((x) => x.field === field)
-        const others = multi ? s.sortModel.filter((x) => x.field !== field) : []
-        if (!current) return { sortModel: [...others, { field, direction: 'asc' }] }
-        if (current.direction === 'asc') return { sortModel: [...others, { field, direction: 'desc' }] }
-        return { sortModel: others }
+        const others = multi || o.multipleColumnsSortingMode === 'always' ? s.sortModel.filter((x) => x.field !== field) : []
+        // the next step after where this column is now (a column whose state is not in the order starts at its first step)
+        const at = order.indexOf(current?.direction ?? null)
+        const next = order.length === 0 ? null : order[(at + 1) % order.length]!
+        return { sortModel: next === null ? others : [...others, { field, direction: next }] }
       })
     },
     setFilterModel: (filterModel) => set({ filterModel, paginationModel: reset(store) }),

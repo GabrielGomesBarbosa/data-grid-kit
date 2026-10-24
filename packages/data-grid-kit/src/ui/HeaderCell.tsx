@@ -80,7 +80,7 @@ export function HeaderCell<R>({
         disabled={!sortable}
         onClick={(e) => {
           if (suppressClick() || e.defaultPrevented) return // the end of a column drag, or an `onColumnHeaderClick` that took the click
-          api.toggleSort(col.field, e.shiftKey)
+          api.toggleSort(col.field, e.shiftKey || e.ctrlKey || e.metaKey)
         }}
       >
         <span className="gk-header-label">{col.renderHeader ? col.renderHeader({ field: col.field, colDef: col }) : (col.headerName ?? col.field)}</span>

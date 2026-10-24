@@ -25,6 +25,11 @@ export interface UIColumnDef<R = any> extends Omit<ColumnDef<R>, 'filterOperator
 export interface GridProps<R = any> extends Omit<GridOptions<R>, 'columns'>, GridEventProps<R> {
   columns: UIColumnDef<R>[]
   height?: number | string
+  /**
+   * Size the grid to its rows: no scrollbar of its own, every row is rendered (so use it for a few dozen rows, with `pagination`). `height` is ignored.
+   * To bound it, put the grid in a parent with a `max-height` and `overflow: auto`.
+   */
+  autoHeight?: boolean
   checkboxSelection?: boolean
   /**
    * Select rows by clicking them: a click selects only that row (a click on the only selected row unselects it), Ctrl/Cmd+click adds or

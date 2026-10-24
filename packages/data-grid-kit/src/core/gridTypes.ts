@@ -58,6 +58,10 @@ export interface GridApi<R = any> {
   autosizeColumns(options?: AutosizeOptions): Record<string, number>
   /** register how columns are measured (the built-in `Grid` does it for you; `null` removes it) */
   setColumnMeasurer(measure: ColumnMeasurer | null): void
+  /** the arrangement of the grid (sorting, filters, page, columns, grouping, aggregation, pivot, density, expansion, pinning) as plain data, to save */
+  exportState(): Partial<GridState>
+  /** bring back what `exportState` gave (or part of it); other keys are ignored. The same shape works as `initialState`. */
+  restoreState(state: Partial<GridState>): void
   /** how tight the rows are (scales `rowHeight` and `headerHeight`; rows sized by `getRowHeight` keep their own height) */
   setDensity(density: Density): void
   /**

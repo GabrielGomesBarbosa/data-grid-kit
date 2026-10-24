@@ -133,6 +133,8 @@ export interface ColumnDef<R = any> {
   hidden?: boolean
   align?: 'left' | 'right' | 'center'
   /** alignment of the header's content (default: the same as `align`) */
+  /** the order a click on this header goes through (see `GridOptions.sortingOrder`) */
+  sortingOrder?: ('asc' | 'desc' | null)[]
   headerAlign?: 'left' | 'right' | 'center'
   /** a tooltip on the header: what the column holds, when its name does not say enough */
   description?: string
@@ -239,6 +241,10 @@ export interface GridOptions<R = any> {
    * The texts the grid shows, by key (see `GridLocaleText`). What you leave out stays in English. Keep the object (and its
    * functions) the same between renders (define it outside the component, or `useMemo` it): a new one re-renders the grid.
    */
+  /** what a click on a header does, in turn (default `['asc', 'desc', null]`: ascending, descending, unsorted). A column's own `sortingOrder` wins. */
+  sortingOrder?: ('asc' | 'desc' | null)[]
+  /** `'always'`: a click on a header adds to the sort instead of replacing it, without a modifier key (default: Shift, Ctrl or Cmd+click adds) */
+  multipleColumnsSortingMode?: 'withModifier' | 'always'
   /** match letters with and without accents ("cafe" finds "café") in the filters and the quick filter */
   ignoreDiacritics?: boolean
   /** rows this returns false for cannot be selected: their checkbox is disabled, and select-all and ranges skip them. Default: all. */

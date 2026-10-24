@@ -73,6 +73,9 @@ export const gridProps: PropRow[] = [
   { name: 'editMode', type: "'cell' | 'row'", default: "'cell'", description: "'row': every editable cell of a row opens together; Enter or a click outside saves the row, Escape discards." },
   { name: 'onCellEditStart / onRowEditStart', type: '({ id, field?, row }) => boolean | void', description: 'An edit is about to start: return false to stop it.' },
   { name: 'onCellEditStop / onRowEditStop', type: "({ id, field?, row, reason, cancelled }) => boolean | void", description: "An edit is about to end (reason: 'enter' | 'tab' | 'escape' | 'blur' | 'api'): return false to keep it open." },
+  { name: 'autoHeight', type: 'boolean', default: 'false', description: 'Size the grid to its rows: no scrollbar of its own and every row rendered (use it for a few dozen rows). height is ignored; bound it with a parent that has a max-height and overflow: auto.' },
+  { name: 'sortingOrder', type: "('asc' | 'desc' | null)[]", default: "['asc', 'desc', null]", description: 'The turns of a click on a header; a column can have its own.' },
+  { name: 'multipleColumnsSortingMode', type: "'withModifier' | 'always'", default: "'withModifier'", description: "'always': a click on a header adds to the sort without Shift, Ctrl or Cmd." },
   { name: 'isCellEditable', type: '(row: R, field: string) => boolean', description: 'Extra per-cell gate on top of column.editable.' },
   { name: 'onReady', type: '(api: GridApi<R>) => void', description: 'Receives the imperative API once the grid mounts.' },
 ]
@@ -129,6 +132,7 @@ export const apiMethods: PropRow[] = [
   { name: 'updateRows({ insert, update, remove })', type: 'RowChanges<R>', description: 'Change rows without rebuilding anything. Upsert semantics. Kept until the rows prop gets a new identity.' },
   { name: 'setColumnWidth / setColumnVisibility / moveColumn', type: 'void', description: 'Column layout.' },
   { name: 'scrollToRow(id, align?) / scrollToColumn(field, align?) / scrollToCell(id, field, align?) / scrollToIndexes({ rowIndex?, colIndex?, align? })', type: 'boolean', description: "Scroll to a row and / or column (header, pinned columns and rows, per-row heights and detail panels are accounted for). align: 'nearest' (default), 'start', 'center' or 'end'. false when there is nothing to scroll to. initialState.scroll restores a position on mount." },
+  { name: 'exportState() / restoreState(state)', type: 'Partial<GridState>', description: 'The arrangement of the grid (sorting, filters, page, column order / widths / visibility / pinning, grouping, aggregation, pivot, density, expansion, pinned rows) as plain data to save, and a way to bring it back. The same shape works as initialState. Not included: viewport, scroll, focus, edits, selection.' },
   { name: 'autosizeColumns(options?)', type: 'Record<string, number>', description: 'Fit columns to their header and the cells that are rendered (rows out of view are not measured), within minWidth / maxWidth. Options: columns, includeHeaders, includeOutliers, outliersFactor, expand. Returns the widths set.' },
   { name: 'setRowGroupingModel(fields)', type: 'string[]', description: 'Group rows by these fields, outermost first. Clears expansion.' },
   { name: 'toggleExpanded(id) / expandAll() / collapseAll()', type: 'void', description: 'Expansion of group and tree rows.' },

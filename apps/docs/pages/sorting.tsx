@@ -18,6 +18,19 @@ export const page: PageDef = {
         milliseconds (see <a href="#/performance">Performance</a>). Empty values always stay last, in both directions. With row grouping
         or tree data, only siblings are sorted.
       </p>
+      <h2>Options</h2>
+      <ul>
+        <li>
+          <code>sortingOrder</code> (grid or column) sets what a click on a header goes through: the default is <code>['asc', 'desc', null]</code>; <code>['desc', 'asc']</code> never
+          goes back to unsorted.
+        </li>
+        <li>
+          Shift, Ctrl or Cmd+click adds a column to the sort; <code>multipleColumnsSortingMode="always"</code> does it without a key.
+        </li>
+        <li>
+          <code>api.setSortModel</code> sorts columns the user cannot (<code>sortable: false</code>).
+        </li>
+      </ul>
     </>
   ),
 }

@@ -1,0 +1,5 @@
+/* autoHeight: the grid is as tall as its rows. The scroller stops being the thing that scrolls vertically; the page does. */
+.gk-root[data-autoheight] .gk-scroller {
+  flex: none;
+  overflow-y: hidden;
+}

@@ -33,6 +33,7 @@ const DETAIL_DEFAULT = 200
 export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
   const {
     height = 400,
+    autoHeight = false,
     checkboxSelection = false,
     rowSelectionOnClick = false,
     densitySelector = false,
@@ -187,7 +188,8 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
       mergeProps(
         {
           className: `gk-root ${cellSelection ? 'gk-cell-select' : ''} ${className ?? ''}`.trim(),
-          style: { height },
+          style: autoHeight ? undefined : { height },
+          'data-autoheight': autoHeight ? '' : undefined,
           'data-loading': grid.server?.loading ? '' : undefined,
           'data-pivot': grid.pivot ? '' : undefined,
         },
