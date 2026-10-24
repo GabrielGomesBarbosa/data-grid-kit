@@ -12,7 +12,7 @@ export interface RowsInput<R> {
   totalWidth: number
   hasHierarchy: boolean
   /** what every row gets, pinned or not */
-  shared: Omit<RowProps<R>, 'row' | 'index' | 'rowClassName' | 'hasHierarchy' | 'selected' | 'selectable' | 'focusedField' | 'editing' | 'pinSide' | 'ariaRow' | 'rangeKey' | 'fillCol' | 'onFillStart' | 'top' | 'detailState' | 'canReorder' | 'onRowDragStart' | 'dragging'>
+  shared: Omit<RowProps<R>, 'rowEdit' | 'row' | 'index' | 'rowClassName' | 'hasHierarchy' | 'selected' | 'selectable' | 'focusedField' | 'editing' | 'pinSide' | 'ariaRow' | 'rangeKey' | 'fillCol' | 'onFillStart' | 'top' | 'detailState' | 'canReorder' | 'onRowDragStart' | 'dragging'>
   canSelect: (r: RenderRow<R>) => boolean
   detailStateOf: (r: RenderRow<R>) => 'open' | 'closed' | undefined
   rangeKeyFor: (rowIndex: number) => string
@@ -21,6 +21,18 @@ export interface RowsInput<R> {
   onRowDragStart: RowProps<R>['onRowDragStart']
   /** the row being dragged, if any */
   draggingId: RenderRow['id'] | undefined
+}
+
+/** What the row being edited tells its cells: where the editors are (a row: every editable cell), which takes the focus, what went wrong. */
+function rowEditOf<R>(i: RowsInput<R>, r: RenderRow<R>): NonNullable<RowProps<R>['rowEdit']> {
+  const { state, layout, api } = i.grid
+  const rowMode = state.editingRow === r.id
+  return {
+    rowMode,
+    fields: rowMode ? layout.all.filter((c) => api.isCellEditable(r.id, c.field)).map((c) => c.field) : state.editingCell ? [state.editingCell.field] : [],
+    focus: state.editingCell?.field,
+    errors: state.editErrors,
+  }
 }
 
 /** The rows in view, as props for the `row` slot (or the placeholders for server rows that have not arrived). */
@@ -41,6 +53,7 @@ export function buildBodyRows<R>(i: RowsInput<R>): BodyRow<R>[] {
       continue
     }
     const here = focused?.rowId === r.id
+    const editedHere = state.editingRow === r.id || state.editingCell?.rowId === r.id
     out.push({
       type: 'row',
       key: r.id,
@@ -56,6 +69,7 @@ export function buildBodyRows<R>(i: RowsInput<R>): BodyRow<R>[] {
         selectable: i.canSelect(r),
         focusedField: here ? focused!.field : undefined,
         editing: here && state.editingCell?.rowId === r.id ? state.editingCell : null,
+        rowEdit: editedHere ? rowEditOf(i, r) : undefined,
         pinSide: undefined,
         ariaRow,
         rangeKey: i.rangeKeyFor(n),

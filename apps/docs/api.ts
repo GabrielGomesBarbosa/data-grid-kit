@@ -70,6 +70,9 @@ export const gridProps: PropRow[] = [
   { name: 'onStateChange', type: '(next: GridState, prev: GridState) => void', description: 'Called after every state change, including scroll and viewport updates. Compare slices before reacting.' },
   { name: 'processRowUpdate', type: '(next: R, prev: R) => R | Promise<R>', description: 'Called when an edit is committed. Return (or resolve) the row to keep; throw to reject and keep the editor open.' },
   { name: 'onProcessRowUpdateError', type: '(error: unknown) => void', description: 'Called when processRowUpdate throws or rejects.' },
+  { name: 'editMode', type: "'cell' | 'row'", default: "'cell'", description: "'row': every editable cell of a row opens together; Enter or a click outside saves the row, Escape discards." },
+  { name: 'onCellEditStart / onRowEditStart', type: '({ id, field?, row }) => boolean | void', description: 'An edit is about to start: return false to stop it.' },
+  { name: 'onCellEditStop / onRowEditStop', type: "({ id, field?, row, reason, cancelled }) => boolean | void", description: "An edit is about to end (reason: 'enter' | 'tab' | 'escape' | 'blur' | 'api'): return false to keep it open." },
   { name: 'isCellEditable', type: '(row: R, field: string) => boolean', description: 'Extra per-cell gate on top of column.editable.' },
   { name: 'onReady', type: '(api: GridApi<R>) => void', description: 'Receives the imperative API once the grid mounts.' },
 ]
@@ -96,6 +99,7 @@ export const columnProps: PropRow[] = [
   { name: 'filterOperators', type: 'FilterOperatorDef[]', description: "Operators the filter panel offers for this column instead of the built-in ones. Each: { value, label, needsValue?, getApplyFilterFn?(item, col) => (value, row) => boolean | null, renderInput?({ item, onChange, focusProps }) }. Spread getFilterOperators(col) to extend the built-in list." },
   { name: "type: 'dateTime'", type: 'Date', description: 'A date with its time: shown with both in the grid locale, edited and filtered with a date-time input, copied as yyyy-mm-ddThh:mm, exported to Excel as yyyy-mm-dd hh:mm.' },
   { name: "type: 'actions'", type: 'column', description: "A column of buttons: give it getActions({ id, row, field }) returning [{ label, icon?, onClick, showInMenu?, disabled?, href? }]. Actions with showInMenu go in a ⋮ menu. Never sorted, filtered, edited, grouped, aggregated or exported." },
+  { name: 'validate', type: '({ value, row, field }) => string | null | void | Promise<…>', description: 'Return a message to refuse the value being edited (shown on the editor; the edit stays open); may be async. Checked while typing and when saving.' },
   { name: 'headerAlign', type: "'left' | 'right' | 'center'", description: "Alignment of the header's content (default: the same as align)." },
   { name: 'description', type: 'string', description: "A tooltip on the header, for when the name says too little." },
   { name: 'headerClassName', type: 'string', description: "Class names for the column's header cell." },

@@ -1,5 +1,5 @@
 import { useCallback, useRef, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent } from 'react'
-import { isPrintableKey, navigate, scrollToCell } from '../core'
+import { isPrintableKey, navigate, scrollToCell, type EditStopReason } from '../core'
 import { type EditMove } from './Editors'
 import type { GridCtx } from './ctx'
 
@@ -58,10 +58,12 @@ export function useKeyboard<R>(c: GridCtx<R>) {
     async (value: unknown, move?: EditMove) => {
       const g = gridRef.current
       const at = focusPosition()
-      const ok = await g.api.commitEdit(value)
+      // how the edit ended, for `onCellEditStop` / `onRowEditStop`: Enter moves down, Tab sideways, a blur moves nowhere
+      const ok = await g.api.commitEdit(value, move === 'down' ? 'enter' : move ? 'tab' : 'blur')
       if (!ok) return false
       scrollerRef.current?.focus({ preventScroll: true })
-      if (move && at) {
+      // after a row is saved the focus stays where it was
+      if (move && at && g.state.editingRow === null) {
         const key = move === 'down' ? 'ArrowDown' : 'Tab'
         const next = navigate({
           key,
@@ -79,10 +81,13 @@ export function useKeyboard<R>(c: GridCtx<R>) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [focusAt],
   )
-  const cancelEdit = useCallback(() => {
-    api.cancelEdit()
-    scrollerRef.current?.focus({ preventScroll: true })
-  }, [api, scrollerRef])
+  const cancelEdit = useCallback(
+    (reason: EditStopReason = 'escape') => {
+      api.cancelEdit(reason)
+      scrollerRef.current?.focus({ preventScroll: true })
+    },
+    [api, scrollerRef],
+  )
 
   const onKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
     // keys typed into editors, buttons and inputs belong to them; an `onCellKeyDown` that called preventDefault took this one

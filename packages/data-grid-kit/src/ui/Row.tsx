@@ -1,7 +1,7 @@
 import type { ColumnLayout } from '../core/layout'
 import { renderSections } from './sections'
 import { memo, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
-import { type CellRef, type ColumnDef, type CustomAggregation, type Range, type RenderRow } from '../core'
+import { type CellRef, type ColumnDef, type CustomAggregation, type EditStopReason, type Range, type RenderRow } from '../core'
 import { type EditMove } from './Editors'
 import { type GridProps, type UIColumnDef } from './types'
 import { cx } from './cx'
@@ -24,13 +24,16 @@ export interface RowProps<R> {
   selected: boolean | 'indeterminate'
   /** `isRowSelectable` allows it (the checkbox is disabled otherwise) */
   selectable: boolean
+  /** only on the row being edited: which of its cells have an editor, the one that takes the focus, and the messages `validate` gave */
+  rowEdit?: { fields: string[]; focus: string | undefined; rowMode: boolean; errors: Record<string, string> }
+  onEditValue: (field: string, value: unknown) => void
   /** only set on the row that holds the focus / editor, so other rows keep stable props */
   focusedField: string | undefined
   editing: CellRef | null
   onToggleExpand: (id: RenderRow['id']) => void
   onToggleSelect: (id: RenderRow['id']) => void
   onCommit: (value: unknown, move?: EditMove) => Promise<boolean>
-  onCancel: () => void
+  onCancel: (reason?: EditStopReason) => void
   /** pinned rows are laid out in normal flow instead of being absolutely positioned */
   pinSide: 'top' | 'bottom' | undefined
   rowPinning: boolean
@@ -94,6 +97,12 @@ function RowInner<R>(p: RowProps<R>) {
     }
     return { sel, fill }
   }
+  /** the cell's editor: in a row every editable cell has one; the cell the user started in keeps what it was started with (a typed-over key) */
+  const editorOf = (field: string): CellRef | null => {
+    const started = p.editing && p.editing.field === field ? p.editing : null
+    if (!p.rowEdit) return started
+    return p.rowEdit.fields.includes(field) ? (started ?? { rowId: row.id, field }) : null
+  }
   const cell = (col: UIColumnDef<R>, style: CSSProperties) => {
     const pos = p.colPos.get(col.field) ?? 0
     const edges = edgesAt(pos)
@@ -110,7 +119,8 @@ function RowInner<R>(p: RowProps<R>) {
         selected={p.selected}
         selectable={p.selectable}
         focused={p.focusedField === col.field}
-        editing={p.editing && p.editing.field === col.field ? p.editing : null}
+        editing={editorOf(col.field)}
+        editBehavior={p.rowEdit ? { rowMode: p.rowEdit.rowMode, autoFocus: !p.rowEdit.rowMode || p.rowEdit.focus === col.field, error: p.rowEdit.errors[col.field], onDraft: (value) => p.onEditValue(col.field, value) } : undefined}
         onToggleExpand={p.onToggleExpand}
         onToggleSelect={p.onToggleSelect}
         onCommit={p.onCommit}

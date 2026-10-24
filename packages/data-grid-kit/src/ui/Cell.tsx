@@ -2,10 +2,10 @@ import { useBase } from './base'
 import { cx } from './cx'
 import { useIcons } from './icons'
 import { type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
-import { aggregationLabel, defaultAlign, formatAggregateValue, formatCellValue, formatDate, formatNumber, getCellValue, type CellRef, type CustomAggregation, type RenderRow } from '../core'
+import { aggregationLabel, defaultAlign, formatAggregateValue, formatCellValue, formatDate, formatNumber, getCellValue, type CellRef, type CustomAggregation, type EditStopReason, type RenderRow } from '../core'
 import { useLocaleText } from './localeContext'
 import { ActionsCell } from './ActionsCell'
-import { CellEditor, type EditMove } from './Editors'
+import { CellEditor, type EditMove, type EditorBehavior } from './Editors'
 import { type GridProps, type UIColumnDef } from './types'
 
 const INDENT = 18
@@ -25,10 +25,12 @@ export interface CellProps<R> {
   selectable: boolean
   focused: boolean
   editing: CellRef | null
+  /** how the editor behaves (a row being edited, a message from `validate`); alone in a cell when absent */
+  editBehavior?: EditorBehavior
   onToggleExpand: (id: RenderRow['id']) => void
   onToggleSelect: (id: RenderRow['id']) => void
   onCommit: (value: unknown, move?: EditMove) => Promise<boolean>
-  onCancel: () => void
+  onCancel: (reason?: EditStopReason) => void
   rowPinning: boolean
   pinSide: 'top' | 'bottom' | undefined
   onPinRow: (id: RenderRow['id'], side: 'top' | 'bottom' | null) => void
@@ -72,7 +74,7 @@ export function Cell<R>(p: CellProps<R>) {
   let content: ReactNode = null
   if (p.editing && row.row !== undefined) {
     content = (
-      <CellEditor col={col} row={row.row} seed={p.editing.seed} onCommit={p.onCommit} onCancel={p.onCancel} />
+      <CellEditor col={col} row={row.row} seed={p.editing.seed} onCommit={p.onCommit} onCancel={p.onCancel} behavior={p.editBehavior} />
     )
   } else if (aggregated && !(p.isHierarchy && isGroupRow)) {
     // group rows, tree parents and the total row show the aggregate instead of a cell value

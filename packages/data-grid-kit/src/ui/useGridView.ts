@@ -14,6 +14,7 @@ import { useGridEvents } from './useGridEvents'
 import { useKeyboard } from './useKeyboard'
 import { usePanels } from './usePanels'
 import { useRowDrag } from './useRowDrag'
+import { useRowEditOutside } from './useRowEditOutside'
 import { useScrollApi } from './useScrollApi'
 import { buildBodyRows, buildDetailItems, buildPinnedBlocks, type RowsInput } from './view/buildRows'
 import { useSlotsValue } from './view/slotsValue'
@@ -84,6 +85,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
   useAutoRowHeights(!!props.getRowHeight, scrollerRef, gridRef)
   useAutosize(api, scrollerRef, gridRef)
   useScrollApi(api, scrollerRef, gridRef)
+  useRowEditOutside(api, scrollerRef, state.editingRow)
   const autosizeRef = useRef(autosizeOptions)
   autosizeRef.current = autosizeOptions
   useFitting(api, gridRef, autosizeRef, { autosizeOnMount, autoPageSize, paginated: props.pagination !== false, viewportHeight: state.viewport.height, density: state.density })
@@ -146,6 +148,7 @@ export function useGridView<R = any>(props: GridProps<R>): GridView<R> {
     onToggleSelect: toggleSelect,
     onCommit: finishEdit,
     onCancel: cancelEdit,
+    onEditValue: api.setEditValue,
     rowPinning: canPinRows,
     onPinRow: api.pinRow,
     aggNames,

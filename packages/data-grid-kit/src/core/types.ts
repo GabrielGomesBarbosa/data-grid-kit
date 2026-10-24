@@ -1,6 +1,9 @@
 import type { GridLocaleText } from './localeText'
 export type RowId = string | number
 
+/** why an edit ended: Enter, Tab, Escape (cancels), focus or a click leaving the cell / row, or a call to the API */
+export type EditStopReason = 'enter' | 'tab' | 'escape' | 'blur' | 'api'
+
 export type SortDirection = 'asc' | 'desc'
 export interface SortItem {
   field: string
@@ -96,6 +99,11 @@ export interface ColumnDef<R = any> {
   /** drives default alignment, filter operators, editor and CSV formatting */
   type?: ColumnType
   editable?: boolean
+  /**
+   * Checked while the cell is edited and again when it is saved: return a message to refuse the value (it is shown on the editor and the edit
+   * stays open), or nothing / `null` when it is fine. May return a promise (a check on the server). Gets the value being typed and the row.
+   */
+  validate?: (params: { value: unknown; row: R; field: string }) => string | null | undefined | void | Promise<string | null | undefined | void>
   /** replaces the operators the filter panel offers for this column (spread `getFilterOperators(col)` to extend them) */
   filterOperators?: FilterOperatorDef<R>[]
   /** options for `singleSelect` columns */
@@ -198,6 +206,12 @@ export interface GridState {
   cellSelection: CellRange[]
   focusedCell: CellRef | null
   editingCell: CellRef | null
+  /** `editMode: 'row'`: the row whose cells are all being edited */
+  editingRow: RowId | null
+  /** `editMode: 'row'`: what was typed so far, by field (cells not touched are not in it) */
+  editDraft: Record<string, unknown>
+  /** the message `validate` gave for each field being edited that has a problem */
+  editErrors: Record<string, string>
   scroll: { top: number; left: number }
   viewport: { width: number; height: number }
 }
@@ -312,6 +326,16 @@ export interface GridOptions<R = any> {
   onProcessRowUpdateError?: (error: unknown) => void
   /** extra per-cell gate on top of `ColumnDef.editable` */
   isCellEditable?: (row: R, field: string) => boolean
+  /** `'cell'` (default): one cell is edited at a time. `'row'`: every editable cell of a row at once, saved together (Enter, or a click outside). */
+  editMode?: 'cell' | 'row'
+  /** a cell is about to be edited: return `false` to stop it */
+  onCellEditStart?: (params: { id: RowId; field: string; row: R }) => boolean | void
+  /** a cell edit is about to end: `cancelled` for Escape; return `false` to keep editing */
+  onCellEditStop?: (params: { id: RowId; field: string; row: R; reason: EditStopReason; cancelled: boolean }) => boolean | void
+  /** a row is about to be edited (`editMode: 'row'`): return `false` to stop it */
+  onRowEditStart?: (params: { id: RowId; row: R }) => boolean | void
+  /** a row edit is about to end (`editMode: 'row'`): return `false` to keep editing */
+  onRowEditStop?: (params: { id: RowId; row: R; reason: EditStopReason; cancelled: boolean }) => boolean | void
   columnBufferPx?: number
   pagination?: boolean
   initialState?: Partial<GridState>

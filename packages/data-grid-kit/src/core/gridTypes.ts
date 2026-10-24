@@ -8,7 +8,7 @@ import type { XlsxExportOptions } from './xlsxExport'
 import type { DataSourceError, DataSourceSnapshot } from './dataSource'
 import type { GridLocaleText } from './localeText'
 import type { Store } from './store'
-import type { CellRef, ColumnDef, Density, FilterModel, GridOptions, GridState, PinSide, PivotModel, RenderRow, RowId, SortItem } from './types'
+import type { CellRef, ColumnDef, Density, EditStopReason, FilterModel, GridOptions, GridState, PinSide, PivotModel, RenderRow, RowId, SortItem } from './types'
 
 /** What a bulk cell change (paste, fill, delete) did. */
 export interface ApplyResult {
@@ -138,9 +138,17 @@ export interface GridApi<R = any> {
   isCellEditable(rowId: RowId, field: string): boolean
   /** enter edit mode; `seed` replaces the value with typed text. Returns false if not editable. */
   startEdit(rowId: RowId, field: string, seed?: string): boolean
-  cancelEdit(): void
+  /** stop editing without saving (`reason` is told to `onCellEditStop` / `onRowEditStop`) */
+  cancelEdit(reason?: EditStopReason): void
   /** apply the edited value through `valueSetter` / `processRowUpdate`. Resolves false if rejected. */
-  commitEdit(value: unknown): Promise<boolean>
+  commitEdit(value: unknown, reason?: EditStopReason): Promise<boolean>
+  /** in `editMode: 'row'`: edit every editable cell of a row; `field` is the one to focus. false when nothing in the row can be edited. */
+  startRowEdit(rowId: RowId, field?: string): boolean
+  /** record what is typed in a cell being edited (checks it with the column's `validate`; in row mode it is kept until the row is saved) */
+  setEditValue(field: string, value: unknown): void
+  /** save the row being edited with what was typed; false (and the row stays open) when `validate` refuses a value or saving fails */
+  commitRowEdit(reason?: EditStopReason): Promise<boolean>
+  cancelRowEdit(reason?: EditStopReason): void
   /**
    * Insert, update or remove rows without rebuilding the grid: only the sort/filter/group nodes on the
    * changed rows' paths are touched. Upsert semantics: `insert` and `update` both replace a row whose id

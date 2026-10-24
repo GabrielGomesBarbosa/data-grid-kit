@@ -318,3 +318,9 @@
   opacity: 0.4;
   cursor: default;
 }
+
+.gk-editor[aria-invalid='true'],
+.gk-cell[data-editing] input[aria-invalid='true'] {
+  outline: 2px solid #dc2626;
+  outline-offset: -2px;
+}

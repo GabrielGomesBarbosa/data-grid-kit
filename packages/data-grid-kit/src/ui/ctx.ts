@@ -1,5 +1,5 @@
 import { type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type ClipboardEvent as ReactClipboardEvent } from 'react'
-import { type DropPlacement, type CsvOptions, type RangeRect, type RenderRow, type GridApi, type GridState, type GridInstance } from '../core'
+import { type DropPlacement, type CsvOptions, type EditStopReason, type RangeRect, type RenderRow, type GridApi, type GridState, type GridInstance } from '../core'
 import { type EditMove } from './Editors'
 import { type UIColumnDef } from './types'
 import { type PanelKind, type PanelState } from './Toolbar'
@@ -53,7 +53,7 @@ export interface GridCtx<R> {
   onBodyPointerDown: (e: ReactPointerEvent<HTMLDivElement>) => void
   announcement: string
   finishEdit: (value: unknown, move?: EditMove) => Promise<boolean>
-  cancelEdit: () => void
+  cancelEdit: (reason?: EditStopReason) => void
   onKeyDown: (e: ReactKeyboardEvent<HTMLDivElement>) => void
   onBodyClick: (e: ReactMouseEvent<HTMLDivElement>) => void
   onBodyDoubleClick: (e: ReactMouseEvent<HTMLDivElement>) => void

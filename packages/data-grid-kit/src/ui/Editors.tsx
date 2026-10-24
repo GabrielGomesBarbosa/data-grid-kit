@@ -11,6 +11,7 @@ import {
   parseDateInput,
   parseDateTimeInput,
   type ColumnDef,
+  type EditStopReason,
 } from '../core'
 
 export type EditMove = 'down' | 'right' | 'left'
@@ -19,9 +20,25 @@ export interface EditCellParams<R = any> {
   value: unknown
   row: R
   field: string
-  /** apply the value; resolves false when the update was rejected */
+  /** apply the value; resolves false when the update was rejected (in a row being edited it saves the row) */
   commit: (value: unknown, move?: EditMove) => Promise<boolean>
-  cancel: () => void
+  cancel: (reason?: EditStopReason) => void
+  /** record what is typed without saving: call it on every change so the value is checked (`validate`) and, in a row, kept for when the row is saved */
+  setValue: (value: unknown) => void
+  /** the message `validate` gave for the value, if it refused it */
+  error?: string
+  /** the cell is one of several of a row being edited (`editMode: 'row'`): do not commit on blur or Tab */
+  rowMode: boolean
+}
+
+/** How an editor behaves where it is: alone in a cell, or one of the cells of a row being edited. */
+export interface EditorBehavior {
+  rowMode: boolean
+  /** take the focus when it appears (the cell that was clicked, not every editor of the row) */
+  autoFocus: boolean
+  error?: string
+  /** a value was typed (or picked) */
+  onDraft: (value: unknown) => void
 }
 
 export interface EditorProps<R> {
@@ -29,20 +46,26 @@ export interface EditorProps<R> {
   row: R
   seed?: string
   onCommit: (value: unknown, move?: EditMove) => Promise<boolean>
-  onCancel: () => void
+  onCancel: (reason?: EditStopReason) => void
+  behavior?: EditorBehavior
 }
 
+const ALONE: EditorBehavior = { rowMode: false, autoFocus: true, onDraft: () => {} }
+
 /** Built-in editors, chosen by column type. `renderEditCell` on the column overrides them. */
-export function CellEditor<R>({ col, row, seed, onCommit, onCancel }: EditorProps<R>) {
+export function CellEditor<R>({ col, row, seed, onCommit, onCancel, behavior = ALONE }: EditorProps<R>) {
   const value = getCellValue(col, row)
   if (col.renderEditCell) {
-    return <>{col.renderEditCell({ value, row, field: col.field, commit: onCommit, cancel: onCancel })}</>
+    return <>{col.renderEditCell({ value, row, field: col.field, commit: onCommit, cancel: onCancel, setValue: behavior.onDraft, error: behavior.error, rowMode: behavior.rowMode })}</>
   }
   const type = getColumnType(col)
-  if (type === 'boolean') return <BooleanEditor value={value} onCommit={onCommit} onCancel={onCancel} />
-  if (type === 'singleSelect') return <SelectEditor col={col} value={value} onCommit={onCommit} onCancel={onCancel} />
-  return <InputEditor type={type} value={value} seed={seed} onCommit={onCommit} onCancel={onCancel} />
+  if (type === 'boolean') return <BooleanEditor value={value} onCommit={onCommit} onCancel={onCancel} behavior={behavior} />
+  if (type === 'singleSelect') return <SelectEditor col={col} value={value} onCommit={onCommit} onCancel={onCancel} behavior={behavior} />
+  return <InputEditor type={type} value={value} seed={seed} onCommit={onCommit} onCancel={onCancel} behavior={behavior} />
 }
+
+/** what an editor shows when its value was refused */
+const invalid = (error: string | undefined) => (error ? { 'aria-invalid': true, 'data-error': '', title: error } : null)
 
 function InputEditor({
   type,
@@ -50,12 +73,14 @@ function InputEditor({
   seed,
   onCommit,
   onCancel,
+  behavior,
 }: {
   type: 'string' | 'number' | 'date' | 'dateTime' | 'boolean' | 'singleSelect' | 'actions'
   value: unknown
   seed?: string
   onCommit: EditorProps<unknown>['onCommit']
-  onCancel: () => void
+  onCancel: EditorProps<unknown>['onCancel']
+  behavior: EditorBehavior
 }) {
   const { Input } = useBase()
   const { text: t } = useLocaleText()
@@ -71,8 +96,8 @@ function InputEditor({
         : type === 'dateTime' && value instanceof Date
           ? formatDateTimeInput(value)
           : value == null
-          ? ''
-          : String(value)
+            ? ''
+            : String(value)
 
   const read = (): unknown => {
     const text = ref.current?.value ?? ''
@@ -97,7 +122,7 @@ function InputEditor({
     <Input
       ref={(el) => {
         ref.current = el
-        if (el && document.activeElement !== el) {
+        if (el && behavior.autoFocus && document.activeElement !== el) {
           el.focus({ preventScroll: true })
           // typed-over cells put the caret after the typed char; edit-in-place selects everything
           if (seed === undefined) el.select?.()
@@ -108,21 +133,27 @@ function InputEditor({
       type={type === 'number' ? 'number' : type === 'date' ? 'date' : type === 'dateTime' ? 'datetime-local' : 'text'}
       defaultValue={initial}
       aria-label={t.editCell}
+      {...invalid(behavior.error)}
+      onChange={() => behavior.onDraft(read())}
       onKeyDown={(e) => {
         e.stopPropagation()
         if (e.key === 'Enter') {
           e.preventDefault()
           void finish('down')
         } else if (e.key === 'Tab') {
+          // alone in a cell Tab saves and moves on; in a row it moves to the next editor, and the row is saved later
+          if (behavior.rowMode) return
           e.preventDefault()
           void finish(e.shiftKey ? 'left' : 'right')
         } else if (e.key === 'Escape') {
           e.preventDefault()
           settled.current = true
-          onCancel()
+          onCancel('escape')
         }
       }}
-      onBlur={() => void finish()}
+      onBlur={() => {
+        if (!behavior.rowMode) void finish()
+      }}
     />
   )
 }
@@ -131,27 +162,35 @@ function BooleanEditor({
   value,
   onCommit,
   onCancel,
+  behavior,
 }: {
   value: unknown
   onCommit: EditorProps<unknown>['onCommit']
-  onCancel: () => void
+  onCancel: EditorProps<unknown>['onCancel']
+  behavior: EditorBehavior
 }) {
   const { Checkbox } = useBase()
   const { text: t } = useLocaleText()
   return (
     <Checkbox
-      autoFocus
+      autoFocus={behavior.autoFocus}
       type="checkbox"
       className="gk-checkbox"
       aria-label={t.editCell}
       defaultChecked={value === true}
-      onChange={(e) => void onCommit(e.target.checked)}
+      {...invalid(behavior.error)}
+      onChange={(e) => {
+        if (behavior.rowMode) behavior.onDraft(e.target.checked)
+        else void onCommit(e.target.checked)
+      }}
       onKeyDown={(e) => {
         e.stopPropagation()
-        if (e.key === 'Escape') onCancel()
-        if (e.key === 'Enter') void onCommit(!(e.currentTarget.checked), 'down')
+        if (e.key === 'Escape') onCancel('escape')
+        if (e.key === 'Enter') void onCommit(behavior.rowMode ? e.currentTarget.checked : !e.currentTarget.checked, 'down')
       }}
-      onBlur={onCancel}
+      onBlur={() => {
+        if (!behavior.rowMode) onCancel('blur')
+      }}
     />
   )
 }
@@ -161,30 +200,38 @@ function SelectEditor<R>({
   value,
   onCommit,
   onCancel,
+  behavior,
 }: {
   col: ColumnDef<R>
   value: unknown
   onCommit: EditorProps<R>['onCommit']
-  onCancel: () => void
+  onCancel: EditorProps<R>['onCancel']
+  behavior: EditorBehavior
 }) {
   const { Select } = useBase()
   const { text: t } = useLocaleText()
   const options = col.valueOptions ?? []
   return (
     <Select
-      autoFocus
+      autoFocus={behavior.autoFocus}
       className="gk-editor"
       aria-label={t.editCell}
       defaultValue={value == null ? '' : String(value)}
+      {...invalid(behavior.error)}
       onChange={(e) => {
         const picked = options.find((o) => String(optionValue(o)) === e.target.value)
-        void onCommit(picked === undefined ? e.target.value : optionValue(picked))
+        const chosen = picked === undefined ? e.target.value : optionValue(picked)
+        if (behavior.rowMode) behavior.onDraft(chosen)
+        else void onCommit(chosen)
       }}
       onKeyDown={(e) => {
         e.stopPropagation()
-        if (e.key === 'Escape') onCancel()
+        if (e.key === 'Escape') onCancel('escape')
+        if (e.key === 'Enter' && behavior.rowMode) void onCommit(undefined, 'down')
       }}
-      onBlur={onCancel}
+      onBlur={() => {
+        if (!behavior.rowMode) onCancel('blur')
+      }}
     >
       <option value="" />
       {options.map((o) => (
