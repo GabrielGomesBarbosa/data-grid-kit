@@ -5,3 +5,4 @@ docs-dist
 .next
 *.tsbuildinfo
 .DS_Store
+tools/media/frames
