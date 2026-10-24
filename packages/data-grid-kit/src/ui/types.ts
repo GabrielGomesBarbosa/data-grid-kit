@@ -67,6 +67,8 @@ export interface GridProps<R = any> extends Omit<GridOptions<R>, 'columns'>, Gri
   aggregationMenu?: boolean
   /** select blocks of cells: drag, Shift+click / Shift+arrows, Ctrl/Cmd+click for more, Ctrl/Cmd+A, Delete clears */
   cellSelection?: boolean
+  /** text was copied or cut from the grid: what went to the clipboard */
+  onClipboardCopy?: (text: string) => void
   /** copy, cut and paste (tab-separated, works with spreadsheets). Default true. */
   clipboard?: boolean
   /** drag the corner of the selection to repeat its cells (needs cellSelection). Default true. */

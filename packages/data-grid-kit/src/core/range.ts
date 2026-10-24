@@ -78,6 +78,20 @@ export function fillTarget(source: RangeRect, row: number, col: number): RangeRe
     : { r0: source.r0, r1: source.r1, c0: col, c1: source.c0 - 1 }
 }
 
+/**
+ * The value of a numeric series that a fill continues: `values` (the source cells along the fill direction, in order) are numbers a
+ * constant step apart, and `offset` says how far the cell is from the end of the source (positive: after the last, negative: before the
+ * first, counted from -1). `undefined` when it is not a series (fewer than two numbers, or no constant step): the fill then repeats.
+ */
+export function seriesValue(values: unknown[], offset: number): number | undefined {
+  if (values.length < 2 || !values.every((v) => typeof v === 'number' && Number.isFinite(v))) return undefined
+  const nums = values as number[]
+  const step = nums[1]! - nums[0]!
+  for (let i = 2; i < nums.length; i++) if (Math.abs(nums[i]! - nums[i - 1]! - step) > 1e-9) return undefined
+  const value = offset > 0 ? nums[nums.length - 1]! + step * offset : nums[0]! + step * offset
+  return Math.round(value * 1e9) / 1e9 // 0.1 + 0.2 is not a number to show
+}
+
 /** Which source cell supplies each cell of a fill: the source pattern repeats, in both directions. */
 export function fillSourceOf(source: RangeRect, row: number, col: number): { row: number; col: number } {
   const h = source.r1 - source.r0 + 1

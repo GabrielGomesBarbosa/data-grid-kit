@@ -1,19 +1,21 @@
 import { cellToText, emptyValueFor, parseCellText, parseTsv, toTsv } from '../clipboard'
-import { fillSourceOf, fillTarget, type RangeRect } from '../range'
+import { fillSourceOf, fillTarget, seriesValue, type RangeRect } from '../range'
 import { getCellValue } from '../values'
 import { DataSourceError } from '../dataSource'
 import { type RowId } from '../types'
 import type { ApiContext } from './context'
 import type { ApplyResult, GridApi } from '../gridTypes'
 
-export function cellsApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'focusCell' | 'selectCells' | 'extendCellSelection' | 'clearCellSelection' | 'getCellRects' | 'copySelection' | 'applyCellValues' | 'pasteText' | 'clearSelectedCells' | 'fillCells'> {
+export function cellsApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'focusCell' | 'selectCells' | 'extendCellSelection' | 'clearCellSelection' | 'getCellRects' | 'copySelection' | 'applyCellValues' | 'pasteText' | 'clearSelectedCells' | 'fillCells' | 'fillSelection'> {
   const { set, rectsNow, resultRef, layoutRef, store, rowIdOf, optionsRef, canEdit, persist, commitRows, apiRef, pointAt } = c
   return {
     focusCell(cell) {
       set((s) => {
         const editing = s.editingCell
         const keepEdit = editing && cell && editing.rowId === cell.rowId && editing.field === cell.field
-        return { focusedCell: cell, editingCell: keepEdit ? editing : null }
+        // moving inside the row being edited keeps the row open, with the cell that was moved to as the one being typed in
+        const inRow = s.editingRow !== null && cell !== null && cell.rowId === s.editingRow
+        return { focusedCell: cell, editingCell: inRow ? { rowId: cell.rowId, field: cell.field } : keepEdit ? editing : null }
       })
     },
     selectCells: (range, opts) =>
@@ -102,7 +104,9 @@ export function cellsApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'focusCell' | 's
       const layout = layoutRef.current
       const empty: ApplyResult = { applied: 0, skipped: 0, rejected: 0 }
       const matrix = parseTsv(text)
-      if (!res || !layout || !matrix.length) return empty
+      if (!res || !layout || !matrix.length || optionsRef.current.disableClipboardPaste) return empty
+      if ((await optionsRef.current.onBeforeClipboardPasteStart?.({ text, rows: matrix })) === false) return empty
+      optionsRef.current.onClipboardPasteStart?.({ text })
       const cols = layout.all
       const rects = rectsNow()
       const active = rects[rects.length - 1]
@@ -136,6 +140,7 @@ export function cellsApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'focusCell' | 's
       }
       const done = await apiRef.current!.applyCellValues(changes)
       done.skipped += invalid
+      optionsRef.current.onClipboardPasteEnd?.(done)
       const a = pointAt(area.r0, area.c0)
       const b = pointAt(Math.min(area.r1, res.rows.length - 1), Math.min(area.c1, cols.length - 1))
       if (a && b) set({ cellSelection: [{ anchor: a, focus: b }] })
@@ -164,7 +169,19 @@ export function cellsApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'focusCell' | 's
       }
       return apiRef.current!.applyCellValues(changes)
     },
-    async fillCells(source, to) {
+    async fillSelection(direction) {
+      const none: ApplyResult = { applied: 0, skipped: 0, rejected: 0 }
+      const rect = rectsNow().at(-1)
+      if (!rect) return none
+      const down = direction === 'down'
+      const spans = down ? rect.r1 > rect.r0 : rect.c1 > rect.c0
+      // a block fills from its first row / column; a single cell from the one before it
+      const source: RangeRect = spans ? (down ? { ...rect, r1: rect.r0 } : { ...rect, c1: rect.c0 }) : down ? { ...rect, r0: rect.r0 - 1, r1: rect.r0 - 1 } : { ...rect, c0: rect.c0 - 1, c1: rect.c0 - 1 }
+      if (source.r0 < 0 || source.c0 < 0) return none
+      // a copy of the source, never a series: the shortcut repeats
+      return apiRef.current!.fillCells(source, { row: rect.r1, col: rect.c1 }, { repeat: true })
+    },
+    async fillCells(source, to, options) {
       const res = resultRef.current
       const layout = layoutRef.current
       const none: ApplyResult = { applied: 0, skipped: 0, rejected: 0 }
@@ -182,7 +199,18 @@ export function cellsApi<R>(c: ApiContext<R>): Pick<GridApi<R>, 'focusCell' | 's
           const srcCol = cols[from.col]
           const dstCol = cols[c]
           if (srcRow === undefined || !srcCol || !dstCol) continue
-          changes.push({ rowId: dest.id, field: dstCol.field, value: getCellValue(srcCol, srcRow) })
+          // numbers a constant step apart continue as a series (1, 2, 3 → 4, 5, 6); anything else repeats
+          const along = target.c0 === source.c0 && target.c1 === source.c1 ? 'rows' : 'cols'
+          const values: unknown[] = []
+          if (along === 'rows') {
+            for (let sr = source.r0; sr <= source.r1; sr++) values.push(res.rows[sr]?.row === undefined ? undefined : getCellValue(srcCol, res.rows[sr]!.row as R))
+          } else {
+            for (let sc = source.c0; sc <= source.c1; sc++) values.push(cols[sc] && res.rows[from.row]?.row !== undefined ? getCellValue(cols[sc]!, res.rows[from.row]!.row as R) : undefined)
+          }
+          const pos = along === 'rows' ? r : c
+          const edge = along === 'rows' ? (pos > source.r1 ? source.r1 : source.r0) : pos > source.c1 ? source.c1 : source.c0
+          const series = options?.repeat || !optionsRef.current.fillSeries ? undefined : seriesValue(values, pos - edge)
+          changes.push({ rowId: dest.id, field: dstCol.field, value: series ?? getCellValue(srcCol, srcRow) })
         }
       }
       const done = await apiRef.current!.applyCellValues(changes)

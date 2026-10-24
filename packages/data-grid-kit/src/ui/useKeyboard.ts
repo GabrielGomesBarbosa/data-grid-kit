@@ -112,6 +112,11 @@ export function useKeyboard<R>(c: GridCtx<R>) {
         e.preventDefault()
         return selectAllCells()
       }
+      if (mod && !e.altKey && !e.shiftKey && (e.key.toLowerCase() === 'd' || e.key.toLowerCase() === 'r')) {
+        e.preventDefault()
+        void g.api.fillSelection(e.key.toLowerCase() === 'd' ? 'down' : 'right')
+        return
+      }
       if ((e.key === 'Delete' || e.key === 'Backspace') && !mod) {
         e.preventDefault()
         void g.api.clearSelectedCells()

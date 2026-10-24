@@ -2,7 +2,7 @@ import { type ClipboardEvent as ReactClipboardEvent } from 'react'
 import type { GridCtx } from './ctx'
 
 export function useClipboard<R>(c: GridCtx<R>) {
-  const { clipboard, api } = c
+  const { clipboard, api, onClipboardCopy } = c
 
   /* ---- clipboard ---- */
 
@@ -12,6 +12,7 @@ export function useClipboard<R>(c: GridCtx<R>) {
     if (!text) return
     e.clipboardData.setData('text/plain', text)
     e.preventDefault()
+    onClipboardCopy?.(text)
   }
   const onCut = (e: ReactClipboardEvent<HTMLDivElement>) => {
     if (!clipboard || e.target !== e.currentTarget) return
@@ -19,6 +20,7 @@ export function useClipboard<R>(c: GridCtx<R>) {
     if (!text) return
     e.clipboardData.setData('text/plain', text)
     e.preventDefault()
+    onClipboardCopy?.(text)
     void api.clearSelectedCells()
   }
   const onPaste = (e: ReactClipboardEvent<HTMLDivElement>) => {

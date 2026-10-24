@@ -137,7 +137,10 @@ export interface GridApi<R = any> {
   /** write values to cells, going through valueSetter and processRowUpdate once per row */
   applyCellValues(changes: { rowId: RowId; field: string; value: unknown }[]): Promise<ApplyResult>
   /** repeat the source block's pattern over the cells between it and (row, col) */
-  fillCells(source: RangeRect, to: { row: number; col: number }): Promise<ApplyResult>
+  /** extend `source` to `to` (the fill handle): the cells repeat; with the `fillSeries` option, numbers a constant step apart continue as a series (unless `repeat` is set) */
+  fillCells(source: RangeRect, to: { row: number; col: number }, options?: { repeat?: boolean }): Promise<ApplyResult>
+  /** fill the selected cells from their first row (`'down'`) or first column (`'right'`), like Ctrl+D / Ctrl+R in a spreadsheet; one cell takes the one above / to the left */
+  fillSelection(direction: 'down' | 'right'): Promise<ApplyResult>
   /** true when the cell can be edited (column editable, data row, `isCellEditable` agrees) */
   isCellEditable(rowId: RowId, field: string): boolean
   /** enter edit mode; `seed` replaces the value with typed text. Returns false if not editable. */

@@ -90,6 +90,20 @@ describe("editMode: 'row'", () => {
     expect(editors()).toEqual([])
   })
 
+  it('clicking another cell of the row being edited keeps it open', async () => {
+    const processRowUpdate = vi.fn((next: P) => next)
+    render(<Grid<P> rows={rows} columns={base} getRowId={(r) => r.id} editMode="row" processRowUpdate={processRowUpdate} />)
+    fireEvent.doubleClick(cell(0, 'name'))
+    fireEvent.change(input(0, 'name'), { target: { value: 'Ana B' } })
+    fireEvent.click(input(0, 'age'))
+    expect(editors()).toEqual(['name', 'age', 'team'])
+    await act(async () => {
+      fireEvent.keyDown(input(0, 'age'), { key: 'Enter' })
+    })
+    await settle()
+    expect(processRowUpdate.mock.calls[0]![0].name).toBe('Ana B')
+  })
+
   it('a row with nothing editable does not open', () => {
     render(<Grid<P> rows={rows} columns={base} getRowId={(r) => r.id} editMode="row" isCellEditable={() => false} />)
     fireEvent.doubleClick(cell(0, 'name'))

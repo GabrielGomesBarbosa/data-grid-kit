@@ -343,6 +343,15 @@ export interface GridOptions<R = any> {
   onProcessRowUpdateError?: (error: unknown) => void
   /** extra per-cell gate on top of `ColumnDef.editable` */
   isCellEditable?: (row: R, field: string) => boolean
+  /** the fill handle continues numbers a constant step apart as a series (1, 2 → 3, 4, 5) instead of repeating them (default false) */
+  fillSeries?: boolean
+  /** do not paste: the paste shortcut and `api.pasteText` do nothing (copy and cut still work) */
+  disableClipboardPaste?: boolean
+  /** text is about to be pasted: return `false` (or a promise of it, after asking the user) to cancel. `rows` is the text split into cells. */
+  onBeforeClipboardPasteStart?: (params: { text: string; rows: string[][] }) => boolean | void | Promise<boolean | void>
+  /** a paste is about to be applied / was applied (with how many cells changed, were skipped or rejected) */
+  onClipboardPasteStart?: (params: { text: string }) => void
+  onClipboardPasteEnd?: (result: { applied: number; skipped: number; rejected: number }) => void
   /** `'cell'` (default): one cell is edited at a time. `'row'`: every editable cell of a row at once, saved together (Enter, or a click outside). */
   editMode?: 'cell' | 'row'
   /** a cell is about to be edited: return `false` to stop it */

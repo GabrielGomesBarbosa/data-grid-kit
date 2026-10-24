@@ -11,6 +11,17 @@ export const page: PageDef = {
   body: () => (
     <>
       {demo('ClipboardDemo', ClipboardDemo, clipboardSrc)}
+      <h2>Events and options</h2>
+      <ul>
+        <li>
+          <code>onClipboardCopy(text)</code> gets what was copied or cut. <code>onBeforeClipboardPasteStart({'{ text, rows }'})</code> can cancel a paste by returning <code>false</code>, or a promise of
+          it (ask the user first); <code>onClipboardPasteStart</code> and <code>onClipboardPasteEnd</code> report the start and the result. <code>disableClipboardPaste</code> turns pasting off.
+        </li>
+        <li>
+          <kbd>Ctrl/Cmd+D</kbd> fills the selection down from its first row and <kbd>Ctrl/Cmd+R</kbd> to the right from its first column (a single cell takes the one above or to the left);
+          <code> api.fillSelection('down' | 'right')</code> does it from code. With <code>fillSeries</code> the fill handle continues numbers a constant step apart (1, 2 → 3, 4, 5) instead of repeating them.
+        </li>
+      </ul>
       <h2>Copy and cut</h2>
       <ul>
         <li>

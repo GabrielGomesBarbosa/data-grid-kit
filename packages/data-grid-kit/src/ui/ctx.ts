@@ -39,6 +39,7 @@ export interface GridCtx<R> {
   rowSelectionOnClick: boolean
   rows: RenderRow<R>[]
   clipboard: boolean
+  onClipboardCopy: ((text: string) => void) | undefined
   setPanel: React.Dispatch<React.SetStateAction<PanelState | null>>
   setMenu: React.Dispatch<React.SetStateAction<{ field: string; anchor: DOMRect; } | null>>
   menu: { field: string; anchor: DOMRect; } | null
