@@ -126,6 +126,54 @@ Keys are strings, or functions when a text has a name or a number in it, so reac
 
 ## Performance
 
+### Against other grids
+
+The same table (8 columns, 36 px rows, no pagination, every row virtualized) is rendered by data-grid-kit, [MUI X](https://mui.com/x/react-data-grid/) `DataGridPro` 9.16 and [AG Grid](https://www.ag-grid.com) Community 36.2, in a production build, in headless Chrome. Each number is the median of 5 fresh page loads. The interactions (sort, filter, scroll) run with the CPU slowed down 4x, so that differences a fast machine hides show up.
+
+#### 10,000 rows
+
+|  | data-grid-kit | MUI X DataGridPro | AG Grid Community |
+|---|---:|---:|---:|
+| First rows on screen (ms) | **44** | 47 | 62 |
+| Sort by text (ms) | **31** | 72 | 86 |
+| Sort by number (ms) | **29** | 46 | 73 |
+| Quick filter (ms) | **51** | 58 | 88 |
+| Clear the filter (ms) | **25** | 30 | 53 |
+| Scroll, slowest frame (ms) | **17** | 33 | 50 |
+| Scroll, frames under 30 fps (of 150) | **0.0** | 4.0 | 17 |
+| JS heap after loading (MB) | **5.9** | 9.9 | 11 |
+
+#### 100,000 rows
+
+|  | data-grid-kit | MUI X DataGridPro | AG Grid Community |
+|---|---:|---:|---:|
+| First rows on screen (ms) | **61** | 64 | 109 |
+| Sort by text (ms) | **162** | 488 | 345 |
+| Sort by number (ms) | **204** | 294 | 392 |
+| Quick filter (ms) | 343 | **300** | 783 |
+| Clear the filter (ms) | 181 | **84** | 326 |
+| Scroll, slowest frame (ms) | **17** | 33 | 50 |
+| Scroll, frames under 30 fps (of 150) | **0.0** | 6.0 | 17 |
+| JS heap after loading (MB) | **38** | 38 | 44 |
+
+#### Size added to a page
+
+| | data-grid-kit | MUI X DataGridPro | AG Grid Community |
+|---|---:|---:|---:|
+| Gzipped JS + CSS (kB) | 80 | 267 | 319 |
+
+_Chrome/155.0.8059.85, Apple M4, 10 cores, 16 GB, median of 5 runs, CPU throttled 4x for the interactions, 2026-10-25._
+
+How to read it:
+
+- **Time** is measured from the call that changes the grid (a sort, a filter) to the frame that paints the new rows. **Scroll** moves the grid by 20 rows every frame; a frame is 16.7 ms at best.
+- MUI X is the version without row limits (`DataGridPro`) and was run without a license key, which only adds a watermark. The free `DataGrid` cannot show more than 100 rows per page. AG Grid registers all community modules, which is the largest of its configurations for size.
+- The sizes are what each library adds to a page: its chunk and CSS, gzipped, without React. The MUI figure includes `@mui/material` and Emotion, which the grid needs.
+- It is one machine and one scenario: the numbers say how the grids compare on this workload, not how fast your own table will be. Where another grid is ahead (quick filter and clearing it at 100,000 rows, against MUI X) the table shows it.
+- The page, the runner and the raw numbers are in [`apps/benchmarks`](apps/benchmarks); `npm run bench -w benchmarks` repeats the run.
+
+### The data pipeline
+
 Measured in Node (`npm run bench`), 100,000 rows: build a sorted flat list ≈ 18 ms, group by two columns with aggregation ≈ 50 ms, pivot ≈ 35 ms, edit one value in a live grid ≈ 0.3 ms. The documentation includes a benchmark you can run in your own browser.
 
 ## Examples
@@ -151,6 +199,7 @@ Measured in Node (`npm run bench`), 100,000 rows: build a sorted flat list ≈ 1
 | `packages/sample-data` | Deterministic fake data shared by the docs and the examples (private) |
 | [`apps/docs`](apps/docs) | The documentation site |
 | [`apps/react-example`](apps/react-example), [`apps/next-example`](apps/next-example) | Example applications |
+| [`apps/benchmarks`](apps/benchmarks) | The workbench that compares data-grid-kit with MUI X and AG Grid in Chrome (private) |
 | `tools/media` | Scripts that record the demo animation and screenshots used in this README |
 
 It is a [Turborepo](https://turbo.build) with npm workspaces.
