@@ -126,7 +126,7 @@ Keys are strings, or functions when a text has a name or a number in it, so reac
 
 ## Performance
 
-Measured in Node (`npm run bench`), 100,000 rows: build a sorted flat list ≈ 18 ms, group by two columns with aggregation ≈ 50 ms, pivot ≈ 35 ms, edit one value in a live grid ≈ 0.3 ms. The documentation includes a benchmark you can run in your own browser.
+Measured in Node (`npm run bench`), 100,000 rows: build a sorted flat list ≈ 18 ms, group by two columns with aggregation ≈ 50 ms, pivot ≈ 35 ms, edit one value in a live grid ≈ 0.3 ms. The documentation includes a benchmark you can run in your own browser. A comparison with MUI X and AG Grid in Chrome, with the method, is in the [repository README](https://github.com/GabrielGomesBarbosa/data-grid-kit#performance).
 
 ## Examples
 
